@@ -33,7 +33,10 @@ export default async function Overview({ searchParams }: { searchParams: Promise
           <p className="text-sm text-ink/70">Yesterday</p>
           <h1 className="font-display text-3xl font-semibold">{dateLabel(row.date, true)}</h1>
         </div>
-        <form action={sendTestEmail}><Button variant="ghost" type="submit">Send test email</Button></form>
+        <div className="flex gap-2">
+          <a href={`/sales/export?date=${row.date}`} className="inline-flex min-h-11 items-center rounded-xl border border-ink/15 bg-white/60 px-5 font-medium hover:bg-meadow/50">Download Excel</a>
+          <form action={sendTestEmail}><Button variant="ghost" type="submit">Email me this</Button></form>
+        </div>
       </div>
 
       {test && NOTICE[test] && <p role="status" className="rounded-xl bg-meadow px-4 py-2 text-ink">{NOTICE[test]}</p>}
@@ -45,24 +48,28 @@ export default async function Overview({ searchParams }: { searchParams: Promise
         <Kpi label="Month to date" value={money(s.mtdNet, cur)} note={`${int(s.mtdOrders)} orders`} />
       </div>
 
-      <div className="grid gap-4 xl:grid-cols-5">
-        <Card className="xl:col-span-2">
-          <h2 className="font-display text-lg font-semibold">Last 14 days</h2>
-          <p className="mb-3 text-sm text-ink/70">Net sales per day</p>
-          <Sparkline values={trend.map((r) => r.net_sales)} label={`Net sales, ${trend.length} days, latest ${money(row.net_sales, cur)}`} />
-        </Card>
-        <Card className="p-0 xl:col-span-3">
+      <Card>
+        <h2 className="font-display text-lg font-semibold">Last 14 days</h2>
+        <p className="mb-3 text-sm text-ink/70">Net sales per day</p>
+        <Sparkline values={trend.map((r) => r.net_sales)} label={`Net sales, ${trend.length} days, latest ${money(row.net_sales, cur)}`} />
+      </Card>
+
+      <div className="grid gap-4 xl:grid-cols-2">
+        <Card className="p-0">
           <h2 className="px-5 pt-5 font-display text-lg font-semibold">Top products</h2>
-          <DataTable
-            label="Top 5 products by net sales"
-            rows={row.top_products}
-            rowKey={(p) => p.name}
-            cols={[
-              { label: "Product", render: (p) => p.name },
-              { label: "Units", align: "right", render: (p) => int(p.units) },
-              { label: "Net sales", align: "right", render: (p) => money(p.net, cur) },
-            ]}
-          />
+          <DataTable label="Top 5 products by net sales" rows={row.top_products} rowKey={(p) => p.name} cols={[
+            { label: "Product", render: (p) => p.name },
+            { label: "Units", align: "right", render: (p) => int(p.units) },
+            { label: "Net sales", align: "right", render: (p) => money(p.net, cur) },
+          ]} />
+        </Card>
+        <Card className="p-0">
+          <h2 className="px-5 pt-5 font-display text-lg font-semibold">Top locations</h2>
+          <DataTable label="Top 5 locations by net sales" rows={row.locations.slice(0, 5)} rowKey={(l) => `${l.country}|${l.city}`} cols={[
+            { label: "Location", render: (l) => (l.city === "Unknown" ? l.country : `${l.city}, ${l.country}`) },
+            { label: "Orders", align: "right", render: (l) => int(l.orders) },
+            { label: "Net sales", align: "right", render: (l) => money(l.net, cur) },
+          ]} />
         </Card>
       </div>
     </div>

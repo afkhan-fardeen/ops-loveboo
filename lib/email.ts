@@ -23,6 +23,11 @@ export function buildEmail(s: Summary, appUrl: string) {
      <td align="right" style="padding:8px 0;border-top:1px solid #eee;color:${C.mute}">${int(p.units)}</td>
      <td align="right" style="padding:8px 0;border-top:1px solid #eee;color:${C.ink};font-weight:600">${money(p.net, cur)}</td></tr>`).join("");
 
+  const places = row.locations.slice(0, 5).map((l) =>
+    `<tr><td style="padding:8px 0;border-top:1px solid #eee;color:${C.ink}">${(l.city === "Unknown" ? l.country : `${l.city}, ${l.country}`).replace(/</g, "&lt;")}</td>
+     <td align="right" style="padding:8px 0;border-top:1px solid #eee;color:${C.mute}">${int(l.orders)}</td>
+     <td align="right" style="padding:8px 0;border-top:1px solid #eee;color:${C.ink};font-weight:600">${money(l.net, cur)}</td></tr>`).join("");
+
   const html = `<!doctype html><html><body style="margin:0;background:${C.linen};font-family:Helvetica,Arial,sans-serif">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr><td align="center" style="padding:24px 12px">
 <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%">
@@ -38,13 +43,18 @@ export function buildEmail(s: Summary, appUrl: string) {
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="font-size:14px;margin:0 6px;width:calc(100% - 12px)">
     <tr><td style="color:${C.mute};font-size:12px">Product</td><td align="right" style="color:${C.mute};font-size:12px">Units</td><td align="right" style="color:${C.mute};font-size:12px">Net</td></tr>${products}
   </table>
+  <div style="font-size:14px;font-weight:700;color:${C.ink};margin:20px 6px 4px">Top locations</div>
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="font-size:14px;margin:0 6px;width:calc(100% - 12px)">
+    <tr><td style="color:${C.mute};font-size:12px">Location</td><td align="right" style="color:${C.mute};font-size:12px">Orders</td><td align="right" style="color:${C.mute};font-size:12px">Net</td></tr>${places}
+  </table>
+  <p style="font-size:13px;color:${C.mute};margin:20px 6px 0">The Excel file attached has the month's daily sales with totals, and sales by location.</p>
   <div style="text-align:center;margin-top:24px"><a href="${appUrl}/sales/reports/${row.date}" style="display:inline-block;background:${C.teal};color:#fff;text-decoration:none;padding:12px 24px;border-radius:10px;font-weight:600">Open portal</a></div>
 </td></tr></table></td></tr></table></body></html>`;
 
   const text = [subject, "",
     `Net sales: ${money(row.net_sales, cur)}`, `Orders: ${row.orders}`, `AOV: ${money(s.aov, cur, 2)}`,
     `Month to date: ${money(s.mtdNet, cur)} / ${s.mtdOrders} orders`, "", "Top products:",
-    ...row.top_products.map((p, i) => `${i + 1}. ${p.name} — ${p.units} units, ${money(p.net, cur)}`), "", `${appUrl}/sales/reports/${row.date}`].join("\n");
+    ...row.top_products.map((p, i) => `${i + 1}. ${p.name} — ${p.units} units, ${money(p.net, cur)}`), "", "Top locations:", ...row.locations.slice(0, 5).map((l) => `${l.city}, ${l.country} — ${l.orders} orders, ${money(l.net, cur)}`), "", "Excel attached: daily sales and location sales.", "", `${appUrl}/sales/reports/${row.date}`].join("\n");
 
   return { subject, html, text };
 }

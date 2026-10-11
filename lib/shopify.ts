@@ -1,11 +1,13 @@
 import { dayRange } from "./format";
-import type { Product } from "./data";
+import type { Location, Product } from "./data";
 
 const QUERY = `query($q: String!, $after: String) {
   orders(first: 100, after: $after, query: $q) {
     pageInfo { hasNextPage endCursor }
     nodes {
       taxesIncluded
+      sourceName
+      shippingAddress { country city }
       currentSubtotalPriceSet { shopMoney { amount currencyCode } }
       currentTotalTaxSet { shopMoney { amount } }
       lineItems(first: 100) { nodes { name currentQuantity discountedTotalSet { shopMoney { amount } } taxLines { priceSet { shopMoney { amount } } } } }
@@ -21,6 +23,7 @@ export async function fetchDay(date: string) {
 
   let net = 0, orders = 0, units = 0, currency = "GBP", after: string | null = null;
   const products = new Map<string, Product>();
+  const places = new Map<string, Location>();
 
   do {
     const res: Response = await fetch(url, {
@@ -33,12 +36,21 @@ export async function fetchDay(date: string) {
     if (!res.ok || json.errors) throw new Error(`Shopify: ${JSON.stringify(json.errors ?? res.status)}`);
     const page: any = json.data.orders;
     for (const o of page.nodes as any[]) {
+      if (o.sourceName === "shopify_draft_order") continue; // exclude draft orders
       orders++;
       // Prices may include VAT; Shopify's net sales excludes tax.
-      net += Number(o.currentSubtotalPriceSet.shopMoney.amount) - (o.taxesIncluded ? Number(o.currentTotalTaxSet.shopMoney.amount) : 0);
+      const orderNet = Number(o.currentSubtotalPriceSet.shopMoney.amount) - (o.taxesIncluded ? Number(o.currentTotalTaxSet.shopMoney.amount) : 0);
+      net += orderNet;
+      const country = o.shippingAddress?.country ?? "Unknown";
+      const city = (o.shippingAddress?.city ?? "").trim().toLowerCase().replace(/(^|[\s-])\p{L}/gu, (m: string) => m.toUpperCase()) || "Unknown";
+      const place = places.get(`${country}|${city}`) ?? { country, city, orders: 0, units: 0, net: 0 };
+      place.orders++;
+      place.net += orderNet;
+      places.set(`${country}|${city}`, place);
       currency = o.currentSubtotalPriceSet.shopMoney.currencyCode;
       for (const li of o.lineItems.nodes) {
         units += li.currentQuantity;
+        place.units += li.currentQuantity;
         const p = products.get(li.name) ?? { name: li.name, units: 0, net: 0 };
         p.units += li.currentQuantity;
         const tax = o.taxesIncluded ? li.taxLines.reduce((t: number, x: any) => t + Number(x.priceSet.shopMoney.amount), 0) : 0;
@@ -51,5 +63,6 @@ export async function fetchDay(date: string) {
 
   const top = [...products.values()].sort((a, b) => b.net - a.net).slice(0, 5)
     .map((p) => ({ ...p, net: Math.round(p.net * 100) / 100 }));
-  return { net_sales: Math.round(net * 100) / 100, orders, units, top_products: top, currency };
+  const locations = [...places.values()].sort((a, b) => b.net - a.net).map((l) => ({ ...l, net: Math.round(l.net * 100) / 100 }));
+  return { net_sales: Math.round(net * 100) / 100, orders, units, top_products: top, locations, currency };
 }

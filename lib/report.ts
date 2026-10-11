@@ -1,5 +1,6 @@
 import { Resend } from "resend";
 import { buildEmail } from "./email";
+import { buildWorkbook, workbookName } from "./excel";
 import { adminClient } from "./supabase";
 import { fetchDay } from "./shopify";
 import { rowsUpTo, summarise } from "./data";
@@ -21,7 +22,8 @@ export async function run(date: string, opts: { resend?: boolean; email?: boolea
   if (s.row.emailed_at && !opts.resend) return { date, emailed: false, reason: "already emailed" };
 
   const { subject, html, text } = buildEmail(s, process.env.APP_URL ?? "");
-  const { error: mailErr } = await resend().emails.send({ from: process.env.REPORT_FROM!, to: recipients(), subject, html, text });
+  const attachments = [{ filename: workbookName(date), content: await buildWorkbook(rows, date) }];
+  const { error: mailErr } = await resend().emails.send({ from: process.env.REPORT_FROM!, to: recipients(), subject, html, text, attachments });
   if (mailErr) throw new Error(mailErr.message);
   await db.from("daily_sales").update({ emailed_at: new Date().toISOString() }).eq("date", date);
   return { date, emailed: true };
@@ -35,9 +37,11 @@ export async function sendFailure(err: unknown) {
 }
 
 export async function sendTest(to: string) {
-  const s = summarise(await rowsUpTo(undefined, 40));
+  const rows = await rowsUpTo(undefined, 60);
+  const s = summarise(rows);
   if (!s) throw new Error("No data yet");
   const { subject, html, text } = buildEmail(s, process.env.APP_URL ?? "");
-  const { error } = await resend().emails.send({ from: process.env.REPORT_FROM!, to, subject: `[Test] ${subject}`, html, text });
+  const attachments = [{ filename: workbookName(s.row.date), content: await buildWorkbook(rows, s.row.date) }];
+  const { error } = await resend().emails.send({ from: process.env.REPORT_FROM!, to, subject: `[Test] ${subject}`, html, text, attachments });
   if (error) throw new Error(error.message);
 }

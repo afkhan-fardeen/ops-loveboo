@@ -4,6 +4,7 @@ create table daily_sales (
   orders       int           not null,
   units        int           not null,
   top_products jsonb         not null default '[]',
+  locations    jsonb         not null default '[]',  -- [{country, city, orders, units, net}]
   currency     text          not null default 'GBP',
   emailed_at   timestamptz,
   created_at   timestamptz   not null default now()

@@ -21,7 +21,10 @@ export default async function Day({ params }: { params: Promise<{ date: string }
     <div className="flex flex-col gap-6">
       <div>
         <Link href="/sales/reports" className="inline-flex min-h-11 items-center text-teal underline-offset-4 hover:underline">← All reports</Link>
-        <h1 className="font-display text-3xl font-semibold">{dateLabel(date, true)}</h1>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <h1 className="font-display text-3xl font-semibold">{dateLabel(date, true)}</h1>
+          <a href={`/sales/export?date=${date}`} className="inline-flex min-h-11 items-center rounded-xl border border-ink/15 bg-white/60 px-5 font-medium hover:bg-meadow/50">Download Excel</a>
+        </div>
       </div>
 
       <div className="grid grid-cols-2 gap-3 xl:grid-cols-4 xl:gap-4">
@@ -37,6 +40,15 @@ export default async function Day({ params }: { params: Promise<{ date: string }
           { label: "Product", render: (p) => p.name },
           { label: "Units", align: "right", render: (p) => int(p.units) },
           { label: "Net sales", align: "right", render: (p) => money(p.net, cur) },
+        ]} />
+      </Card>
+
+      <Card className="p-0">
+        <h2 className="px-5 pt-5 font-display text-lg font-semibold">Top locations</h2>
+        <DataTable label="Top 5 locations" rows={row.locations.slice(0, 5)} rowKey={(l) => `${l.country}|${l.city}`} cols={[
+          { label: "Location", render: (l) => (l.city === "Unknown" ? l.country : `${l.city}, ${l.country}`) },
+          { label: "Orders", align: "right", render: (l) => int(l.orders) },
+          { label: "Net sales", align: "right", render: (l) => money(l.net, cur) },
         ]} />
       </Card>
 
