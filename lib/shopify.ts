@@ -9,16 +9,42 @@ const QUERY = `query($q: String!, $after: String) {
       createdAt
       taxesIncluded
       sourceName
+      currentSubtotalPriceSet { shopMoney { currencyCode } }
       shippingAddress { country city }
-      currentSubtotalPriceSet { shopMoney { amount currencyCode } }
-      currentTotalTaxSet { shopMoney { amount } }
-      totalDiscountsSet { shopMoney { amount } }
-      lineItems(first: 100) { nodes { name currentQuantity discountedTotalSet { shopMoney { amount } } taxLines { priceSet { shopMoney { amount } } } } }
+      lineItems(first: 100) {
+        nodes {
+          name quantity currentQuantity
+          originalTotalSet { shopMoney { amount } }
+          discountAllocations { allocatedAmountSet { shopMoney { amount } } }
+          taxLines { priceSet { shopMoney { amount } } }
+        }
+      }
     }
   }
 }`;
 
-/** Net sales ≈ order subtotal after discounts and returns, minus tax when prices include it (excludes shipping). Paginated orders fallback; swap for ShopifyQL if enabled. */
+type Money = { shopMoney: { amount: string } };
+type LineItem = {
+  name: string; quantity: number; currentQuantity: number; originalTotalSet: Money;
+  discountAllocations: { allocatedAmountSet: Money }[]; taxLines: { priceSet: Money }[];
+};
+type ShopifyOrder = {
+  name: string; createdAt: string; taxesIncluded: boolean; sourceName: string | null;
+  currentSubtotalPriceSet: { shopMoney: { currencyCode: string } };
+  shippingAddress: { country: string | null; city: string | null } | null;
+  lineItems: { nodes: LineItem[] };
+};
+
+const amount = (m: Money) => Number(m.shopMoney.amount);
+const round2 = (n: number) => Math.round(n * 100) / 100;
+const tidyCity = (c: string | null | undefined) =>
+  (c ?? "").trim().toLowerCase().replace(/(^|[\s-])\p{L}/gu, (m) => m.toUpperCase()) || "Unknown";
+
+/**
+ * One day of sales, in the store timezone. Net sales = items sold after every discount (line and order level),
+ * excluding VAT when prices include it, excluding shipping, adjusted for returns. Draft orders are skipped.
+ * Everything (day total, products, locations, per-order amounts) is summed from the same line items.
+ */
 export async function fetchDay(date: string) {
   const { from, to } = dayRange(date, process.env.STORE_TIMEZONE ?? "Europe/London");
   const q = `created_at:>='${from}' created_at:<'${to}' -status:cancelled -test:true`;
@@ -36,44 +62,54 @@ export async function fetchDay(date: string) {
       body: JSON.stringify({ query: QUERY, variables: { q, after } }),
       cache: "no-store",
     });
-    const json: any = await res.json();
-    if (!res.ok || json.errors) throw new Error(`Shopify: ${JSON.stringify(json.errors ?? res.status)}`);
-    const page: any = json.data.orders;
-    for (const o of page.nodes as any[]) {
-      if (o.sourceName === "shopify_draft_order") continue; // exclude draft orders
+    const json = (await res.json()) as { data?: { orders: { pageInfo: { hasNextPage: boolean; endCursor: string }; nodes: ShopifyOrder[] } }; errors?: unknown };
+    if (!res.ok || json.errors || !json.data) throw new Error(`Shopify: ${JSON.stringify(json.errors ?? res.status)}`);
+    const page = json.data.orders;
+
+    for (const o of page.nodes) {
+      if (o.sourceName === "shopify_draft_order") continue;
       orders++;
-      // Prices may include VAT; Shopify's net sales excludes tax.
-      const orderNet = Number(o.currentSubtotalPriceSet.shopMoney.amount) - (o.taxesIncluded ? Number(o.currentTotalTaxSet.shopMoney.amount) : 0);
-      net += orderNet;
-      // Discounts are tax-inclusive when prices are; scale to the ex-VAT share of the order.
-      const sub = Number(o.currentSubtotalPriceSet.shopMoney.amount);
-      const orderDiscount = Number(o.totalDiscountsSet.shopMoney.amount) * (sub ? orderNet / sub : 1);
-      discounts += orderDiscount;
-      const entry: Order = { name: o.name, time: o.createdAt, units: 0, amount: Math.round(orderNet * 100) / 100, discount: Math.round(orderDiscount * 100) / 100 };
-      orderList.push(entry);
-      const country = o.shippingAddress?.country ?? "Unknown";
-      const city = (o.shippingAddress?.city ?? "").trim().toLowerCase().replace(/(^|[\s-])\p{L}/gu, (m: string) => m.toUpperCase()) || "Unknown";
+      currency = o.currentSubtotalPriceSet.shopMoney.currencyCode;
+
+      const country = o.shippingAddress?.country ?? "Unknown", city = tidyCity(o.shippingAddress?.city);
       const place = places.get(`${country}|${city}`) ?? { country, city, orders: 0, units: 0, net: 0 };
       place.orders++;
-      place.net += orderNet;
-      places.set(`${country}|${city}`, place);
-      currency = o.currentSubtotalPriceSet.shopMoney.currencyCode;
+      const entry: Order = { name: o.name, time: o.createdAt, units: 0, amount: 0, discount: 0 };
+
       for (const li of o.lineItems.nodes) {
-        units += li.currentQuantity;
-        place.units += li.currentQuantity;
+        const kept = li.quantity ? li.currentQuantity / li.quantity : 1; // quantity left after returns
+        const allocated = li.discountAllocations.reduce((t, d) => t + amount(d.allocatedAmountSet), 0);
+        const afterDiscount = amount(li.originalTotalSet) - allocated;
+        const vat = o.taxesIncluded ? li.taxLines.reduce((t, x) => t + amount(x.priceSet), 0) : 0;
+        const lineNet = (afterDiscount - vat) * kept;
+        // Express the discount ex-VAT as well, so net + discount ties back to pre-discount sales.
+        const lineDiscount = (afterDiscount > 0 ? allocated * ((afterDiscount - vat) / afterDiscount) : allocated) * kept;
+
+        entry.amount += lineNet;
+        entry.discount += lineDiscount;
         entry.units! += li.currentQuantity;
+        place.units += li.currentQuantity;
+        units += li.currentQuantity;
+
         const p = products.get(li.name) ?? { name: li.name, units: 0, net: 0 };
         p.units += li.currentQuantity;
-        const tax = o.taxesIncluded ? li.taxLines.reduce((t: number, x: any) => t + Number(x.priceSet.shopMoney.amount), 0) : 0;
-        p.net += Number(li.discountedTotalSet.shopMoney.amount) - tax;
+        p.net += lineNet;
         products.set(li.name, p);
       }
+
+      place.net += entry.amount;
+      places.set(`${country}|${city}`, place);
+      net += entry.amount;
+      discounts += entry.discount;
+      orderList.push({ ...entry, amount: round2(entry.amount), discount: round2(entry.discount) });
     }
     after = page.pageInfo.hasNextPage ? page.pageInfo.endCursor : null;
   } while (after);
 
-  const top = [...products.values()].sort((a, b) => b.net - a.net).slice(0, 5)
-    .map((p) => ({ ...p, net: Math.round(p.net * 100) / 100 }));
-  const locations = [...places.values()].sort((a, b) => b.net - a.net).map((l) => ({ ...l, net: Math.round(l.net * 100) / 100 }));
-  return { net_sales: Math.round(net * 100) / 100, discounts: Math.round(discounts * 100) / 100, orders, units, top_products: top, locations, order_list: orderList.sort((a, b) => b.time.localeCompare(a.time)), currency };
+  const top = [...products.values()].sort((a, b) => b.net - a.net).slice(0, 15).map((p) => ({ ...p, net: round2(p.net) }));
+  const locations = [...places.values()].sort((a, b) => b.net - a.net).map((l) => ({ ...l, net: round2(l.net) }));
+  return {
+    net_sales: round2(net), discounts: round2(discounts), orders, units, top_products: top, locations,
+    order_list: orderList.sort((a, b) => b.time.localeCompare(a.time)), currency,
+  };
 }

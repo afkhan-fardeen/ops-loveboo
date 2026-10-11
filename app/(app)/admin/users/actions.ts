@@ -15,7 +15,7 @@ export async function createUser(form: FormData): Promise<Result> {
   await requireAdmin();
   const email = str(form, "email").toLowerCase(), password = str(form, "password");
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return fail("Enter a valid email address.");
-  if (password.length < 8) return fail("Password must be at least 8 characters.");
+  if (password.length < 10) return fail("Password must be at least 10 characters.");
 
   const db = adminClient();
   const { data, error } = await db.auth.admin.createUser({ email, password, email_confirm: true });
@@ -33,7 +33,7 @@ export async function updateUser(form: FormData): Promise<Result> {
   const me = await requireAdmin();
   const id = str(form, "id"), password = str(form, "password");
   const self = id === me.id;
-  if (password && password.length < 8) return fail("Password must be at least 8 characters.");
+  if (password && password.length < 10) return fail("Password must be at least 10 characters.");
 
   const db = adminClient();
   const { error } = await db.from("profiles").update({

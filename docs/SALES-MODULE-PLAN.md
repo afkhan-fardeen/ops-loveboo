@@ -1,46 +1,55 @@
-# Sales module — plan (v0.2)
+# Sales module — plan (v0.3)
 
-Owner: Fardeen · Status: Phase 1 shipped, Phase 2–4 proposed
+Owner: Fardeen · Status: Phases 1, 1.5 and 2 shipped; 3–5 proposed
 
-## Purpose
-One place for Love Boo's sales: yesterday at a glance, any past day, any period, and the daily email. Read-only on Shopify, numbers stored once and reused.
+## Is this the best Sales module yet?
+Not yet. It is now a solid, correct foundation, but "best" means answering the questions a store owner actually asks each day, quickly, on a phone.
 
-## Principles
-- **One definition of "sales"**: net sales = after discounts and returns, excluding VAT and shipping. Draft orders excluded. Same number in the portal, the email and the Excel.
-- **Compute once, store, reuse.** The nightly job writes one row per store-day; every view is arithmetic on stored rows.
-- **Fast on a phone.** Server-rendered pages, lazy charts, skeletons, no layout shift.
-- **Honest data.** Always show which day/period, currency, and when the data was last refreshed.
+**What it does well today**
+- Numbers are correct and tie out: day total = products = locations = orders, and matches Shopify's own ShopifyQL net sales to the penny (checked 6–10 Oct 2026).
+- One definition everywhere (portal, email, Excel): net sales after all discounts, excluding VAT and shipping, adjusted for returns, draft orders excluded.
+- Fast, readable, live "Today so far", date switcher, period reports with comparison, Excel export, admin-managed recipients and access.
+
+**Gaps vs. a best-in-class module**
+1. No answers to "why": nothing explains what moved (which product, which country).
+2. No goals/targets, so no "are we on track this month?".
+3. No alerts: the owner finds out about a bad day only by looking.
+4. No order-level search (find an order, a customer, a discount code).
+5. Product history is limited to each day's top 15; no per-product trend, no returns view.
+6. No data-health view (when did the job last run, did it fail, can I re-sync a day?).
+7. Customer lens missing (new vs returning, repeat rate).
+
+## Principles (unchanged)
+Compute once, store, reuse. One definition of sales. Server-rendered and fast. Always show the period, currency and freshness. Read-only on Shopify.
 
 ## Information architecture
 | Section | Route | Status |
 |---|---|---|
-| Overview (one day, date switcher, orders, products, locations, share) | `/sales` | Done |
-| Reports (every stored day) | `/sales/reports` | Done |
-| Live "Today so far" strip | on Overview | Phase 1.5 (this iteration) |
-| Period reports (range picker, comparison, export) | `/sales/reports?range=` | Phase 2 |
-| Products (best/worst sellers over a period) | `/sales/products` | Phase 3 |
-| Locations (country/city breakdown over a period) | `/sales/locations` | Phase 3 |
-| Orders (search across days) | `/sales/orders` | Phase 3 |
-| Settings (recipients, email on/off, Excel on/off) | `/sales/settings` | Done (admin) |
+| Overview: one day, date switcher, live today, orders, products, locations | `/sales` | Done |
+| Reports: period (7d/30d/month/last month/custom), vs previous period, chart, days/products/locations, Excel | `/sales/reports` | Done |
+| Settings: recipients, email on/off, Excel on/off, test send | `/sales/settings` | Done (admin) |
+| Insights strip on Overview/Reports ("what changed") | on both | Phase 3 |
+| Products: ranking, trend, share, returns | `/sales/products` | Phase 3 |
+| Locations: country/city ranking and trend | `/sales/locations` | Phase 3 |
+| Orders: search/filter across days, export | `/sales/orders` | Phase 4 |
+| Targets: monthly goal, pace, projected finish | Overview card | Phase 4 |
+| Alerts: email when a day is X% below the usual for that weekday | Settings | Phase 4 |
+| Health: last run, last error, "Sync a day" button | `/sales/health` (admin) | Phase 5 |
 
 ## Phases
-**Phase 1 — Daily report (done):** nightly Shopify fetch → store → email + Excel; day view with date switcher; admin-managed recipients; module access per user.
-
-**Phase 1.5 — Feel (this iteration):** live "Today so far" (auto-refresh, paused when the tab is hidden); page transitions; skeletons; phone-friendly tables (secondary columns hide on small screens); button/row micro-interactions.
-
-**Phase 2 — Period reports:** quick ranges (Yesterday, Last 7, Last 30, This month, Last month, Custom); totals with change vs the previous equal period; daily chart; daily table; Excel export for the range; shareable URL.
-
-**Phase 3 — Drill-downs:** Products and Locations pages (ranked, with share-of-total and change); Orders page with search and filters (needs per-order storage beyond 60 days).
-
-**Phase 4 — Operations:** "Sync now" button (admin) and job health (last run, last error); weekly summary email option; optional send-time setting once on a plan with hourly cron; targets/goals on the Overview.
+- **Phase 1–2 (done):** daily job → store → email + Excel; day view; live today; period reports with comparison and export.
+- **Phase 3 — Understand (next):** "What changed" insights (biggest mover product, top growing country, best/worst day vs average); Products and Locations pages with trends. Needs: store all products per day (not just top 15) in a child table.
+- **Phase 4 — Act:** targets and pace; weekday-aware alerts; Orders explorer (needs an `orders` table with one row per order: id, time, customer id hash, discount codes, net, country).
+- **Phase 5 — Operate:** health page, re-sync a day, weekly summary email, send-time setting (needs Vercel Pro hourly cron), optional second store.
 
 ## Data
-- `daily_sales`: one row per store-day (net, orders, units, discounts, top products, locations, order list, emailed_at).
-- Live today is **not stored**: fetched on demand, cached 60 s server-side.
-- Period views sum stored rows; no extra Shopify calls.
+- `daily_sales`: one row per store-day: net, discounts, orders, units, top 15 products, locations, order list, emailed_at.
+- Live today is not stored: fetched on demand, cached 60 s, shared across viewers.
+- Period views sum stored rows (no extra Shopify calls).
+- Phase 3–4 add `order_items` / `orders` tables so products and orders can be queried without JSON blobs.
 
 ## Open decisions
-1. **Total sales definition** in the email: net (current) vs Shopify's "Total sales" (adds shipping + VAT).
-2. **Location**: shipping country + city (current) vs country only.
-3. **Stores**: Love Boo only for now; add a `store` column if another store joins.
-4. **Retention**: keep daily rows forever (tiny) — confirm.
+1. "Total sales" in the email: net (current) vs Shopify's "Total sales" (adds shipping + VAT).
+2. Location = shipping country + city (current).
+3. Targets: monthly net-sales goal per month, set by an admin?
+4. Alert threshold and recipients.

@@ -3,12 +3,12 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState, type ReactNode } from "react";
-import { ActionIcon, AppShell, Avatar, Burger, Container, Divider, Group, NavLink, ScrollArea, Stack, Text, Tooltip } from "@mantine/core";
+import { ActionIcon, AppShell, Avatar, Burger, Container, Divider, Group, NavLink, ScrollArea, Stack, Text, ThemeIcon, Tooltip } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
 import { IconChartBar, IconFileText, IconHome2, IconLayoutSidebarLeftCollapse, IconLayoutSidebarLeftExpand, IconSettings, IconUsers } from "@tabler/icons-react";
 
-const Logo = () => <Image src="/logo.png" alt="Love Boo" width={112} height={35} priority />;
-const WIDE = 248, RAIL = 76;
+const Logo = () => <Image src="/logo.png" alt="Love Boo" width={92} height={29} priority />;
+const WIDE = 248, RAIL = 84;
 
 /** Sidebar layout: collapsible to an icon rail on desktop (remembered in a cookie), burger + drawer on phones. */
 export default function AppFrame({ isAdmin, showSales, who, email, signOut, signOutCompact, initialCollapsed, children }: {
@@ -49,7 +49,7 @@ export default function AppFrame({ isAdmin, showSales, who, email, signOut, sign
         </Group>
       </AppShell.Section>
 
-      <AppShell.Section grow component={ScrollArea}>
+      <AppShell.Section grow component={ScrollArea} scrollbars="y" type="never">
         <Stack gap={2}>
           <Text size="xs" tt="uppercase" fw={700} c="dimmed" px="sm" pb={4} style={{ letterSpacing: 0.5 }}>Menu</Text>
           <NavLink {...link} href="/" label="Home" leftSection={<IconHome2 size={18} />} active={path === "/"} />
@@ -85,7 +85,7 @@ export default function AppFrame({ isAdmin, showSales, who, email, signOut, sign
     <>
       <AppShell.Section mb="md">
         <Stack align="center" gap="xs">
-          <Link href="/" aria-label="Love Boo Ops home"><Image src="/icon.png" alt="Love Boo" width={32} height={32} priority /></Link>
+          <Link href="/" aria-label="Love Boo Ops home" style={{ textDecoration: "none" }}><ThemeIcon size={36} radius="md" fw={800} fz={13} aria-hidden>LB</ThemeIcon></Link>
           <Tooltip label="Expand sidebar" position="right" withArrow>
             <ActionIcon variant="subtle" color="gray" onClick={toggleRail} aria-label="Expand sidebar" aria-expanded={false}>
               <IconLayoutSidebarLeftExpand size={18} />
@@ -94,7 +94,7 @@ export default function AppFrame({ isAdmin, showSales, who, email, signOut, sign
         </Stack>
       </AppShell.Section>
 
-      <AppShell.Section grow component={ScrollArea}>
+      <AppShell.Section grow component={ScrollArea} scrollbars="y" type="never">
         <Stack align="center" gap={6}>
           {railItems.map(({ href, label, icon: Icon, on }) => (
             <Tooltip key={href} label={label} position="right" withArrow>
@@ -131,7 +131,7 @@ export default function AppFrame({ isAdmin, showSales, who, email, signOut, sign
 
       <AppShell.Navbar p={10} component="nav" aria-label="Main" withBorder={false} bg="transparent">
         <Stack gap={0} h="100%" p="md" className="sidebar-panel" hiddenFrom="sm">{wide}</Stack>
-        <Stack gap={0} h="100%" p="md" className="sidebar-panel" visibleFrom="sm">{rail ? compact : wide}</Stack>
+        <Stack gap={0} h="100%" p={rail ? 8 : "md"} className="sidebar-panel" visibleFrom="sm" style={{ overflow: "hidden" }}>{rail ? compact : wide}</Stack>
       </AppShell.Navbar>
 
       <AppShell.Main>

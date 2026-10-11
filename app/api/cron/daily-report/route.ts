@@ -1,3 +1,4 @@
+import { timingSafeEqual } from "node:crypto";
 import { NextRequest, NextResponse } from "next/server";
 import { addDays, yesterdayIn } from "@/lib/format";
 import { run, sendFailure } from "@/lib/report";
@@ -5,9 +6,16 @@ import { run, sendFailure } from "@/lib/report";
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 
+/** Constant-time check of "Authorization: Bearer <CRON_SECRET>". */
+function authorised(req: NextRequest) {
+  const secret = process.env.CRON_SECRET;
+  if (!secret) return false;
+  const a = Buffer.from(req.headers.get("authorization") ?? ""), b = Buffer.from(`Bearer ${secret}`);
+  return a.length === b.length && timingSafeEqual(a, b);
+}
+
 export async function GET(req: NextRequest) {
-  if (!process.env.CRON_SECRET || req.headers.get("authorization") !== `Bearer ${process.env.CRON_SECRET}`)
-    return new NextResponse("Unauthorized", { status: 401 });
+  if (!authorised(req)) return new NextResponse("Unauthorized", { status: 401 });
 
   const url = new URL(req.url);
   // ?backfill=60 loops the last N days through the same function (no emails)

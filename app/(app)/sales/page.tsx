@@ -9,11 +9,13 @@ import { DataTable, EmptyState, Kpi, PageHeader, Section } from "@/components/ui
 import { dateBounds, rowsForSummary, summarise, tz as storeTz } from "@/lib/data";
 import { buildEmail } from "@/lib/email";
 import { dateLabel, int, money, num2, timeIn } from "@/lib/format";
+import { requireModule } from "@/lib/auth";
 import { sendTestEmail } from "../actions";
 
 export const dynamic = "force-dynamic";
 
 export default async function Overview({ searchParams }: { searchParams: Promise<{ date?: string }> }) {
+  await requireModule("sales");
   const { date: raw } = await searchParams;
   const date = raw && /^\d{4}-\d{2}-\d{2}$/.test(raw) ? raw : undefined;
   const [bounds, rows] = await Promise.all([dateBounds(), rowsForSummary(date)]);
@@ -67,7 +69,7 @@ export default async function Overview({ searchParams }: { searchParams: Promise
 
       <SimpleGrid cols={{ base: 1, lg: 2 }}>
         <Section title="Top products" flush>
-          <DataTable rows={row.top_products} rowKey={(p) => p.name} cols={[
+          <DataTable rows={row.top_products.slice(0, 5)} rowKey={(p) => p.name} cols={[
             { label: "Product", render: (p) => p.name },
             { label: "Units", align: "right", render: (p) => int(p.units) },
             { label: "Net sales", align: "right", render: (p) => money(p.net, cur) },

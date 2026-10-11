@@ -6,7 +6,7 @@ import SubmitButton from "@/components/SubmitButton";
 import { getUser } from "@/lib/auth";
 import { serverClient } from "@/lib/supabase";
 
-const safe = (n?: string) => (n && n.startsWith("/") && !n.startsWith("//") ? n : "/");
+const safe = (n?: string) => (n && n.startsWith("/") && !n.startsWith("//") && !n.includes("\\") ? n : "/");
 
 async function signIn(form: FormData) {
   "use server";
@@ -32,7 +32,7 @@ export default async function Login({ searchParams }: { searchParams: Promise<{ 
       <Box visibleFrom="md" w="46%" p={56} c="white" style={{ position: "relative", overflow: "hidden", display: "flex", flexDirection: "column", justifyContent: "space-between", background: "linear-gradient(145deg, #006d68 0%, #00403d 100%)" }}>
         <span aria-hidden style={{ position: "absolute", width: 420, height: 420, borderRadius: "50%", top: -140, right: -120, background: "rgb(255 255 255 / 0.07)" }} />
         <span aria-hidden style={{ position: "absolute", width: 300, height: 300, borderRadius: "50%", bottom: -100, left: -80, background: "rgb(255 255 255 / 0.06)" }} />
-        <Image src="/logo.png" alt="Love Boo" width={150} height={47} priority style={{ filter: "brightness(0) invert(1)", position: "relative" }} />
+        <Image src="/logo.png" alt="Love Boo" width={118} height={37} priority style={{ filter: "brightness(0) invert(1)", position: "relative" }} />
         <Stack gap="xl" style={{ position: "relative" }}>
           <div>
             <Title order={1} fz={34} lh={1.2} c="white">Love Boo operations,<br />in one place.</Title>
@@ -52,7 +52,7 @@ export default async function Login({ searchParams }: { searchParams: Promise<{ 
 
       <Box style={{ flex: 1, display: "grid", placeItems: "center" }} p="md">
         <Stack gap="lg" w="100%" maw={400} className="page-in">
-          <Stack gap={6} align="center" hiddenFrom="md"><Image src="/logo.png" alt="Love Boo" width={150} height={47} priority /></Stack>
+          <Stack gap={6} align="center" hiddenFrom="md"><Image src="/logo.png" alt="Love Boo" width={112} height={35} priority /></Stack>
           <Paper withBorder shadow="sm" p={{ base: "lg", sm: "xl" }}>
             <Stack gap="lg">
               <div>

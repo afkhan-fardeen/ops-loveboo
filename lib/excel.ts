@@ -1,5 +1,6 @@
 import ExcelJS from "exceljs";
 import type { Row } from "./data";
+import { aggLocations, aggProducts } from "./aggregate";
 import { timeIn } from "./format";
 
 const TEAL = "FF006D68", MEADOW = "FFE6F4F3";
@@ -53,3 +54,43 @@ export async function buildWorkbook(row: Row) {
 }
 
 export const workbookName = (date: string) => `loveboo-sales-${date}.xlsx`;
+
+/** A period: daily totals, products and locations. `rows` may be in any order. */
+export async function buildRangeWorkbook(rows: Row[]) {
+  const days = [...rows].sort((a, b) => a.date.localeCompare(b.date));
+  const cur = days[0]?.currency ?? "GBP";
+  const money = `[$${cur === "GBP" ? "£" : cur + " "}]#,##0.00`;
+  const wb = new ExcelJS.Workbook();
+  const sum = (f: (r: Row) => number) => days.reduce((a, r) => a + f(r), 0);
+
+  const d = wb.addWorksheet("Daily Sales");
+  d.addRow(["Date", "Net sales", "Orders", "Units", "AOV", "Discounts"]);
+  days.forEach((r, i) => d.addRow([new Date(`${r.date}T00:00:00Z`), r.net_sales, r.orders, r.units, { formula: `IF(C${i + 2}=0,0,B${i + 2}/C${i + 2})`, result: r.orders ? r.net_sales / r.orders : 0 }, r.discounts]));
+  const last = days.length + 1, t = last + 1;
+  d.addRow(["Total", { formula: `SUM(B2:B${last})`, result: sum((r) => r.net_sales) }, { formula: `SUM(C2:C${last})`, result: sum((r) => r.orders) }, { formula: `SUM(D2:D${last})`, result: sum((r) => r.units) },
+    { formula: `IF(C${t}=0,0,B${t}/C${t})`, result: sum((r) => r.orders) ? sum((r) => r.net_sales) / sum((r) => r.orders) : 0 }, { formula: `SUM(F2:F${last})`, result: sum((r) => r.discounts) }]);
+  d.getColumn(1).numFmt = "ddd d mmm yyyy";
+  [2, 5, 6].forEach((c) => (d.getColumn(c).numFmt = money));
+  finish(d, [18, 16, 10, 10, 14, 14], 2);
+
+  const prods = aggProducts(days), pTotal = prods.reduce((a, p) => a + p.net, 0);
+  const p = wb.addWorksheet("Products");
+  p.addRow(["Product", "Units", "Net sales", "% of listed"]);
+  prods.forEach((x, i) => p.addRow([x.name, x.units, x.net, { formula: `IF(C$${prods.length + 2}=0,0,C${i + 2}/C$${prods.length + 2})`, result: pTotal ? x.net / pTotal : 0 }]));
+  p.addRow(["Total (top products per day)", { formula: `SUM(B2:B${prods.length + 1})`, result: prods.reduce((a, x) => a + x.units, 0) }, { formula: `SUM(C2:C${prods.length + 1})`, result: pTotal }, { formula: `SUM(D2:D${prods.length + 1})`, result: pTotal ? 1 : 0 }]);
+  p.getColumn(3).numFmt = money; p.getColumn(4).numFmt = "0.0%";
+  finish(p, [44, 10, 16, 12], 2);
+
+  const locs = aggLocations(days), lTotal = locs.reduce((a, l) => a + l.net, 0);
+  const l = wb.addWorksheet("Location Sales");
+  l.addRow(["Country", "City", "Orders", "Units", "Net sales", "% of total"]);
+  locs.forEach((x, i) => l.addRow([x.country, x.city, x.orders, x.units, x.net, { formula: `IF(E$${locs.length + 2}=0,0,E${i + 2}/E$${locs.length + 2})`, result: lTotal ? x.net / lTotal : 0 }]));
+  const le = locs.length + 1;
+  l.addRow(["Total", "", { formula: `SUM(C2:C${le})`, result: locs.reduce((a, x) => a + x.orders, 0) }, { formula: `SUM(D2:D${le})`, result: locs.reduce((a, x) => a + x.units, 0) }, { formula: `SUM(E2:E${le})`, result: lTotal }, { formula: `SUM(F2:F${le})`, result: lTotal ? 1 : 0 }]);
+  l.getColumn(5).numFmt = money; l.getColumn(6).numFmt = "0.0%";
+  finish(l, [20, 22, 10, 10, 16, 12], 3);
+
+  return Buffer.from(await wb.xlsx.writeBuffer());
+}
+
+export const rangeName = (from: string, to: string) => `loveboo-sales-${from}_to_${to}.xlsx`;

@@ -80,7 +80,7 @@ export default function UsersManager({ users, meId, modules, createUser, updateU
           <Stack gap="md">
             <TextInput name="name" label="Name" autoComplete="off" data-autofocus />
             <TextInput name="email" type="email" label="Email" required autoComplete="off" />
-            <PasswordInput name="password" label="Password" description="At least 8 characters. Share it with them securely." required minLength={8} autoComplete="new-password" value={password} onChange={(e) => setPassword(e.currentTarget.value)} />
+            <PasswordInput name="password" label="Password" description="At least 10 characters. Share it with them securely." required minLength={10} autoComplete="new-password" value={password} onChange={(e) => setPassword(e.currentTarget.value)} />
             <Group gap="xs">
               <Button variant="light" size="xs" leftSection={<IconWand size={14} />} onClick={() => setPassword(genPassword())}>Generate</Button>
               <CopyButton value={password}>{({ copied, copy }) => (
@@ -103,7 +103,7 @@ export default function UsersManager({ users, meId, modules, createUser, updateU
                 <Text size="sm" c="dimmed">{editing.email}</Text>
                 <TextInput name="name" label="Name" defaultValue={editing.name ?? ""} />
                 <NativeSelect name="role" label="Role" data={ROLES} defaultValue={editing.role} disabled={editing.id === meId} description={editing.id === meId ? "You can’t change your own role." : undefined} />
-                <PasswordInput name="password" label="New password" description="Leave blank to keep the current one." minLength={8} autoComplete="new-password" />
+                <PasswordInput name="password" label="New password" description="Leave blank to keep the current one (min 10 characters)." minLength={10} autoComplete="new-password" />
                 <Checkbox name="active" label="Account active" description="Disabled people can’t sign in." defaultChecked={editing.active} disabled={editing.id === meId} />
                 <ModuleChecks selected={editing.modules} />
                 <SubmitButton fullWidth>Save changes</SubmitButton>

@@ -25,6 +25,16 @@ export async function rowsUpTo(upTo?: string, limit = 60, light = false): Promis
   return (data as unknown as Row[]).map(norm);
 }
 
+const RANGE = `${LIGHT},top_products,locations`;
+
+/** Rows for an inclusive date range (everything except the per-order list), newest first. */
+export async function rowsBetween(from: string, to: string): Promise<Row[]> {
+  const { data, error } = await adminClient().from("daily_sales").select(RANGE as "*")
+    .gte("date", from).lte("date", to).order("date", { ascending: false }).limit(400);
+  if (error) throw error;
+  return (data as unknown as Row[]).map(norm);
+}
+
 /** Oldest and newest stored dates, for the date switcher limits. */
 export async function dateBounds(): Promise<{ min: string; max: string } | null> {
   const db = adminClient();
