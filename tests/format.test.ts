@@ -57,3 +57,13 @@ test("lineAmounts: discount, VAT and returns", async () => {
   r = lineAmounts({ quantity: 1, currentQuantity: 1, original: 5, allocated: 5, vat: 0 });
   close(r.net, 0); close(r.discount, 5);
 });
+
+test("norm fills fields missing from older cached rows, so totals are never NaN", async () => {
+  const { norm } = await import("../lib/data");
+  const old = { date: "2026-10-10", net_sales: "82.86", orders: 6, units: 9, currency: "GBP", emailed_at: null } as unknown as Row;
+  const r = norm(old);
+  assert.equal(r.total_sales, 0);
+  assert.equal(r.shipping, 0);
+  assert.equal(r.net_sales, 82.86);
+  assert.ok([r.gross_sales, r.returns, r.taxes, r.discounts].every((n) => Number.isFinite(n)));
+});
