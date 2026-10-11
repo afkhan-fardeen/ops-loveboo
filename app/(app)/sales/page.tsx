@@ -1,4 +1,5 @@
 import { Accordion, AccordionControl, AccordionItem, AccordionPanel, SimpleGrid, Stack, Text } from "@mantine/core";
+import { IconCalendarStats, IconCurrencyPound, IconReceipt2, IconShoppingBag } from "@tabler/icons-react";
 import { DownloadButton } from "@/components/Links";
 import DateSwitcher from "@/components/DateSwitcher";
 import LiveToday from "@/components/LiveToday";
@@ -43,10 +44,10 @@ export default async function Overview({ searchParams }: { searchParams: Promise
       {row.date === bounds.max && <LiveToday currency={cur} />}
 
       <SimpleGrid cols={{ base: 2, md: 4 }}>
-        <Kpi label="Net sales" value={money(row.net_sales, cur)} note={`${money(row.discounts, cur, 2)} discounts`} deltas={[{ label: "vs yesterday", value: s.vsPrev }, { label: "vs last week", value: s.vsWeek }]} />
-        <Kpi label="Orders" value={int(row.orders)} note={`${int(row.units)} units`} />
-        <Kpi label="Average order" value={money(s.aov, cur, 2)} />
-        <Kpi label="Month to date" value={money(s.mtdNet, cur)} note={`${int(s.mtdOrders)} orders`} />
+        <Kpi icon={<IconCurrencyPound size={16} />} label="Net sales" value={money(row.net_sales, cur)} note={`${money(row.discounts, cur, 2)} discounts`} deltas={[{ label: "vs yesterday", value: s.vsPrev }, { label: "vs last week", value: s.vsWeek }]} />
+        <Kpi icon={<IconShoppingBag size={16} />} label="Orders" value={int(row.orders)} note={`${int(row.units)} units`} />
+        <Kpi icon={<IconReceipt2 size={16} />} label="Average order" value={money(s.aov, cur, 2)} />
+        <Kpi icon={<IconCalendarStats size={16} />} label="Month to date" value={money(s.mtdNet, cur)} note={`${int(s.mtdOrders)} orders`} />
       </SimpleGrid>
 
       <Section title="Last 14 days" subtitle={`Net sales per day, up to ${dateLabel(row.date)}`}>

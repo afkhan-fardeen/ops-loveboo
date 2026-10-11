@@ -18,7 +18,7 @@ export function TextLink({ href, children }: { href: string; children: ReactNode
 
 const ICONS = { sales: IconChartBar, users: IconUsers };
 
-export function ModuleCard({ href, title, text, icon, badge }: { href: string; title: string; text: string; icon: keyof typeof ICONS; badge?: string }) {
+export function ModuleCard({ href, title, text, icon, badge, stat }: { href: string; title: string; text: string; icon: keyof typeof ICONS; badge?: string; stat?: { label: string; value: string; delta?: string; up?: boolean } }) {
   const Icon = ICONS[icon];
   return (
     <Paper component={Link} href={href} withBorder p="lg" radius="lg" shadow="xs" h="100%" className="lift" style={{ textDecoration: "none", color: "inherit", display: "block" }}>
@@ -29,6 +29,12 @@ export function ModuleCard({ href, title, text, icon, badge }: { href: string; t
         </Group>
         <Title order={3} size="h4">{title}</Title>
         <Text c="dimmed" size="sm">{text}</Text>
+        {stat && (
+          <Paper p="sm" radius="md" bg="rgb(0 109 104 / 0.06)">
+            <Text size="xs" c="dimmed">{stat.label}</Text>
+            <Group gap="xs" align="baseline"><Text fw={700} fz={22}>{stat.value}</Text>{stat.delta && <Text size="sm" fw={600} c={stat.up ? "brand" : "red"}>{stat.delta}</Text>}</Group>
+          </Paper>
+        )}
         <Group gap={4} mt="auto" c="brand" fw={500}><Text size="sm" fw={500} c="brand">Open</Text><IconArrowRight size={16} /></Group>
       </Stack>
     </Paper>

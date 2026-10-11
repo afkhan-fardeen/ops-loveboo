@@ -16,11 +16,14 @@ export function Delta({ value, label }: { value: number | null; label?: string }
   );
 }
 
-export function Kpi({ label, value, note, deltas }: { label: string; value: string; note?: string; deltas?: { label: string; value: number | null }[] }) {
+export function Kpi({ label, value, note, deltas, icon }: { label: string; value: string; note?: string; icon?: ReactNode; deltas?: { label: string; value: number | null }[] }) {
   return (
     <Paper withBorder p="md" radius="lg" shadow="xs" h="100%">
       <Stack gap={6}>
-        <Text size="xs" tt="uppercase" fw={700} c="dimmed" style={{ letterSpacing: 0.4 }}>{label}</Text>
+        <Group justify="space-between" wrap="nowrap" gap={4}>
+          <Text size="xs" tt="uppercase" fw={700} c="dimmed" style={{ letterSpacing: 0.4 }}>{label}</Text>
+          {icon && <ThemeIcon size={28} radius="md" variant="light" aria-hidden>{icon}</ThemeIcon>}
+        </Group>
         <Text fz={{ base: 24, sm: 28 }} fw={700} lh={1.2}>{value}</Text>
         {note && <Text size="sm" c="dimmed">{note}</Text>}
         {deltas?.map((d) => <Delta key={d.label} {...d} />)}

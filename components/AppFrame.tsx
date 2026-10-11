@@ -11,8 +11,8 @@ const Logo = () => <Image src="/logo.png" alt="Love Boo" width={112} height={35}
 const WIDE = 248, RAIL = 76;
 
 /** Sidebar layout: collapsible to an icon rail on desktop (remembered in a cookie), burger + drawer on phones. */
-export default function AppFrame({ isAdmin, showSales, who, signOut, signOutCompact, initialCollapsed, children }: {
-  isAdmin: boolean; showSales: boolean; who: string; signOut: ReactNode; signOutCompact: ReactNode; initialCollapsed: boolean; children: ReactNode;
+export default function AppFrame({ isAdmin, showSales, who, email, signOut, signOutCompact, initialCollapsed, children }: {
+  isAdmin: boolean; showSales: boolean; who: string; email: string; signOut: ReactNode; signOutCompact: ReactNode; initialCollapsed: boolean; children: ReactNode;
 }) {
   const path = usePathname();
   const [opened, { toggle, close }] = useDisclosure();
@@ -51,6 +51,7 @@ export default function AppFrame({ isAdmin, showSales, who, signOut, signOutComp
 
       <AppShell.Section grow component={ScrollArea}>
         <Stack gap={2}>
+          <Text size="xs" tt="uppercase" fw={700} c="dimmed" px="sm" pb={4} style={{ letterSpacing: 0.5 }}>Menu</Text>
           <NavLink {...link} href="/" label="Home" leftSection={<IconHome2 size={18} />} active={path === "/"} />
           {showSales && (
             <NavLink label="Sales" leftSection={<IconChartBar size={18} />} defaultOpened={path.startsWith("/sales")} active={path.startsWith("/sales")} variant="subtle" childrenOffset={28}>
@@ -59,6 +60,7 @@ export default function AppFrame({ isAdmin, showSales, who, signOut, signOutComp
               {isAdmin && <NavLink {...link} href="/sales/settings" label="Settings" active={path.startsWith("/sales/settings")} />}
             </NavLink>
           )}
+          {isAdmin && <Text size="xs" tt="uppercase" fw={700} c="dimmed" px="sm" pt="md" pb={4} style={{ letterSpacing: 0.5 }}>Admin</Text>}
           {isAdmin && <NavLink {...link} href="/admin/users" label="Users" leftSection={<IconUsers size={18} />} active={path.startsWith("/admin")} />}
         </Stack>
       </AppShell.Section>
@@ -67,8 +69,11 @@ export default function AppFrame({ isAdmin, showSales, who, signOut, signOutComp
         <Divider mb="sm" />
         <Stack gap="xs" px="xs">
           <Group gap="xs" wrap="nowrap">
-            <Avatar color="brand" radius="xl" size="sm">{initial}</Avatar>
-            <Text size="sm" c="dimmed" truncate>{who}</Text>
+            <Avatar color="brand" radius="xl" size="md">{initial}</Avatar>
+            <div style={{ minWidth: 0 }}>
+              <Text size="sm" fw={600} truncate>{who}</Text>
+              <Text size="xs" c="dimmed" truncate>{isAdmin ? "Administrator" : email}</Text>
+            </div>
           </Group>
           {signOut}
         </Stack>
