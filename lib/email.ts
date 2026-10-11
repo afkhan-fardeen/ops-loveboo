@@ -19,12 +19,10 @@ export function buildEmail(s: Summary, appUrl: string, name?: string) {
   const rows: [string, string][] = [
     ["Orders", int(row.orders)],
     ["Units sold", int(row.units)],
-    ["Net sales", money(row.net_sales, cur, 2)],
-    ["Discounts given", money(row.discounts, cur, 2)],
-    ["Shipping", money(row.shipping, cur, 2)],
-    ["VAT", money(row.taxes, cur, 2)],
     ["Total sales", money(row.total_sales, cur, 2)],
+    ["Discounts given", money(row.discounts, cur, 2)],
   ];
+  const includes = `Total sales is what customers paid: net sales ${money(row.net_sales, cur, 2)} + shipping ${money(row.shipping, cur, 2)} + VAT ${money(row.taxes, cur, 2)}.`;
 
   const subject = `Love Boo · Daily sales report — ${dateLabel(row.date)}`;
   const html = `<!doctype html><html><body style="margin:0;background:${C.linen};font-family:${font}">
@@ -36,16 +34,17 @@ export function buildEmail(s: Summary, appUrl: string, name?: string) {
   <div style="margin:4px 0 18px;font-size:14px;color:${C.mute}">Here’s the sales overview for ${long}.</div>` : ""}
   <div style="font-size:20px;font-weight:700;color:${C.ink};line-height:1.3">Daily sales report — ${long}</div>
   <div style="margin-top:10px;font-size:14px"><a href="${link}" style="color:${C.teal};font-weight:600;text-decoration:none">View full report →</a></div>
-  <div style="margin-top:6px;font-size:13px;color:${C.mute}">Draft orders excluded. Total sales = net sales + shipping + VAT.</div>
+  <div style="margin-top:6px;font-size:13px;color:${C.mute}">Draft orders excluded.</div>
   <div style="margin-top:24px;font-size:13px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:${C.teal}">Love Boo Store</div>
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-top:4px">
-    ${rows.map(([l, v], i) => line(l, v, i === rows.length - 1, i === rows.length - 1)).join("")}
+    ${rows.map(([l, v], i) => line(l, v, i === rows.length - 1, l === "Total sales")).join("")}
   </table>
+  <div style="margin-top:14px;font-size:12px;line-height:1.5;color:${C.mute}">${includes}</div>
 </td></tr>
 <tr><td style="padding:14px 4px;font-size:12px;color:${C.mute}">Love Boo Ops · ${stamp} (Bahrain)</td></tr>
 </table></td></tr></table></body></html>`;
 
-  const text = [...(name ? [`Hello ${name},`, `Here’s the sales overview for ${long}.`, ""] : []), `Daily sales report — ${long}`, `View full report: ${link}`, "Draft orders excluded. Total sales = net sales + shipping + VAT.", "", "Love Boo Store",
-    ...rows.map(([l, v]) => `${l}: ${v}`), "", `Love Boo Ops · ${stamp} (Bahrain)`].join("\n");
+  const text = [...(name ? [`Hello ${name},`, `Here’s the sales overview for ${long}.`, ""] : []), `Daily sales report — ${long}`, `View full report: ${link}`, "Draft orders excluded.", "", "Love Boo Store",
+    ...rows.map(([l, v]) => `${l}: ${v}`), "", includes, "", `Love Boo Ops · ${stamp} (Bahrain)`].join("\n");
   return { subject, html, text };
 }

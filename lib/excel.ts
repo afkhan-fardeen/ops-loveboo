@@ -3,6 +3,8 @@ import type { Row } from "./data";
 import { aggLocations, aggProducts, byCountry } from "./aggregate";
 import { time12 } from "./format";
 
+export const STORE_NAME = "Love Boo Store";
+
 const TEAL = "FF006D68", MEADOW = "FFE6F4F3";
 const fill = (argb: string): ExcelJS.Fill => ({ type: "pattern", pattern: "solid", fgColor: { argb } });
 
@@ -42,7 +44,7 @@ const moneyFmt = (currency: string) => `[$${currency === "GBP" ? "£" : currency
 const sum = <T,>(xs: T[], f: (x: T) => number) => xs.reduce((a, x) => a + f(x), 0);
 const round = (n: number) => Math.round(n * 100) / 100;
 
-/** One report day: orders with totals, a Shopify-style sales summary and a by-country summary; plus a Location Sales sheet. */
+/** One report day. Sheet 1 is the simple report; "Breakdown" has gross/net/shipping/VAT per order and the by-country summary; plus Location Sales. */
 export async function buildWorkbook(row: Row) {
   const tz = process.env.STORE_TIMEZONE ?? "Europe/London";
   const money = moneyFmt(row.currency);
@@ -50,7 +52,30 @@ export async function buildWorkbook(row: Row) {
   const countries = byCountry(row.locations);
 
   const orders = row.order_list;
-  const sales = wb.addWorksheet("Daily Sales");
+
+  // Sheet 1: the simple daily report. Amount = what the customer paid (matches the order in Shopify).
+  const at = new Date(`${row.date}T12:00:00Z`);
+  const long = `${at.toLocaleDateString("en-GB", { weekday: "short", timeZone: "UTC" })}, ${at.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" })}`;
+  const simple = wb.addWorksheet("Daily Report");
+  simple.addRow([`${STORE_NAME} — ${long}`]).font = { bold: true, size: 14 };
+  const kv: [string, number, string?][] = [["Orders", row.orders, "0"], ["Units sold", row.units, "0"], ["Total sales", row.total_sales, money], ["Discounts given", row.discounts, money]];
+  for (const [label, value, fmt] of kv) {
+    const r = simple.addRow([label, round(value)]);
+    r.getCell(2).numFmt = fmt!; r.getCell(2).alignment = { horizontal: "right" };
+    r.getCell(1).font = { bold: label === "Total sales" }; r.getCell(2).font = { bold: label === "Total sales" };
+  }
+  simple.addRow([]);
+  const head = simple.addRow(["Order", "Time", "Amount", "Discount"]);
+  head.font = { bold: true, color: { argb: "FFFFFFFF" } };
+  head.fill = fill(TEAL);
+  orders.forEach((o) => {
+    const r = simple.addRow([o.name, time12(o.time, tz), o.total ?? o.amount, o.discount]);
+    r.getCell(3).numFmt = money; r.getCell(4).numFmt = money;
+  });
+  for (let n = head.number; n <= simple.rowCount; n++) [2, 3, 4].forEach((c) => (simple.getRow(n).getCell(c).alignment = { horizontal: "right" }));
+  simple.columns = [{ width: 22 }, { width: 14 }, { width: 14 }, { width: 14 }];
+
+  const sales = wb.addWorksheet("Breakdown");
   sales.addRow(["Order", "Time", "Country", "Units", "Gross", "Discount", "Net sales", "Shipping", "VAT", "Total paid", "Discount code"]);
   orders.forEach((o) => sales.addRow([
     o.name, time12(o.time, tz), o.country ?? "", o.units ?? 0,
