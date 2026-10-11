@@ -26,3 +26,10 @@ create table profiles (
 -- means the public anon key (and signed-in users calling the API directly) can read nothing.
 alter table daily_sales enable row level security;
 alter table profiles    enable row level security;
+
+-- Admin-editable report settings (recipients, toggles). Server-side access only.
+create table settings (
+  key   text primary key,
+  value jsonb not null
+);
+alter table settings enable row level security;

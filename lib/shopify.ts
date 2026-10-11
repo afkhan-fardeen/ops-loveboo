@@ -49,7 +49,8 @@ export async function fetchDay(date: string) {
       const sub = Number(o.currentSubtotalPriceSet.shopMoney.amount);
       const orderDiscount = Number(o.totalDiscountsSet.shopMoney.amount) * (sub ? orderNet / sub : 1);
       discounts += orderDiscount;
-      orderList.push({ name: o.name, time: o.createdAt, amount: Math.round(orderNet * 100) / 100, discount: Math.round(orderDiscount * 100) / 100 });
+      const entry: Order = { name: o.name, time: o.createdAt, units: 0, amount: Math.round(orderNet * 100) / 100, discount: Math.round(orderDiscount * 100) / 100 };
+      orderList.push(entry);
       const country = o.shippingAddress?.country ?? "Unknown";
       const city = (o.shippingAddress?.city ?? "").trim().toLowerCase().replace(/(^|[\s-])\p{L}/gu, (m: string) => m.toUpperCase()) || "Unknown";
       const place = places.get(`${country}|${city}`) ?? { country, city, orders: 0, units: 0, net: 0 };
@@ -60,6 +61,7 @@ export async function fetchDay(date: string) {
       for (const li of o.lineItems.nodes) {
         units += li.currentQuantity;
         place.units += li.currentQuantity;
+        entry.units! += li.currentQuantity;
         const p = products.get(li.name) ?? { name: li.name, units: 0, net: 0 };
         p.units += li.currentQuantity;
         const tax = o.taxesIncluded ? li.taxLines.reduce((t: number, x: any) => t + Number(x.priceSet.shopMoney.amount), 0) : 0;

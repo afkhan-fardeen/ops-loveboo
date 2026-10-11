@@ -2,7 +2,7 @@ import { addDays, pctChange } from "./format";
 import { adminClient } from "./supabase";
 
 export type Product = { name: string; units: number; net: number };
-export type Order = { name: string; time: string; amount: number; discount: number };
+export type Order = { name: string; time: string; units?: number; amount: number; discount: number };
 export type Location = { country: string; city: string; orders: number; units: number; net: number };
 export type Row = {
   date: string; net_sales: number; discounts: number; orders: number; units: number;
