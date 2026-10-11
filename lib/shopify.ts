@@ -10,6 +10,7 @@ const QUERY = `query($q: String!, $after: String) {
       shippingAddress { country city }
       currentSubtotalPriceSet { shopMoney { amount currencyCode } }
       currentTotalTaxSet { shopMoney { amount } }
+      totalDiscountsSet { shopMoney { amount } }
       lineItems(first: 100) { nodes { name currentQuantity discountedTotalSet { shopMoney { amount } } taxLines { priceSet { shopMoney { amount } } } } }
     }
   }
@@ -21,7 +22,7 @@ export async function fetchDay(date: string) {
   const q = `created_at:>='${from}' created_at:<'${to}' -status:cancelled -test:true`;
   const url = `https://${process.env.SHOPIFY_STORE_DOMAIN}/admin/api/${process.env.SHOPIFY_API_VERSION ?? "2025-07"}/graphql.json`;
 
-  let net = 0, orders = 0, units = 0, currency = "GBP", after: string | null = null;
+  let net = 0, discounts = 0, orders = 0, units = 0, currency = "GBP", after: string | null = null;
   const products = new Map<string, Product>();
   const places = new Map<string, Location>();
 
@@ -41,6 +42,9 @@ export async function fetchDay(date: string) {
       // Prices may include VAT; Shopify's net sales excludes tax.
       const orderNet = Number(o.currentSubtotalPriceSet.shopMoney.amount) - (o.taxesIncluded ? Number(o.currentTotalTaxSet.shopMoney.amount) : 0);
       net += orderNet;
+      // Discounts are tax-inclusive when prices are; scale to the ex-VAT share of the order.
+      const sub = Number(o.currentSubtotalPriceSet.shopMoney.amount);
+      discounts += Number(o.totalDiscountsSet.shopMoney.amount) * (sub ? orderNet / sub : 1);
       const country = o.shippingAddress?.country ?? "Unknown";
       const city = (o.shippingAddress?.city ?? "").trim().toLowerCase().replace(/(^|[\s-])\p{L}/gu, (m: string) => m.toUpperCase()) || "Unknown";
       const place = places.get(`${country}|${city}`) ?? { country, city, orders: 0, units: 0, net: 0 };
@@ -64,5 +68,5 @@ export async function fetchDay(date: string) {
   const top = [...products.values()].sort((a, b) => b.net - a.net).slice(0, 5)
     .map((p) => ({ ...p, net: Math.round(p.net * 100) / 100 }));
   const locations = [...places.values()].sort((a, b) => b.net - a.net).map((l) => ({ ...l, net: Math.round(l.net * 100) / 100 }));
-  return { net_sales: Math.round(net * 100) / 100, orders, units, top_products: top, locations, currency };
+  return { net_sales: Math.round(net * 100) / 100, discounts: Math.round(discounts * 100) / 100, orders, units, top_products: top, locations, currency };
 }

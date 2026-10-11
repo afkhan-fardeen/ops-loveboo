@@ -23,14 +23,14 @@ export async function buildWorkbook(rows: Row[], date: string) {
   const wb = new ExcelJS.Workbook();
 
   const daily = wb.addWorksheet("Daily Sales");
-  daily.addRow(["Date", "Net sales", "Orders", "Units", "AOV"]);
-  month.forEach((r, i) => daily.addRow([new Date(`${r.date}T00:00:00Z`), r.net_sales, r.orders, r.units, { formula: `IF(C${i + 2}=0,0,B${i + 2}/C${i + 2})`, result: r.orders ? r.net_sales / r.orders : 0 }]));
+  daily.addRow(["Date", "Net sales", "Orders", "Units", "AOV", "Discounts"]);
+  month.forEach((r, i) => daily.addRow([new Date(`${r.date}T00:00:00Z`), r.net_sales, r.orders, r.units, { formula: `IF(C${i + 2}=0,0,B${i + 2}/C${i + 2})`, result: r.orders ? r.net_sales / r.orders : 0 }, r.discounts]));
   const sum = (f: (r: Row) => number) => month.reduce((a, r) => a + f(r), 0);
   const last = month.length + 1, t = last + 1;
-  daily.addRow(["Total", { formula: `SUM(B2:B${last})`, result: sum((r) => r.net_sales) }, { formula: `SUM(C2:C${last})`, result: sum((r) => r.orders) }, { formula: `SUM(D2:D${last})`, result: sum((r) => r.units) }, { formula: `IF(C${t}=0,0,B${t}/C${t})`, result: sum((r) => r.orders) ? sum((r) => r.net_sales) / sum((r) => r.orders) : 0 }]);
+  daily.addRow(["Total", { formula: `SUM(B2:B${last})`, result: sum((r) => r.net_sales) }, { formula: `SUM(C2:C${last})`, result: sum((r) => r.orders) }, { formula: `SUM(D2:D${last})`, result: sum((r) => r.units) }, { formula: `IF(C${t}=0,0,B${t}/C${t})`, result: sum((r) => r.orders) ? sum((r) => r.net_sales) / sum((r) => r.orders) : 0 }, { formula: `SUM(F2:F${last})`, result: sum((r) => r.discounts) }]);
   daily.getColumn(1).numFmt = "ddd d mmm yyyy";
-  [2, 5].forEach((c) => (daily.getColumn(c).numFmt = money));
-  style(daily, [18, 16, 10, 10, 14], 2);
+  [2, 5, 6].forEach((c) => (daily.getColumn(c).numFmt = money));
+  style(daily, [18, 16, 10, 10, 14, 14], 2);
 
   const agg = new Map<string, Location & { yday: number }>();
   for (const r of month) for (const l of r.locations) {

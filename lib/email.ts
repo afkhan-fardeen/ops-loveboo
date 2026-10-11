@@ -1,60 +1,44 @@
-import { dateLabel, int, money, pct } from "./format";
+import { dateLabel, int, money } from "./format";
 import type { Summary } from "./data";
 
-const C = { teal: "#006D68", meadow: "#E3EABA", linen: "#F9F6EC", ink: "#222222", berry: "#FF3B40", mute: "#5c5c5c" };
+const C = { teal: "#006D68", linen: "#F9F6EC", ink: "#222222", mute: "#5c5c5c", line: "#E6E3D8" };
+const font = "-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif";
 
-const chip = (v: number | null, label: string) => {
-  if (v === null) return `<span style="color:${C.mute};font-size:12px">${label}: —</span>`;
-  const up = v >= 0;
-  return `<span style="display:inline-block;margin-top:4px;padding:2px 8px;border-radius:99px;font-size:12px;background:${up ? C.meadow : "#FFE3E3"};color:${up ? C.teal : C.ink}">${up ? "▲" : `<span style="color:${C.berry}">▼</span>`} ${pct(v)} ${label}</span>`;
-};
-
-const kpi = (label: string, value: string, extra = "") =>
-  `<td width="50%" style="padding:6px"><div style="background:${C.linen};border-radius:12px;padding:14px">
-    <div style="font-size:12px;color:${C.mute}">${label}</div>
-    <div style="font-size:24px;font-weight:700;color:${C.ink};margin-top:2px">${value}</div>${extra}</div></td>`;
+const line = (label: string, value: string, last = false) =>
+  `<tr><td style="padding:12px 0;${last ? "" : `border-bottom:1px solid ${C.line};`}font-size:15px;color:${C.mute}">${label}</td>
+   <td align="right" style="padding:12px 0;${last ? "" : `border-bottom:1px solid ${C.line};`}font-size:15px;font-weight:600;color:${C.ink}">${value}</td></tr>`;
 
 export function buildEmail(s: Summary, appUrl: string) {
-  const { row } = s, cur = row.currency, label = dateLabel(row.date);
-  const subject = `Love Boo · Sales · ${label} — ${money(row.net_sales, cur)} net / ${row.orders} orders`;
+  const { row } = s, cur = row.currency;
+  const long = new Date(`${row.date}T12:00:00Z`).toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short", year: "numeric", timeZone: "UTC" }).replace(/^(\w+)/, "$1,");
+  const link = `${appUrl}/sales/reports/${row.date}`;
+  const stamp = new Date().toLocaleString("en-GB", { timeZone: "Asia/Bahrain", hour12: false });
 
-  const products = row.top_products.map((p, i) =>
-    `<tr><td style="padding:8px 0;border-top:1px solid #eee;color:${C.ink}">${i + 1}. ${p.name.replace(/</g, "&lt;")}</td>
-     <td align="right" style="padding:8px 0;border-top:1px solid #eee;color:${C.mute}">${int(p.units)}</td>
-     <td align="right" style="padding:8px 0;border-top:1px solid #eee;color:${C.ink};font-weight:600">${money(p.net, cur)}</td></tr>`).join("");
+  const rows: [string, string][] = [
+    ["Orders", int(row.orders)],
+    ["Units sold", int(row.units)],
+    ["Total sales", money(row.net_sales, cur, 2)],
+    ["Discounts given", money(row.discounts, cur, 2)],
+  ];
 
-  const places = row.locations.slice(0, 5).map((l) =>
-    `<tr><td style="padding:8px 0;border-top:1px solid #eee;color:${C.ink}">${(l.city === "Unknown" ? l.country : `${l.city}, ${l.country}`).replace(/</g, "&lt;")}</td>
-     <td align="right" style="padding:8px 0;border-top:1px solid #eee;color:${C.mute}">${int(l.orders)}</td>
-     <td align="right" style="padding:8px 0;border-top:1px solid #eee;color:${C.ink};font-weight:600">${money(l.net, cur)}</td></tr>`).join("");
-
-  const html = `<!doctype html><html><body style="margin:0;background:${C.linen};font-family:Helvetica,Arial,sans-serif">
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr><td align="center" style="padding:24px 12px">
-<table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%">
-<tr><td style="padding:0 6px 16px;font-size:22px;font-weight:700;color:${C.teal}">Love Boo</td></tr>
-<tr><td style="background:#fff;border-radius:16px;padding:20px">
-  <div style="font-size:14px;color:${C.mute}">Sales report</div>
-  <div style="font-size:20px;font-weight:700;color:${C.ink};margin-bottom:12px">${label}</div>
-  <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
-    <tr>${kpi("Net sales", money(row.net_sales, cur), `<div>${chip(s.vsPrev, "vs prev day")}</div><div>${chip(s.vsWeek, "vs last week")}</div>`)}${kpi("Orders", int(row.orders))}</tr>
-    <tr>${kpi("Average order value", money(s.aov, cur, 2))}${kpi("Month to date", money(s.mtdNet, cur), `<div style="font-size:12px;color:${C.mute};margin-top:4px">${int(s.mtdOrders)} orders</div>`)}</tr>
+  const subject = `Love Boo · Daily sales report — ${dateLabel(row.date)}`;
+  const html = `<!doctype html><html><body style="margin:0;background:${C.linen};font-family:${font}">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr><td align="center" style="padding:28px 12px">
+<table role="presentation" width="560" cellpadding="0" cellspacing="0" style="max-width:560px;width:100%">
+<tr><td style="padding:0 4px 14px;font-size:20px;font-weight:700;color:${C.teal}">Love Boo</td></tr>
+<tr><td style="background:#ffffff;border-radius:16px;padding:28px 28px 24px">
+  <div style="font-size:20px;font-weight:700;color:${C.ink};line-height:1.3">Daily sales report — ${long}</div>
+  <div style="margin-top:10px;font-size:14px"><a href="${link}" style="color:${C.teal};font-weight:600;text-decoration:none">View full report →</a></div>
+  <div style="margin-top:6px;font-size:13px;color:${C.mute}">Draft orders excluded.</div>
+  <div style="margin-top:24px;font-size:13px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:${C.teal}">Love Boo Store</div>
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-top:4px">
+    ${rows.map(([l, v], i) => line(l, v, i === rows.length - 1)).join("")}
   </table>
-  <div style="font-size:14px;font-weight:700;color:${C.ink};margin:20px 6px 4px">Top products</div>
-  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="font-size:14px;margin:0 6px;width:calc(100% - 12px)">
-    <tr><td style="color:${C.mute};font-size:12px">Product</td><td align="right" style="color:${C.mute};font-size:12px">Units</td><td align="right" style="color:${C.mute};font-size:12px">Net</td></tr>${products}
-  </table>
-  <div style="font-size:14px;font-weight:700;color:${C.ink};margin:20px 6px 4px">Top locations</div>
-  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="font-size:14px;margin:0 6px;width:calc(100% - 12px)">
-    <tr><td style="color:${C.mute};font-size:12px">Location</td><td align="right" style="color:${C.mute};font-size:12px">Orders</td><td align="right" style="color:${C.mute};font-size:12px">Net</td></tr>${places}
-  </table>
-  <p style="font-size:13px;color:${C.mute};margin:20px 6px 0">The Excel file attached has the month's daily sales with totals, and sales by location.</p>
-  <div style="text-align:center;margin-top:24px"><a href="${appUrl}/sales/reports/${row.date}" style="display:inline-block;background:${C.teal};color:#fff;text-decoration:none;padding:12px 24px;border-radius:10px;font-weight:600">Open portal</a></div>
-</td></tr></table></td></tr></table></body></html>`;
+</td></tr>
+<tr><td style="padding:14px 4px;font-size:12px;color:${C.mute}">Love Boo Ops · ${stamp} (Bahrain)</td></tr>
+</table></td></tr></table></body></html>`;
 
-  const text = [subject, "",
-    `Net sales: ${money(row.net_sales, cur)}`, `Orders: ${row.orders}`, `AOV: ${money(s.aov, cur, 2)}`,
-    `Month to date: ${money(s.mtdNet, cur)} / ${s.mtdOrders} orders`, "", "Top products:",
-    ...row.top_products.map((p, i) => `${i + 1}. ${p.name} — ${p.units} units, ${money(p.net, cur)}`), "", "Top locations:", ...row.locations.slice(0, 5).map((l) => `${l.city}, ${l.country} — ${l.orders} orders, ${money(l.net, cur)}`), "", "Excel attached: daily sales and location sales.", "", `${appUrl}/sales/reports/${row.date}`].join("\n");
-
+  const text = [`Daily sales report — ${long}`, `View full report: ${link}`, "Draft orders excluded.", "", "Love Boo Store",
+    ...rows.map(([l, v]) => `${l}: ${v}`), "", `Love Boo Ops · ${stamp} (Bahrain)`].join("\n");
   return { subject, html, text };
 }
