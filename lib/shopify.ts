@@ -5,13 +5,15 @@ const QUERY = `query($q: String!, $after: String) {
   orders(first: 100, after: $after, query: $q) {
     pageInfo { hasNextPage endCursor }
     nodes {
+      taxesIncluded
       currentSubtotalPriceSet { shopMoney { amount currencyCode } }
-      lineItems(first: 100) { nodes { name currentQuantity discountedTotalSet { shopMoney { amount } } } }
+      currentTotalTaxSet { shopMoney { amount } }
+      lineItems(first: 100) { nodes { name currentQuantity discountedTotalSet { shopMoney { amount } } taxLines { priceSet { shopMoney { amount } } } } }
     }
   }
 }`;
 
-/** Net sales ≈ order subtotal after discounts and returns (excludes shipping/tax). Paginated orders fallback; swap for ShopifyQL if enabled. */
+/** Net sales ≈ order subtotal after discounts and returns, minus tax when prices include it (excludes shipping). Paginated orders fallback; swap for ShopifyQL if enabled. */
 export async function fetchDay(date: string) {
   const { from, to } = dayRange(date, process.env.STORE_TIMEZONE ?? "Europe/London");
   const q = `created_at:>='${from}' created_at:<'${to}' -status:cancelled -test:true`;
@@ -32,13 +34,15 @@ export async function fetchDay(date: string) {
     const page: any = json.data.orders;
     for (const o of page.nodes as any[]) {
       orders++;
-      net += Number(o.currentSubtotalPriceSet.shopMoney.amount);
+      // Prices may include VAT; Shopify's net sales excludes tax.
+      net += Number(o.currentSubtotalPriceSet.shopMoney.amount) - (o.taxesIncluded ? Number(o.currentTotalTaxSet.shopMoney.amount) : 0);
       currency = o.currentSubtotalPriceSet.shopMoney.currencyCode;
       for (const li of o.lineItems.nodes) {
         units += li.currentQuantity;
         const p = products.get(li.name) ?? { name: li.name, units: 0, net: 0 };
         p.units += li.currentQuantity;
-        p.net += Number(li.discountedTotalSet.shopMoney.amount);
+        const tax = o.taxesIncluded ? li.taxLines.reduce((t: number, x: any) => t + Number(x.priceSet.shopMoney.amount), 0) : 0;
+        p.net += Number(li.discountedTotalSet.shopMoney.amount) - tax;
         products.set(li.name, p);
       }
     }
