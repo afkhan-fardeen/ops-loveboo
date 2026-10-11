@@ -1,7 +1,10 @@
 import { redirect } from "next/navigation";
-import { Butterfly, Button, Card } from "@/components/ui";
+import { Alert, Box, Button, Center, Paper, PasswordInput, Stack, Text, TextInput, Title } from "@mantine/core";
+import { IconAlertCircle, IconChartBar } from "@tabler/icons-react";
 import { getUser } from "@/lib/auth";
 import { serverClient } from "@/lib/supabase";
+
+const safe = (n?: string) => (n && n.startsWith("/") && !n.startsWith("//") ? n : "/");
 
 async function signIn(form: FormData) {
   "use server";
@@ -9,8 +12,7 @@ async function signIn(form: FormData) {
     email: String(form.get("email") ?? "").trim(),
     password: String(form.get("password") ?? ""),
   });
-  const next = String(form.get("next") ?? "");
-  redirect(error ? "/login?error=1" : next.startsWith("/") && !next.startsWith("//") ? next : "/");
+  redirect(error ? "/login?error=1" : safe(String(form.get("next") ?? "")));
 }
 
 const MSG: Record<string, string> = {
@@ -20,23 +22,27 @@ const MSG: Record<string, string> = {
 
 export default async function Login({ searchParams }: { searchParams: Promise<{ error?: string; next?: string }> }) {
   const { error, next } = await searchParams;
-  if (await getUser()) redirect(next?.startsWith("/") && !next.startsWith("//") ? next : "/");
-  const input = "min-h-11 rounded-xl border border-ink/20 bg-white px-3 text-base placeholder:text-ink/50";
+  if (await getUser()) redirect(safe(next));
   return (
-    <main className="grid min-h-dvh place-items-center px-4">
-      <Card className="flex w-full max-w-sm flex-col items-center gap-4 p-8 text-center">
-        <Butterfly className="h-14 w-14" />
-        <h1 className="font-display text-2xl font-semibold text-teal">Love Boo Ops</h1>
-        <form action={signIn} className="flex w-full flex-col gap-3 text-left">
-          <input type="hidden" name="next" value={next ?? ""} />
-          <label htmlFor="email" className="text-sm font-medium">Email</label>
-          <input id="email" name="email" type="email" required autoComplete="username" inputMode="email" className={input} />
-          <label htmlFor="password" className="text-sm font-medium">Password</label>
-          <input id="password" name="password" type="password" required autoComplete="current-password" className={input} />
-          {error && MSG[error] && <p role="alert" className="rounded-lg bg-berry/10 px-3 py-2 text-sm">{MSG[error]}</p>}
-          <Button type="submit">Sign in</Button>
-        </form>
-      </Card>
-    </main>
+    <Center mih="100dvh" p="md" bg="var(--mantine-color-gray-0)">
+      <Paper withBorder shadow="sm" radius="md" p="xl" w="100%" maw={400}>
+        <Stack gap="lg">
+          <Stack gap={4} align="center">
+            <Box c="blue"><IconChartBar size={36} aria-hidden /></Box>
+            <Title order={2}>Love Boo Ops</Title>
+            <Text c="dimmed" size="sm">Sign in to continue</Text>
+          </Stack>
+          <form action={signIn}>
+            <input type="hidden" name="next" value={next ?? ""} />
+            <Stack gap="sm">
+              <TextInput name="email" type="email" label="Email" required autoComplete="username" />
+              <PasswordInput name="password" label="Password" required autoComplete="current-password" />
+              {error && MSG[error] && <Alert color="red" icon={<IconAlertCircle size={16} />} role="alert">{MSG[error]}</Alert>}
+              <Button type="submit" fullWidth mt="xs">Sign in</Button>
+            </Stack>
+          </form>
+        </Stack>
+      </Paper>
+    </Center>
   );
 }

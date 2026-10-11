@@ -1,54 +1,60 @@
 "use client";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import type { ReactNode } from "react";
-import { cx } from "./ui";
+import { Anchor, Box, Button, Container, Group, Tabs, TabsList, TabsTab, Text } from "@mantine/core";
+import { IconChartBar } from "@tabler/icons-react";
 
 type Item = { href: string; label: string };
+
 const useActive = () => {
   const path = usePathname();
   return (href: string, exact = false) => (exact || href === "/" ? path === href : path.startsWith(href));
 };
 
-/** Global header: logo, section links, user slot. */
+/** Global header: brand, section links, user slot. Links move to a second row on phones. */
 export default function Nav({ items, children }: { items: Item[]; children?: ReactNode }) {
   const active = useActive();
+  const links = (
+    <Group gap={4} wrap="nowrap">
+      {items.map((i) => (
+        <Button key={i.href} component={Link} href={i.href} variant={active(i.href) ? "light" : "subtle"} color={active(i.href) ? "blue" : "gray"} size="sm" aria-current={active(i.href) ? "page" : undefined}>
+          {i.label}
+        </Button>
+      ))}
+    </Group>
+  );
   return (
-    <header className="glass sticky top-0 z-20 rounded-none border-x-0 border-t-0">
-      <div className="mx-auto flex max-w-[1200px] flex-wrap items-center gap-x-6 px-4 md:px-8">
-        <Link href="/" className="flex min-h-14 items-center gap-2 font-display text-xl font-semibold text-teal">
-          <span aria-hidden className="grid h-8 w-8 place-items-center rounded-lg bg-teal text-base text-white">B</span>
-          Love Boo
-        </Link>
-        <div className="order-2 ml-auto md:order-3">{children}</div>
-        <nav aria-label="Main" className="order-3 flex w-full gap-1 pb-2 md:order-2 md:w-auto md:flex-1 md:pb-0">
-          {items.map((i) => (
-            <Link key={i.href} href={i.href} aria-current={active(i.href) ? "page" : undefined}
-              className={cx("flex min-h-11 flex-1 items-center justify-center rounded-xl px-4 text-base md:flex-none",
-                active(i.href) ? "bg-teal font-medium text-white" : "text-ink hover:bg-meadow/60")}>
-              {i.label}
-            </Link>
-          ))}
-        </nav>
-      </div>
-    </header>
+    <Box component="header" bg="var(--mantine-color-body)" style={{ position: "sticky", top: 0, zIndex: 100, borderBottom: "1px solid var(--mantine-color-default-border)" }}>
+      <Container size={1200} px="md">
+        <Group h={60} justify="space-between" wrap="nowrap">
+          <Group gap="xl" wrap="nowrap">
+            <Anchor component={Link} href="/" underline="never" c="inherit">
+              <Group gap={8} wrap="nowrap">
+                <IconChartBar size={24} color="var(--mantine-color-blue-6)" aria-hidden />
+                <Text fw={700} size="lg">Love Boo Ops</Text>
+              </Group>
+            </Anchor>
+            <Box visibleFrom="sm">{links}</Box>
+          </Group>
+          {children}
+        </Group>
+        <Box hiddenFrom="sm" pb="xs" style={{ overflowX: "auto" }}>{links}</Box>
+      </Container>
+    </Box>
   );
 }
 
-/** Module-level tabs (underline style). */
-export function Tabs({ items }: { items: Item[] }) {
+/** Module-level tabs. */
+export function ModuleTabs({ items }: { items: Item[] }) {
+  const router = useRouter();
   const active = useActive();
+  const current = items.find((i) => active(i.href, i.href === items[0].href))?.href ?? items[0].href;
   return (
-    <nav aria-label="Module" className="-mt-2 mb-6 flex gap-1 overflow-x-auto border-b border-ink/10">
-      {items.map((i) => {
-        const on = active(i.href, i.href === items[0].href);
-        return (
-          <Link key={i.href} href={i.href} aria-current={on ? "page" : undefined}
-            className={cx("flex min-h-11 items-center border-b-2 px-4 text-base whitespace-nowrap", on ? "border-teal font-medium text-teal" : "border-transparent text-ink/70 hover:text-ink")}>
-            {i.label}
-          </Link>
-        );
-      })}
-    </nav>
+    <Tabs value={current} onChange={(v) => v && router.push(v)} mb="lg">
+      <TabsList style={{ flexWrap: "nowrap", overflowX: "auto" }}>
+        {items.map((i) => <TabsTab key={i.href} value={i.href}>{i.label}</TabsTab>)}
+      </TabsList>
+    </Tabs>
   );
 }

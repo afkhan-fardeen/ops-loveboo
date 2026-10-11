@@ -1,11 +1,11 @@
-import { Skeleton } from "@/components/ui";
+import { SimpleGrid, Skeleton, Stack } from "@mantine/core";
 
 export default function Loading() {
   return (
-    <div role="status" aria-label="Loading">
-      <Skeleton className="mb-6 h-9 w-56" />
-      <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">{[0, 1, 2, 3].map((i) => <Skeleton key={i} className="h-28" />)}</div>
-      <Skeleton className="mt-6 h-48" />
-    </div>
+    <Stack gap="lg" role="status" aria-label="Loading">
+      <Skeleton h={36} w={240} />
+      <SimpleGrid cols={{ base: 2, md: 4 }}>{[0, 1, 2, 3].map((i) => <Skeleton key={i} h={110} />)}</SimpleGrid>
+      <Skeleton h={260} />
+    </Stack>
   );
 }

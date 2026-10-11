@@ -1,5 +1,5 @@
+import { Button, Container, Group, Text } from "@mantine/core";
 import Nav from "@/components/Nav";
-import { Button } from "@/components/ui";
 import { requireUser } from "@/lib/auth";
 import { signOut } from "./actions";
 
@@ -11,15 +11,14 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   return (
     <>
       <Nav items={items}>
-        <form action={signOut} className="flex items-center gap-3">
-          <span className="hidden max-w-48 truncate text-sm text-ink/70 md:inline">{user.name || user.email}</span>
-          <Button variant="ghost" type="submit">Sign out</Button>
+        <form action={signOut}>
+          <Group gap="sm" wrap="nowrap">
+            <Text size="sm" c="dimmed" visibleFrom="sm" maw={220} truncate>{user.name || user.email}</Text>
+            <Button type="submit" variant="default" size="xs">Sign out</Button>
+          </Group>
         </form>
       </Nav>
-      <main id="main" className="mx-auto max-w-[1200px] px-4 pb-16 pt-6 md:px-8 md:pt-10">
-        {children}
-      </main>
-      <footer className="mx-auto max-w-[1200px] px-4 pb-8 text-sm text-ink/70 md:px-8">Love Boo Ops</footer>
+      <Container size={1200} px="md" py="xl" component="main" id="main">{children}</Container>
     </>
   );
 }

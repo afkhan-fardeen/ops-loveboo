@@ -1,12 +1,14 @@
 "use client";
-import { Button, Card } from "@/components/ui";
+import { Alert, Button, Stack } from "@mantine/core";
+import { IconAlertCircle } from "@tabler/icons-react";
 
 export default function Error({ reset }: { error: Error; reset: () => void }) {
   return (
-    <Card className="flex flex-col items-start gap-3">
-      <h1 className="font-display text-xl font-semibold">We couldn’t load this page</h1>
-      <p className="text-ink/70">Something went wrong reading the report data. Your data is safe — try again.</p>
+    <Stack align="flex-start">
+      <Alert color="red" icon={<IconAlertCircle size={18} />} title="We couldn’t load this page">
+        Something went wrong reading the data. Try again.
+      </Alert>
       <Button onClick={reset}>Try again</Button>
-    </Card>
+    </Stack>
   );
 }

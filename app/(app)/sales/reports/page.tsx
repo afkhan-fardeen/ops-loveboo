@@ -1,5 +1,7 @@
-import Link from "next/link";
-import { Badge, Card, DataTable, EmptyState } from "@/components/ui";
+import { Badge, Paper, Stack } from "@mantine/core";
+import { IconCheck } from "@tabler/icons-react";
+import { TextLink } from "@/components/Links";
+import { DataTable, EmptyState, PageHeader } from "@/components/ui";
 import { rowsUpTo } from "@/lib/data";
 import { dateLabel, int, money } from "@/lib/format";
 
@@ -8,26 +10,21 @@ export const dynamic = "force-dynamic";
 export default async function Reports() {
   const rows = await rowsUpTo(undefined, 60);
   return (
-    <div className="flex flex-col gap-6">
-      <h1 className="font-display text-3xl font-semibold">Reports</h1>
+    <Stack gap="lg">
+      <PageHeader title="Reports" eyebrow="Daily sales, newest first" />
       {rows.length === 0 ? (
         <EmptyState title="No reports yet">Past days will be listed here once the daily job has run.</EmptyState>
       ) : (
-        <Card className="p-0">
-          <DataTable
-            label="Daily sales reports, newest first"
-            rows={rows}
-            rowKey={(r) => r.date}
-            cols={[
-              { label: "Date", render: (r) => <Link href={`/sales/reports/${r.date}`} className="font-medium text-teal underline-offset-4 hover:underline after:absolute after:inset-0">{dateLabel(r.date, true)}</Link> },
-              { label: "Net sales", align: "right", render: (r) => money(r.net_sales, r.currency) },
-              { label: "Orders", align: "right", render: (r) => int(r.orders) },
-              { label: "AOV", align: "right", render: (r) => money(r.orders ? r.net_sales / r.orders : 0, r.currency, 2) },
-              { label: "Emailed", align: "right", render: (r) => (r.emailed_at ? <Badge>✓ Sent</Badge> : <Badge tone="muted">Not sent</Badge>) },
-            ]}
-          />
-        </Card>
+        <Paper withBorder radius="md" shadow="xs">
+          <DataTable minWidth={620} rows={rows} rowKey={(r) => r.date} cols={[
+            { label: "Date", render: (r) => <TextLink href={`/sales/reports/${r.date}`}>{dateLabel(r.date, true)}</TextLink> },
+            { label: "Net sales", align: "right", render: (r) => money(r.net_sales, r.currency) },
+            { label: "Orders", align: "right", render: (r) => int(r.orders) },
+            { label: "AOV", align: "right", render: (r) => money(r.orders ? r.net_sales / r.orders : 0, r.currency, 2) },
+            { label: "Emailed", align: "right", render: (r) => (r.emailed_at ? <Badge color="teal" variant="light" leftSection={<IconCheck size={12} />}>Sent</Badge> : <Badge color="gray" variant="light">Not sent</Badge>) },
+          ]} />
+        </Paper>
       )}
-    </div>
+    </Stack>
   );
 }

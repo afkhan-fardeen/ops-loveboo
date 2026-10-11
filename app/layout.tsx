@@ -1,17 +1,27 @@
-import type { Metadata, Viewport } from "next";
-import { Fraunces, Inter } from "next/font/google";
-import "./globals.css";
+import type { Metadata } from "next";
+import { Inter } from "next/font/google";
+import { ColorSchemeScript, MantineProvider, createTheme, mantineHtmlProps } from "@mantine/core";
+import "@mantine/core/styles.css";
+import "@mantine/charts/styles.css";
 
-const inter = Inter({ subsets: ["latin"], variable: "--font-inter", display: "swap" });
-const fraunces = Fraunces({ subsets: ["latin"], variable: "--font-fraunces", display: "swap" });
+const inter = Inter({ subsets: ["latin"], display: "swap" });
+
+const theme = createTheme({
+  primaryColor: "blue",
+  fontFamily: inter.style.fontFamily,
+  headings: { fontFamily: inter.style.fontFamily, fontWeight: "650" },
+  defaultRadius: "md",
+});
 
 export const metadata: Metadata = { title: "Love Boo Ops", robots: { index: false } };
-export const viewport: Viewport = { themeColor: "#F9F6EC" };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en-GB" className={`${inter.variable} ${fraunces.variable}`}>
-      <body>{children}</body>
+    <html lang="en-GB" {...mantineHtmlProps}>
+      <head><ColorSchemeScript defaultColorScheme="light" /></head>
+      <body>
+        <MantineProvider theme={theme} defaultColorScheme="light">{children}</MantineProvider>
+      </body>
     </html>
   );
 }
