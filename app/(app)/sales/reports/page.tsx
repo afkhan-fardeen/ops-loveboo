@@ -3,7 +3,10 @@ import { IconCheck, IconCurrencyPound, IconDiscount2, IconReceipt2, IconShopping
 import { DownloadButton, TextLink } from "@/components/Links";
 import RangePicker from "@/components/RangePicker";
 import SalesChart from "@/components/SalesChart";
+import SubmitButton from "@/components/SubmitButton";
 import { DataTable, EmptyState, Kpi, PageHeader, Section } from "@/components/ui";
+import { activeRecipients, getSettings } from "@/lib/settings";
+import { sendReportNow } from "../actions";
 import { aggLocations, aggProducts, byCountry, totals } from "@/lib/aggregate";
 import { requireModule } from "@/lib/auth";
 import { dateBounds, rowsBetween } from "@/lib/data";
@@ -15,7 +18,8 @@ const ISO = /^\d{4}-\d{2}-\d{2}$/;
 const share = (n: number, total: number) => (total ? `${((n / total) * 100).toFixed(1)}%` : "—");
 
 export default async function Reports({ searchParams }: { searchParams: Promise<{ from?: string; to?: string }> }) {
-  await requireModule("sales");
+  const user = await requireModule("sales");
+  const isAdmin = user.role === "admin";
   const q = await searchParams;
   const bounds = await dateBounds();
   if (!bounds) return <EmptyState title="No reports yet">Reports appear once the daily job has run.</EmptyState>;
@@ -34,6 +38,8 @@ export default async function Reports({ searchParams }: { searchParams: Promise<
   const [rows, prevRows] = await Promise.all([rowsBetween(from, to), hasPrev ? rowsBetween(prevFrom, prevTo) : Promise.resolve([])]);
 
   const cur = rows[0]?.currency ?? "GBP";
+  const recipients = isAdmin ? activeRecipients(await getSettings()) : [];
+  const here = `/sales/reports?from=${from}&to=${to}`;
   const t = totals(rows), p = totals(prevRows);
   const vs = (a: number, b: number) => (hasPrev && prevRows.length ? pctChange(a, b) : null);
   const label = `vs previous ${n} ${n === 1 ? "day" : "days"}`;
@@ -86,6 +92,14 @@ export default async function Reports({ searchParams }: { searchParams: Promise<
                   { label: "Orders", align: "right", render: (r) => int(r.orders) },
                   { label: "AOV", align: "right", hideBelow: "sm", render: (r) => money(r.orders ? r.net_sales / r.orders : 0, cur, 2) },
                   { label: "Discounts", align: "right", hideBelow: "md", render: (r) => money(r.discounts, cur, 2) },
+                  ...(isAdmin ? [{ label: "Send", align: "right" as const, render: (r: { date: string }) => (
+                    <form action={sendReportNow}>
+                      <input type="hidden" name="date" value={r.date} />
+                      <input type="hidden" name="returnTo" value={here} />
+                      <SubmitButton variant="subtle" size="compact-sm" aria-label={`Send the ${r.date} report now`}
+                        confirm={`Send the report for ${dateLabel(r.date, true)} to ${recipients.length} ${recipients.length === 1 ? "recipient" : "recipients"} now?\n\n${recipients.map((x) => x.email).join("\n") || "No active recipients."}`}>Send now</SubmitButton>
+                    </form>
+                  ) }] : []),
                   { label: "Emailed", align: "right", hideBelow: "md", render: (r) => (r.emailed_at ? <Badge color="brand" variant="light" leftSection={<IconCheck size={12} />}>Sent</Badge> : <Badge color="gray" variant="light">Not sent</Badge>) },
                 ]} />
               </Section>

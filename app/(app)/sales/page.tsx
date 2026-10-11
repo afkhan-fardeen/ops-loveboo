@@ -1,5 +1,5 @@
 import { Accordion, AccordionControl, AccordionItem, AccordionPanel, SimpleGrid, Stack, Text } from "@mantine/core";
-import { IconCalendarStats, IconCurrencyPound, IconReceipt2, IconShoppingBag } from "@tabler/icons-react";
+import { IconCalendarStats, IconCurrencyPound, IconReceipt2, IconSend, IconShoppingBag } from "@tabler/icons-react";
 import { DownloadButton } from "@/components/Links";
 import DateSwitcher from "@/components/DateSwitcher";
 import LiveToday from "@/components/LiveToday";
@@ -12,6 +12,8 @@ import { dateLabel, int, money, num2, timeIn } from "@/lib/format";
 import { firstName } from "@/lib/names";
 import { requireModule } from "@/lib/auth";
 import { sendTestEmail } from "../actions";
+import { sendReportNow } from "./actions";
+import { activeRecipients, getSettings } from "@/lib/settings";
 
 export const dynamic = "force-dynamic";
 
@@ -19,7 +21,8 @@ export default async function Overview({ searchParams }: { searchParams: Promise
   const user = await requireModule("sales");
   const { date: raw } = await searchParams;
   const date = raw && /^\d{4}-\d{2}-\d{2}$/.test(raw) ? raw : undefined;
-  const [bounds, rows] = await Promise.all([dateBounds(), rowsForSummary(date)]);
+  const isAdmin = user.role === "admin";
+  const [bounds, rows, cfg] = await Promise.all([dateBounds(), rowsForSummary(date), isAdmin ? getSettings() : Promise.resolve(null)]);
 
   if (!bounds) return <EmptyState title="No sales yet">The first report appears after the daily job runs.</EmptyState>;
 
@@ -85,14 +88,26 @@ export default async function Overview({ searchParams }: { searchParams: Promise
         </Section>
       </SimpleGrid>
 
-      <Section title="Share this day" subtitle="Download the Excel report or email this day’s summary to yourself." >
-        <form action={sendTestEmail}>
-          <input type="hidden" name="date" value={row.date} />
-          <SimpleGrid cols={{ base: 1, xs: 2 }} maw={420}>
-            <DownloadButton href={`/sales/export?date=${row.date}`}>Download Excel</DownloadButton>
-            <SubmitButton variant="default">Email me this day</SubmitButton>
-          </SimpleGrid>
-        </form>
+      <Section title="Share this day" subtitle={isAdmin ? "Send it to your recipients, email it to yourself, or download the Excel." : "Email this day’s summary to yourself or download the Excel."}>
+        <Stack gap="sm">
+          {isAdmin && cfg && (
+            <form action={sendReportNow}>
+              <input type="hidden" name="date" value={row.date} />
+              <input type="hidden" name="returnTo" value={`/sales?date=${row.date}`} />
+              <SubmitButton fullWidth leftSection={<IconSend size={16} />}
+                confirm={`Send the report for ${dateLabel(row.date, true)} to ${activeRecipients(cfg).length} ${activeRecipients(cfg).length === 1 ? "recipient" : "recipients"} now?\n\n${activeRecipients(cfg).map((r) => r.email).join("\n") || "No active recipients."}`}>
+                Send now to {activeRecipients(cfg).length} {activeRecipients(cfg).length === 1 ? "recipient" : "recipients"}
+              </SubmitButton>
+            </form>
+          )}
+          <form action={sendTestEmail}>
+            <input type="hidden" name="date" value={row.date} />
+            <SimpleGrid cols={{ base: 1, xs: 2 }}>
+              <DownloadButton href={`/sales/export?date=${row.date}`}>Download Excel</DownloadButton>
+              <SubmitButton variant="default">Email me this day</SubmitButton>
+            </SimpleGrid>
+          </form>
+        </Stack>
       </Section>
 
       <Accordion variant="contained" radius="lg" chevronPosition="right">

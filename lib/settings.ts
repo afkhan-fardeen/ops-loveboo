@@ -1,20 +1,34 @@
 import { adminClient } from "./supabase";
 
-export type ReportSettings = { recipients: string[]; emailEnabled: boolean; attachExcel: boolean };
+export type Recipient = { name: string; email: string; active: boolean };
+export type ReportSettings = { recipients: Recipient[]; emailEnabled: boolean; attachExcel: boolean };
 
-const envRecipients = () => (process.env.REPORT_RECIPIENTS ?? "").split(",").map((e) => e.trim()).filter(Boolean);
+const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+export const isEmail = (e: string) => EMAIL.test(e);
+
+const envRecipients = (): Recipient[] =>
+  (process.env.REPORT_RECIPIENTS ?? "").split(",").map((e) => e.trim().toLowerCase()).filter(Boolean).map((email) => ({ name: "", email, active: true }));
+
+/** Accepts the old format (plain email strings) as well as {name, email, active}. */
+const normalise = (raw: unknown): Recipient[] =>
+  (Array.isArray(raw) ? raw : []).flatMap((x): Recipient[] => {
+    const o = typeof x === "string" ? { email: x } : (x as Partial<Recipient>);
+    const email = String(o.email ?? "").trim().toLowerCase();
+    return isEmail(email) ? [{ name: String(o.name ?? "").trim().slice(0, 80), email, active: o.active !== false }] : [];
+  });
 
 /** Stored settings win; env REPORT_RECIPIENTS is only the fallback before the first save. */
 export async function getSettings(): Promise<ReportSettings> {
   const { data } = await adminClient().from("settings").select("value").eq("key", "report").maybeSingle();
-  const v = (data?.value ?? {}) as Partial<ReportSettings>;
+  const v = (data?.value ?? {}) as { recipients?: unknown; emailEnabled?: boolean; attachExcel?: boolean };
   return {
-    // Once an admin has saved, the saved list (even if empty) wins over the env fallback.
-    recipients: Array.isArray(v.recipients) ? v.recipients : envRecipients(),
+    recipients: Array.isArray(v.recipients) ? normalise(v.recipients) : envRecipients(),
     emailEnabled: v.emailEnabled ?? true,
     attachExcel: v.attachExcel ?? true,
   };
 }
+
+export const activeRecipients = (s: ReportSettings) => s.recipients.filter((r) => r.active);
 
 export async function saveSettings(s: ReportSettings) {
   const { error } = await adminClient().from("settings").upsert({ key: "report", value: s });
