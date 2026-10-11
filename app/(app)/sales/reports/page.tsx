@@ -1,7 +1,9 @@
+import { Suspense } from "react";
 import { Badge, SimpleGrid, Stack, Tabs, TabsList, TabsPanel, TabsTab, Text } from "@mantine/core";
 import { IconCheck, IconCurrencyPound, IconDiscount2, IconReceipt2, IconShoppingBag } from "@tabler/icons-react";
 import { DownloadButton, TextLink } from "@/components/Links";
 import RangePicker from "@/components/RangePicker";
+import { BodySkeleton } from "@/components/Skeletons";
 import SalesChart from "@/components/SalesChart";
 import SubmitButton from "@/components/SubmitButton";
 import { DataTable, EmptyState, Kpi, PageHeader, Section } from "@/components/ui";
@@ -33,8 +35,24 @@ export default async function Reports({ searchParams }: { searchParams: Promise<
   if (from < addDays(to, -365)) from = addDays(to, -365);
 
   const n = Math.round((Date.parse(`${to}T12:00:00Z`) - Date.parse(`${from}T12:00:00Z`)) / 864e5) + 1;
+
+  return (
+    <Stack gap="lg">
+      <PageHeader eyebrow="Period report" title={n === 1 ? dateLabel(from, true) : `${dateLabel(from)} – ${dateLabel(to, true)}`}>
+        <DownloadButton href={`/sales/export?from=${from}&to=${to}`}>Download Excel</DownloadButton>
+      </PageHeader>
+      <RangePicker from={from} to={to} min={bounds.min} max={bounds.max} />
+      {/* Keyed Suspense: switching ranges shows the skeleton at once while the numbers load. */}
+      <Suspense key={`${from}_${to}`} fallback={<BodySkeleton />}>
+        <ReportBody from={from} to={to} n={n} min={bounds.min} max={bounds.max} isAdmin={isAdmin} />
+      </Suspense>
+    </Stack>
+  );
+}
+
+async function ReportBody({ from, to, n, min, max, isAdmin }: { from: string; to: string; n: number; min: string; max: string; isAdmin: boolean }) {
   const prevTo = addDays(from, -1), prevFrom = addDays(prevTo, -(n - 1));
-  const hasPrev = prevTo >= bounds.min;
+  const hasPrev = prevTo >= min;
   const [rows, prevRows] = await Promise.all([rowsBetween(from, to), hasPrev ? rowsBetween(prevFrom, prevTo) : Promise.resolve([])]);
 
   const cur = rows[0]?.currency ?? "GBP";
@@ -56,14 +74,8 @@ export default async function Reports({ searchParams }: { searchParams: Promise<
 
   return (
     <Stack gap="lg">
-      <PageHeader eyebrow="Period report" title={n === 1 ? dateLabel(from, true) : `${dateLabel(from)} – ${dateLabel(to, true)}`}>
-        <DownloadButton href={`/sales/export?from=${from}&to=${to}`}>Download Excel</DownloadButton>
-      </PageHeader>
-
-      <RangePicker from={from} to={to} min={bounds.min} max={bounds.max} />
-
       {rows.length === 0 ? (
-        <EmptyState title="No data in this range">Pick a different period. Reports exist from {dateLabel(bounds.min)} to {dateLabel(bounds.max)}.</EmptyState>
+        <EmptyState title="No data in this range">Pick a different period. Reports exist from {dateLabel(min)} to {dateLabel(max)}.</EmptyState>
       ) : (
         <>
           <SimpleGrid cols={{ base: 2, md: 4 }}>

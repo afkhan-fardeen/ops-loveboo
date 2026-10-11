@@ -43,3 +43,7 @@ export const num2 = (n: number) => new Intl.NumberFormat("en-GB", { minimumFract
 /** HH:mm of an instant in the given timezone. */
 export const timeIn = (iso: string, tz: string) =>
   new Date(iso).toLocaleTimeString("en-GB", { timeZone: tz, hour: "2-digit", minute: "2-digit", hour12: false });
+
+/** 12-hour clock with AM/PM in the given timezone, e.g. "3:26 PM". */
+export const time12 = (iso: string, tz: string) =>
+  new Date(iso).toLocaleTimeString("en-US", { timeZone: tz, hour: "numeric", minute: "2-digit", hour12: true });

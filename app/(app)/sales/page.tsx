@@ -1,9 +1,11 @@
+import { Suspense } from "react";
 import { Accordion, AccordionControl, AccordionItem, AccordionPanel, SimpleGrid, Stack, Text } from "@mantine/core";
 import { IconCalendarStats, IconCurrencyPound, IconReceipt2, IconSend, IconShoppingBag } from "@tabler/icons-react";
 import { DownloadButton } from "@/components/Links";
 import DateSwitcher from "@/components/DateSwitcher";
 import LiveToday from "@/components/LiveToday";
 import SalesChart from "@/components/SalesChart";
+import { BodySkeleton } from "@/components/Skeletons";
 import SubmitButton from "@/components/SubmitButton";
 import { DataTable, EmptyState, Kpi, PageHeader, Section } from "@/components/ui";
 import { dateBounds, rowsForSummary, summarise, tz as storeTz } from "@/lib/data";
@@ -21,21 +23,30 @@ export default async function Overview({ searchParams }: { searchParams: Promise
   const user = await requireModule("sales");
   const { date: raw } = await searchParams;
   const date = raw && /^\d{4}-\d{2}-\d{2}$/.test(raw) ? raw : undefined;
-  const isAdmin = user.role === "admin";
-  const [bounds, rows, cfg] = await Promise.all([dateBounds(), rowsForSummary(date), isAdmin ? getSettings() : Promise.resolve(null)]);
-
+  const bounds = await dateBounds();
   if (!bounds) return <EmptyState title="No sales yet">The first report appears after the daily job runs.</EmptyState>;
 
-  const s = summarise(rows);
   const shown = date ?? bounds.max;
+  return (
+    <Stack gap="lg">
+      <PageHeader eyebrow={shown === bounds.max ? "Latest report" : "Sales report"} title={dateLabel(shown, true)}>
+        <DateSwitcher value={shown} min={bounds.min} max={bounds.max} />
+      </PageHeader>
+      {/* Keyed Suspense: switching days shows the skeleton at once while the numbers load. */}
+      <Suspense key={shown} fallback={<BodySkeleton />}>
+        <DayBody shown={shown} date={date} min={bounds.min} max={bounds.max} user={{ email: user.email, name: user.name, admin: user.role === "admin" }} />
+      </Suspense>
+    </Stack>
+  );
+}
+
+async function DayBody({ shown, date, min, max, user }: { shown: string; date?: string; min: string; max: string; user: { email: string; name: string | null; admin: boolean } }) {
+  const isAdmin = user.admin;
+  const [rows, cfg] = await Promise.all([rowsForSummary(date), isAdmin ? getSettings() : Promise.resolve(null)]);
+  const s = summarise(rows);
 
   if (!s || s.row.date !== shown)
-    return (
-      <Stack gap="lg">
-        <PageHeader title="Sales"><DateSwitcher value={shown} min={bounds.min} max={bounds.max} /></PageHeader>
-        <EmptyState title={`No report for ${dateLabel(shown, true)}`}>Pick another day. Reports exist from {dateLabel(bounds.min)} to {dateLabel(bounds.max)}.</EmptyState>
-      </Stack>
-    );
+    return <EmptyState title={`No report for ${dateLabel(shown, true)}`}>Pick another day. Reports exist from {dateLabel(min)} to {dateLabel(max)}.</EmptyState>;
 
   const { row } = s, cur = row.currency, tz = storeTz();
   const trend = rows.slice(0, 14).reverse().map((r) => ({ date: dateLabel(r.date), "Net sales": r.net_sales }));
@@ -43,11 +54,7 @@ export default async function Overview({ searchParams }: { searchParams: Promise
 
   return (
     <Stack gap="lg">
-      <PageHeader eyebrow={row.date === bounds.max ? "Latest report" : "Sales report"} title={dateLabel(row.date, true)}>
-        <DateSwitcher value={row.date} min={bounds.min} max={bounds.max} />
-      </PageHeader>
-
-      {row.date === bounds.max && <LiveToday currency={cur} />}
+      {row.date === max && <LiveToday currency={cur} />}
 
       <SimpleGrid cols={{ base: 2, md: 4 }}>
         <Kpi icon={<IconCurrencyPound size={16} />} label="Net sales" value={money(row.net_sales, cur)} note={`${money(row.discounts, cur, 2)} discounts`} deltas={[{ label: "vs yesterday", value: s.vsPrev }, { label: "vs last week", value: s.vsWeek }]} />

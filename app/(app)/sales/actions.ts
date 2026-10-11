@@ -1,4 +1,5 @@
 "use server";
+import { revalidateTag } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireAdmin } from "@/lib/auth";
 import { sendNow } from "@/lib/report";
@@ -22,7 +23,7 @@ export async function sendReportNow(form: FormData) {
   if (!process.env.RESEND_API_KEY) return go("err", "Email isn’t configured: RESEND_API_KEY is missing.");
 
   let r;
-  try { r = await sendNow(date); } catch (e) { return go("err", e instanceof Error ? e.message : "Couldn’t send the report."); }
+  try { r = await sendNow(date); revalidateTag("sales"); } catch (e) { return go("err", e instanceof Error ? e.message : "Couldn’t send the report."); }
   if (r.none) return go("err", "No active recipients. Add or switch on a recipient in Settings first.");
   if (!r.failed.length) return go("ok", `Report for ${date} sent to ${r.sent.join(", ")}.`);
   const why = r.failed.map((f) => `${f.address}: ${f.error}`).join(" · ");

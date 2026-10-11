@@ -3,7 +3,7 @@ import { buildEmail } from "./email";
 import { buildWorkbook, workbookName } from "./excel";
 import { adminClient } from "./supabase";
 import { fetchDay } from "./shopify";
-import { rowsUpTo, summarise } from "./data";
+import { fetchRows as rowsUpTo, summarise } from "./data";
 import { activeRecipients, getSettings, type Recipient } from "./settings";
 import { firstName } from "./names";
 

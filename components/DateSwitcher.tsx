@@ -1,5 +1,5 @@
 "use client";
-import { useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { ActionIcon, Button, Group, Loader } from "@mantine/core";
 import { DatePickerInput } from "@mantine/dates";
@@ -13,13 +13,15 @@ const shift = (iso: string, n: number) => {
 };
 
 /** Jump between report days: arrows, calendar, "Latest", and ←/→ keys. State lives in the URL (?date=). */
-export default function DateSwitcher({ value, min, max }: { value: string; min: string; max: string }) {
+export default function DateSwitcher({ value: current, min, max }: { value: string; min: string; max: string }) {
   const router = useRouter();
   const [pending, start] = useTransition();
+  const [value, setValue] = useState(current);
+  useEffect(() => setValue(current), [current]);
   const prev = shift(value, -1), next = shift(value, 1);
   const canPrev = prev >= min, canNext = next <= max;
 
-  const go = (d: string) => start(() => router.push(d === max ? "/sales" : `/sales?date=${d}`));
+  const go = (d: string) => { setValue(d); start(() => router.push(d === max ? "/sales" : `/sales?date=${d}`)); };
   useHotkeys([["ArrowLeft", () => canPrev && go(prev)], ["ArrowRight", () => canNext && go(next)]]);
 
   return (

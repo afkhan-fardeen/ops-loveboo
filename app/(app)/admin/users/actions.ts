@@ -1,12 +1,12 @@
 "use server";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { requireAdmin } from "@/lib/auth";
 import { moduleIds } from "@/lib/modules";
 import { adminClient } from "@/lib/supabase";
 
 export type Result = { ok: boolean; message: string };
 
-const done = (message: string): Result => { revalidatePath("/admin/users"); return { ok: true, message }; };
+const done = (message: string): Result => { revalidateTag("profiles"); revalidatePath("/admin/users"); return { ok: true, message }; };
 const fail = (message: string): Result => ({ ok: false, message });
 const str = (f: FormData, k: string) => String(f.get(k) ?? "").trim();
 const mods = (f: FormData) => f.getAll("modules").map(String).filter((m) => moduleIds.includes(m));

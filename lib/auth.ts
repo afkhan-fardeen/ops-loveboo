@@ -1,7 +1,14 @@
+import { unstable_cache } from "next/cache";
 import { cache } from "react";
 import { redirect } from "next/navigation";
 import { moduleIds } from "./modules";
 import { adminClient, serverClient } from "./supabase";
+
+/** Profile lookups are cached for 30 s and cleared immediately when an admin changes a user. */
+const profileById = unstable_cache(async (id: string) => {
+  const { data } = await adminClient().from("profiles").select("*").eq("id", id).maybeSingle();
+  return data;
+}, ["profile"], { revalidate: 30, tags: ["profiles"] });
 
 export type User = { id: string; email: string; name: string | null; role: "admin" | "user"; modules: string[] };
 
@@ -11,8 +18,7 @@ export const getUser = cache(async (): Promise<User | null> => {
   const user = data?.claims ? { id: data.claims.sub, email: data.claims.email as string | undefined } : null;
   if (!user?.email) return null;
 
-  const db = adminClient();
-  const { data: p } = await db.from("profiles").select("*").eq("id", user.id).maybeSingle();
+  const p = await profileById(user.id);
   if (!p || !p.active) return null;
   return { id: user.id, email: p.email, name: p.name, role: p.role, modules: p.role === "admin" ? moduleIds : p.modules ?? [] };
 });

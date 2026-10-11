@@ -1,4 +1,5 @@
 import { addDays, pctChange } from "./format";
+import { unstable_cache } from "next/cache";
 import { adminClient } from "./supabase";
 
 export type Product = { name: string; units: number; net: number };
@@ -16,7 +17,8 @@ const norm = (r: Row): Row => ({ ...r, net_sales: Number(r.net_sales), discounts
 /** Newest-first rows on or before `upTo` (default: everything). One query, ≤ limit rows. */
 const LIGHT = "date,net_sales,discounts,orders,units,currency,emailed_at";
 
-export async function rowsUpTo(upTo?: string, limit = 60, light = false): Promise<Row[]> {
+/** Uncached read. Use this right after writing (cron, send now) so emails never use stale numbers. */
+export async function fetchRows(upTo?: string, limit = 60, light = false): Promise<Row[]> {
   const db = adminClient();
   let q = db.from("daily_sales").select((light ? LIGHT : "*") as "*").order("date", { ascending: false }).limit(limit);
   if (upTo) q = q.lte("date", upTo);
@@ -27,16 +29,24 @@ export async function rowsUpTo(upTo?: string, limit = 60, light = false): Promis
 
 const RANGE = `${LIGHT},top_products,locations`;
 
+// Stored days change once a day (cron) or on "Send now", both of which call revalidateTag("sales").
+// Cached reads make switching ranges and days near-instant.
+const CACHE = { revalidate: 300, tags: ["sales"] };
+const cachedRows = unstable_cache(async (upTo: string | null, limit: number, light: boolean) => fetchRows(upTo ?? undefined, limit, light), ["rows-up-to"], CACHE);
+export const rowsUpTo = (upTo?: string, limit = 60, light = false) => cachedRows(upTo ?? null, limit, light);
+
 /** Rows for an inclusive date range (everything except the per-order list), newest first. */
-export async function rowsBetween(from: string, to: string): Promise<Row[]> {
+async function queryBetween(from: string, to: string): Promise<Row[]> {
   const { data, error } = await adminClient().from("daily_sales").select(RANGE as "*")
     .gte("date", from).lte("date", to).order("date", { ascending: false }).limit(400);
   if (error) throw error;
   return (data as unknown as Row[]).map(norm);
 }
 
+export const rowsBetween = unstable_cache(queryBetween, ["rows-between"], CACHE);
+
 /** Oldest and newest stored dates, for the date switcher limits. */
-export async function dateBounds(): Promise<{ min: string; max: string } | null> {
+async function queryBounds(): Promise<{ min: string; max: string } | null> {
   const db = adminClient();
   const [a, b] = await Promise.all([
     db.from("daily_sales").select("date").order("date", { ascending: true }).limit(1),
@@ -44,6 +54,8 @@ export async function dateBounds(): Promise<{ min: string; max: string } | null>
   ]);
   return a.data?.[0] && b.data?.[0] ? { min: a.data[0].date, max: b.data[0].date } : null;
 }
+
+export const dateBounds = unstable_cache(queryBounds, ["date-bounds"], CACHE);
 
 /** Newest day in full plus lighter rows behind it (for deltas and month-to-date): smaller payload, parallel queries. */
 export async function rowsForSummary(upTo?: string, limit = 40): Promise<Row[]> {

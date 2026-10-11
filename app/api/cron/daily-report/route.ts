@@ -1,4 +1,5 @@
 import { timingSafeEqual } from "node:crypto";
+import { revalidateTag } from "next/cache";
 import { NextRequest, NextResponse } from "next/server";
 import { addDays, yesterdayIn } from "@/lib/format";
 import { run, sendFailure } from "@/lib/report";
@@ -25,7 +26,9 @@ export async function GET(req: NextRequest) {
     if (backfill > 0) {
       for (let i = backfill; i >= 1; i--) await run(addDays(end, -i), { email: false }).catch(() => null);
     }
-    return NextResponse.json(await run(url.searchParams.get("date") ?? end, { resend: url.searchParams.has("resend") }));
+    const result = await run(url.searchParams.get("date") ?? end, { resend: url.searchParams.has("resend") });
+    revalidateTag("sales");
+    return NextResponse.json(result);
   } catch (e) {
     await sendFailure(e).catch(() => null);
     return NextResponse.json({ error: String(e) }, { status: 500 });
