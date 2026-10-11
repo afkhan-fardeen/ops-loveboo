@@ -44,7 +44,7 @@ const moneyFmt = (currency: string) => `[$${currency === "GBP" ? "£" : currency
 const sum = <T,>(xs: T[], f: (x: T) => number) => xs.reduce((a, x) => a + f(x), 0);
 const round = (n: number) => Math.round(n * 100) / 100;
 
-/** One report day. Sheet 1 is the simple report; "Breakdown" has gross/net/shipping/VAT per order and the by-country summary; plus Location Sales. */
+/** One report day: the simple daily report, plus a Location Sales sheet (cities, with a by-country summary underneath). */
 export async function buildWorkbook(row: Row) {
   const tz = process.env.STORE_TIMEZONE ?? "Europe/London";
   const money = moneyFmt(row.currency);
@@ -74,44 +74,6 @@ export async function buildWorkbook(row: Row) {
   });
   for (let n = head.number; n <= simple.rowCount; n++) [2, 3, 4].forEach((c) => (simple.getRow(n).getCell(c).alignment = { horizontal: "right" }));
   simple.columns = [{ width: 22 }, { width: 14 }, { width: 14 }, { width: 14 }];
-
-  const sales = wb.addWorksheet("Breakdown");
-  sales.addRow(["Order", "Time", "Country", "Units", "Gross", "Discount", "Net sales", "Shipping", "VAT", "Total paid", "Discount code"]);
-  orders.forEach((o) => sales.addRow([
-    o.name, time12(o.time, tz), o.country ?? "", o.units ?? 0,
-    o.gross ?? o.amount + o.discount, o.discount, o.amount, o.shipping ?? 0, o.tax ?? 0, o.total ?? o.amount, (o.codes ?? []).join(", "),
-  ]));
-  const e = orders.length + 1;
-  const col = (f: (o: Row["order_list"][number]) => number) => sum(orders, f);
-  const colSum = (letter: string, result: number) => ({ formula: `SUM(${letter}2:${letter}${e})`, result });
-  sales.addRow([`Total (${orders.length} orders)`, "", "", colSum("D", col((o) => o.units ?? 0)),
-    colSum("E", col((o) => o.gross ?? o.amount + o.discount)), colSum("F", col((o) => o.discount)), colSum("G", col((o) => o.amount)),
-    colSum("H", col((o) => o.shipping ?? 0)), colSum("I", col((o) => o.tax ?? 0)), colSum("J", col((o) => o.total ?? o.amount)), ""]);
-  [5, 6, 7, 8, 9, 10].forEach((c) => (sales.getColumn(c).numFmt = money));
-  finish(sales, [30, 12, 20, 8, 12, 12, 13, 12, 12, 13, 18], 4);
-  sales.getColumn(11).alignment = { horizontal: "left" };
-
-  // Reconciles to Shopify's Sales report: gross − discounts − returns = net; net + shipping + VAT = total.
-  summary(sales, ["Sales summary", "Amount"],
-    [["Gross sales", row.gross_sales], ["Discounts", -row.discounts], ["Returns", -row.returns], ["Net sales", row.net_sales], ["Shipping", row.shipping], ["VAT", row.taxes]],
-    ["Total sales", row.total_sales], { 2: money });
-
-  // By country, from the orders when they carry a country (newer data), else from the stored locations.
-  const hasCountry = orders.length > 0 && orders.every((o) => o.country);
-  const byC = new Map<string, { orders: number; units: number; net: number; shipping: number; total: number }>();
-  if (hasCountry) {
-    for (const o of orders) {
-      const x = byC.get(o.country!) ?? { orders: 0, units: 0, net: 0, shipping: 0, total: 0 };
-      x.orders++; x.units += o.units ?? 0; x.net += o.amount; x.shipping += o.shipping ?? 0; x.total += o.total ?? o.amount;
-      byC.set(o.country!, x);
-    }
-  } else {
-    for (const c of countries) byC.set(c.country, { orders: c.orders, units: c.units, net: c.net, shipping: 0, total: c.net });
-  }
-  const cRows = [...byC.entries()].sort((a, b) => b[1].net - a[1].net).map(([k, v]) => [k, v.orders, v.units, round(v.net), round(v.shipping), round(v.total)]);
-  summary(sales, ["Summary by location", "Orders", "Units", "Net sales", "Shipping", "Total paid"], cRows,
-    ["Total", sum(cRows, (r) => r[1] as number), sum(cRows, (r) => r[2] as number), round(sum(cRows, (r) => r[3] as number)), round(sum(cRows, (r) => r[4] as number)), round(sum(cRows, (r) => r[5] as number))],
-    { 4: money, 5: money, 6: money });
 
   const loc = wb.addWorksheet("Location Sales");
   loc.addRow(["Country", "City", "Orders", "Units", "Net sales", "% of total"]);
