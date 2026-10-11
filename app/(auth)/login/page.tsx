@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
-import { Alert, Box, Button, Center, Paper, PasswordInput, Stack, Text, TextInput, Title } from "@mantine/core";
-import { IconAlertCircle, IconChartBar } from "@tabler/icons-react";
+import { Box, Center, Paper, PasswordInput, Stack, Text, TextInput, Title } from "@mantine/core";
+import { IconChartBar } from "@tabler/icons-react";
+import SubmitButton from "@/components/SubmitButton";
 import { getUser } from "@/lib/auth";
 import { serverClient } from "@/lib/supabase";
 
@@ -12,16 +13,12 @@ async function signIn(form: FormData) {
     email: String(form.get("email") ?? "").trim(),
     password: String(form.get("password") ?? ""),
   });
-  redirect(error ? "/login?error=1" : safe(String(form.get("next") ?? "")));
+  const next = String(form.get("next") ?? "");
+  redirect(error ? `/login?err=${encodeURIComponent("Incorrect email or password.")}${next ? `&next=${encodeURIComponent(next)}` : ""}` : safe(next));
 }
 
-const MSG: Record<string, string> = {
-  "1": "Incorrect email or password.",
-  access: "Your account doesn’t have access. Ask an admin.",
-};
-
-export default async function Login({ searchParams }: { searchParams: Promise<{ error?: string; next?: string }> }) {
-  const { error, next } = await searchParams;
+export default async function Login({ searchParams }: { searchParams: Promise<{ next?: string }> }) {
+  const { next } = await searchParams;
   if (await getUser()) redirect(safe(next));
   return (
     <Center mih="100dvh" p="md" bg="var(--mantine-color-gray-0)">
@@ -35,10 +32,9 @@ export default async function Login({ searchParams }: { searchParams: Promise<{ 
           <form action={signIn}>
             <input type="hidden" name="next" value={next ?? ""} />
             <Stack gap="sm">
-              <TextInput name="email" type="email" label="Email" required autoComplete="username" />
+              <TextInput name="email" type="email" label="Email" required autoComplete="username" data-autofocus autoFocus />
               <PasswordInput name="password" label="Password" required autoComplete="current-password" />
-              {error && MSG[error] && <Alert color="red" icon={<IconAlertCircle size={16} />} role="alert">{MSG[error]}</Alert>}
-              <Button type="submit" fullWidth mt="xs">Sign in</Button>
+              <SubmitButton fullWidth mt="xs">Sign in</SubmitButton>
             </Stack>
           </form>
         </Stack>

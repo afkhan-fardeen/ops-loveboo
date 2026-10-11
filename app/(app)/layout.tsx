@@ -1,4 +1,5 @@
-import { Button, Container, Group, Text } from "@mantine/core";
+import { Container, Group, Text } from "@mantine/core";
+import SubmitButton from "@/components/SubmitButton";
 import Nav from "@/components/Nav";
 import { requireUser } from "@/lib/auth";
 import { signOut } from "./actions";
@@ -14,7 +15,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         <form action={signOut}>
           <Group gap="sm" wrap="nowrap">
             <Text size="sm" c="dimmed" visibleFrom="sm" maw={220} truncate>{user.name || user.email}</Text>
-            <Button type="submit" variant="default" size="xs">Sign out</Button>
+            <SubmitButton variant="default" size="xs">Sign out</SubmitButton>
           </Group>
         </form>
       </Nav>

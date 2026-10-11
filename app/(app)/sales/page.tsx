@@ -1,5 +1,5 @@
-import { Alert, Button, SimpleGrid, Stack } from "@mantine/core";
-import { IconCheck, IconInfoCircle } from "@tabler/icons-react";
+import { SimpleGrid, Stack } from "@mantine/core";
+import SubmitButton from "@/components/SubmitButton";
 import { DownloadButton } from "@/components/Links";
 import SalesChart from "@/components/SalesChart";
 import { DataTable, EmptyState, Kpi, PageHeader, Section } from "@/components/ui";
@@ -9,14 +9,7 @@ import { sendTestEmail } from "../actions";
 
 export const dynamic = "force-dynamic";
 
-const NOTICE: Record<string, { text: string; ok: boolean }> = {
-  sent: { text: "Test email sent to your inbox.", ok: true },
-  unconfigured: { text: "Email isn’t configured yet. Add RESEND_API_KEY to send a test.", ok: false },
-  failed: { text: "The test email couldn’t be sent. Check your email settings and try again.", ok: false },
-};
-
-export default async function Overview({ searchParams }: { searchParams: Promise<{ test?: string }> }) {
-  const { test } = await searchParams;
+export default async function Overview() {
   const rows = await rowsUpTo(undefined, 40);
   const s = summarise(rows);
 
@@ -24,18 +17,13 @@ export default async function Overview({ searchParams }: { searchParams: Promise
 
   const { row } = s, cur = row.currency;
   const trend = rows.slice(0, 14).reverse().map((r) => ({ date: dateLabel(r.date), "Net sales": r.net_sales }));
-  const notice = test ? NOTICE[test] : undefined;
 
   return (
     <Stack gap="lg">
       <PageHeader eyebrow="Latest report" title={dateLabel(row.date, true)}>
         <DownloadButton href={`/sales/export?date=${row.date}`}>Download Excel</DownloadButton>
-        <form action={sendTestEmail}><Button type="submit" variant="default">Email me this</Button></form>
+        <form action={sendTestEmail}><SubmitButton variant="default">Email me this</SubmitButton></form>
       </PageHeader>
-
-      {notice && (
-        <Alert color={notice.ok ? "teal" : "red"} icon={notice.ok ? <IconCheck size={18} /> : <IconInfoCircle size={18} />}>{notice.text}</Alert>
-      )}
 
       <SimpleGrid cols={{ base: 2, md: 4 }}>
         <Kpi label="Net sales" value={money(row.net_sales, cur)} deltas={[{ label: "vs yesterday", value: s.vsPrev }, { label: "vs last week", value: s.vsWeek }]} />

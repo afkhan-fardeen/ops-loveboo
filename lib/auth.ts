@@ -24,7 +24,7 @@ export const getUser = cache(async (): Promise<User | null> => {
 
 export async function requireUser() {
   const u = await getUser();
-  if (!u) redirect("/login?error=access");
+  if (!u) redirect(`/login?err=${encodeURIComponent("Your account doesn’t have access. Ask an admin.")}`);
   return u;
 }
 export async function requireAdmin() {

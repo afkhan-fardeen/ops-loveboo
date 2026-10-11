@@ -6,14 +6,14 @@ import { serverClient } from "@/lib/supabase";
 
 export async function sendTestEmail() {
   const user = await requireModule("sales");
-  let result = "sent";
+  const to = (k: "ok" | "err", m: string) => redirect(`/sales?${k}=${encodeURIComponent(m)}`);
+  if (!process.env.RESEND_API_KEY) return to("err", "Email isn’t configured yet. Add RESEND_API_KEY first.");
   try {
-    if (!process.env.RESEND_API_KEY) result = "unconfigured";
-    else await sendTest(user.email);
+    await sendTest(user.email);
   } catch {
-    result = "failed";
+    return to("err", "The test email couldn’t be sent. Check your email settings and try again.");
   }
-  redirect(`/sales?test=${result}`);
+  to("ok", `Test email sent to ${user.email}.`);
 }
 
 export async function signOut() {

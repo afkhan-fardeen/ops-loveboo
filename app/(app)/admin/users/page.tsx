@@ -1,5 +1,5 @@
-import { Accordion, AccordionControl, AccordionItem, AccordionPanel, Alert, Badge, Button, Checkbox, Group, NativeSelect, Paper, PasswordInput, SimpleGrid, Stack, Text, TextInput } from "@mantine/core";
-import { IconAlertCircle, IconCheck } from "@tabler/icons-react";
+import { Accordion, AccordionControl, AccordionItem, AccordionPanel, Badge, Checkbox, Group, NativeSelect, Paper, PasswordInput, SimpleGrid, Stack, Text, TextInput } from "@mantine/core";
+import SubmitButton from "@/components/SubmitButton";
 import { PageHeader, Section } from "@/components/ui";
 import { requireAdmin } from "@/lib/auth";
 import { MODULES } from "@/lib/modules";
@@ -20,17 +20,13 @@ function Modules({ selected = [] }: { selected?: string[] }) {
   );
 }
 
-export default async function Users({ searchParams }: { searchParams: Promise<{ ok?: string; err?: string }> }) {
+export default async function Users() {
   const me = await requireAdmin();
-  const { ok, err } = await searchParams;
   const users = ((await adminClient().from("profiles").select("*").order("created_at")).data as Profile[] | null) ?? [];
 
   return (
     <Stack gap="lg">
       <PageHeader title="Users" eyebrow="Add people, set their password and choose which modules they can open." />
-
-      {ok && <Alert color="teal" icon={<IconCheck size={18} />}>{ok}</Alert>}
-      {err && <Alert color="red" icon={<IconAlertCircle size={18} />}>{err}</Alert>}
 
       <Section title="Add a user">
         <form action={createUser}>
@@ -42,7 +38,7 @@ export default async function Users({ searchParams }: { searchParams: Promise<{ 
               <NativeSelect name="role" label="Role" data={ROLES} defaultValue="user" />
             </SimpleGrid>
             <Modules selected={["sales"]} />
-            <Group><Button type="submit">Add user</Button></Group>
+            <Group><SubmitButton>Add user</SubmitButton></Group>
           </Stack>
         </form>
       </Section>
@@ -75,13 +71,13 @@ export default async function Users({ searchParams }: { searchParams: Promise<{ 
                         <Checkbox name="active" label="Account active" defaultChecked={u.active} disabled={u.id === me.id} mt={{ base: 0, sm: 34 }} />
                       </SimpleGrid>
                       <Modules selected={u.modules} />
-                      <Group><Button type="submit">Save changes</Button></Group>
+                      <Group><SubmitButton>Save changes</SubmitButton></Group>
                     </Stack>
                   </form>
                   {u.id !== me.id && (
                     <form action={deleteUser}>
                       <input type="hidden" name="id" value={u.id} />
-                      <Button type="submit" variant="subtle" color="red" size="xs">Delete this user</Button>
+                      <SubmitButton variant="subtle" color="red" size="xs" confirm={`Delete ${u.name || u.email}? This can’t be undone.`}>Delete this user</SubmitButton>
                     </form>
                   )}
                 </Stack>

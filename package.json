@@ -11,6 +11,7 @@
     "@mantine/charts": "^8.3.18",
     "@mantine/core": "^8.3.18",
     "@mantine/hooks": "^8.3.18",
+    "@mantine/notifications": "^8.3.18",
     "@supabase/ssr": "^0.6.1",
     "@supabase/supabase-js": "^2.49.0",
     "@tabler/icons-react": "^3.49.0",

@@ -11,5 +11,5 @@ export async function save(form: FormData) {
   const bad = recipients.find((e) => !EMAIL.test(e));
   if (bad) redirect(`/sales/settings?err=${encodeURIComponent(`“${bad}” isn’t a valid email address.`)}`);
   await saveSettings({ recipients, emailEnabled: form.get("emailEnabled") === "on", attachExcel: form.get("attachExcel") === "on" });
-  redirect("/sales/settings?saved=1");
+  redirect(`/sales/settings?ok=${encodeURIComponent("Settings saved.")}`);
 }
