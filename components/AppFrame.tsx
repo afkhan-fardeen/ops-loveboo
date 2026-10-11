@@ -129,9 +129,9 @@ export default function AppFrame({ isAdmin, showSales, who, email, signOut, sign
         </Group>
       </AppShell.Header>
 
-      <AppShell.Navbar p="md" component="nav" aria-label="Main">
-        <Stack gap={0} h="100%" hiddenFrom="sm">{wide}</Stack>
-        <Stack gap={0} h="100%" visibleFrom="sm">{rail ? compact : wide}</Stack>
+      <AppShell.Navbar p={10} component="nav" aria-label="Main" withBorder={false} bg="transparent">
+        <Stack gap={0} h="100%" p="md" className="sidebar-panel" hiddenFrom="sm">{wide}</Stack>
+        <Stack gap={0} h="100%" p="md" className="sidebar-panel" visibleFrom="sm">{rail ? compact : wide}</Stack>
       </AppShell.Navbar>
 
       <AppShell.Main>

@@ -11,7 +11,8 @@ export async function sendTestEmail(form: FormData) {
   const to = (k: "ok" | "err", m: string) => redirect(`/sales?${date ? `date=${date}&` : ""}${k}=${encodeURIComponent(m)}`);
   if (!process.env.RESEND_API_KEY) return to("err", "Email isn’t configured yet. Add RESEND_API_KEY first.");
   try {
-    await sendTest(user.email, date);
+    const r = await sendTest(user.email, date);
+    if (r.failed.length) return to("err", r.failed[0].error);
   } catch {
     return to("err", "The test email couldn’t be sent. Check your email settings and try again.");
   }
