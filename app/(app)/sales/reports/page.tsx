@@ -16,12 +16,12 @@ export default async function Reports() {
         <EmptyState title="No reports yet">Past days will be listed here once the daily job has run.</EmptyState>
       ) : (
         <Paper withBorder radius="lg" shadow="xs">
-          <DataTable minWidth={620} rows={rows} rowKey={(r) => r.date} cols={[
+          <DataTable minWidth={0} rows={rows} rowKey={(r) => r.date} cols={[
             { label: "Date", render: (r) => <TextLink href={`/sales?date=${r.date}`}>{dateLabel(r.date, true)}</TextLink> },
             { label: "Net sales", align: "right", render: (r) => money(r.net_sales, r.currency) },
             { label: "Orders", align: "right", render: (r) => int(r.orders) },
-            { label: "AOV", align: "right", render: (r) => money(r.orders ? r.net_sales / r.orders : 0, r.currency, 2) },
-            { label: "Emailed", align: "right", render: (r) => (r.emailed_at ? <Badge color="brand" variant="light" leftSection={<IconCheck size={12} />}>Sent</Badge> : <Badge color="gray" variant="light">Not sent</Badge>) },
+            { label: "AOV", align: "right", hideBelow: "sm", render: (r) => money(r.orders ? r.net_sales / r.orders : 0, r.currency, 2) },
+            { label: "Emailed", align: "right", hideBelow: "sm", render: (r) => (r.emailed_at ? <Badge color="brand" variant="light" leftSection={<IconCheck size={12} />}>Sent</Badge> : <Badge color="gray" variant="light">Not sent</Badge>) },
           ]} />
         </Paper>
       )}

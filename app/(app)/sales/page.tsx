@@ -1,6 +1,7 @@
 import { Accordion, AccordionControl, AccordionItem, AccordionPanel, SimpleGrid, Stack, Text } from "@mantine/core";
 import { DownloadButton } from "@/components/Links";
 import DateSwitcher from "@/components/DateSwitcher";
+import LiveToday from "@/components/LiveToday";
 import SalesChart from "@/components/SalesChart";
 import SubmitButton from "@/components/SubmitButton";
 import { DataTable, EmptyState, Kpi, PageHeader, Section } from "@/components/ui";
@@ -39,6 +40,8 @@ export default async function Overview({ searchParams }: { searchParams: Promise
         <DateSwitcher value={row.date} min={bounds.min} max={bounds.max} />
       </PageHeader>
 
+      {row.date === bounds.max && <LiveToday currency={cur} />}
+
       <SimpleGrid cols={{ base: 2, md: 4 }}>
         <Kpi label="Net sales" value={money(row.net_sales, cur)} note={`${money(row.discounts, cur, 2)} discounts`} deltas={[{ label: "vs yesterday", value: s.vsPrev }, { label: "vs last week", value: s.vsWeek }]} />
         <Kpi label="Orders" value={int(row.orders)} note={`${int(row.units)} units`} />
@@ -52,7 +55,7 @@ export default async function Overview({ searchParams }: { searchParams: Promise
 
       <Section title="Orders" subtitle="Draft orders excluded. Amounts are net of VAT." flush>
         {row.order_list.length === 0 ? <Text c="dimmed" p="md">No orders on this day.</Text> : (
-          <DataTable rows={row.order_list} rowKey={(o) => o.name} cols={[
+          <DataTable minWidth={320} rows={row.order_list} rowKey={(o) => o.name} cols={[
             { label: "Order", render: (o) => <Text fw={600} size="sm">{o.name}</Text> },
             { label: "Time", render: (o) => timeIn(o.time, tz) },
             { label: "Amount", align: "right", render: (o) => num2(o.amount) },

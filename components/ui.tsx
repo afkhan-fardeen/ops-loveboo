@@ -29,20 +29,20 @@ export function Kpi({ label, value, note, deltas }: { label: string; value: stri
   );
 }
 
-type Col<T> = { label: string; align?: "right"; render: (r: T) => ReactNode };
+type Col<T> = { label: string; align?: "right"; hideBelow?: "sm" | "md"; render: (r: T) => ReactNode };
 export function DataTable<T>({ cols, rows, rowKey, minWidth = 420 }: { cols: Col<T>[]; rows: T[]; rowKey: (r: T) => string; minWidth?: number }) {
   return (
     <TableScrollContainer minWidth={minWidth}>
       <Table highlightOnHover verticalSpacing="sm" horizontalSpacing="md" ff="inherit">
         <TableThead>
           <TableTr>
-            {cols.map((c) => <TableTh key={c.label} ta={c.align}>{c.label}</TableTh>)}
+            {cols.map((c) => <TableTh key={c.label} ta={c.align} visibleFrom={c.hideBelow}>{c.label}</TableTh>)}
           </TableTr>
         </TableThead>
         <TableTbody>
           {rows.map((r) => (
             <TableTr key={rowKey(r)}>
-              {cols.map((c) => <TableTd key={c.label} ta={c.align} style={c.align ? { fontVariantNumeric: "tabular-nums" } : undefined}>{c.render(r)}</TableTd>)}
+              {cols.map((c) => <TableTd key={c.label} ta={c.align} visibleFrom={c.hideBelow} style={c.align ? { fontVariantNumeric: "tabular-nums" } : undefined}>{c.render(r)}</TableTd>)}
             </TableTr>
           ))}
         </TableTbody>

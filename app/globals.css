@@ -30,3 +30,17 @@ body {
 .lift { transition: transform 0.15s ease, box-shadow 0.15s ease; }
 .lift:hover { transform: translateY(-2px); box-shadow: 0 10px 30px rgb(0 109 104 / 0.14); }
 @media (prefers-reduced-motion: reduce) { .lift, .lift:hover { transition: none; transform: none; } }
+
+/* Motion: quick, quiet, and off for reduced-motion users. */
+@keyframes page-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+.page-in { animation: page-in 0.22s ease-out; }
+.mantine-Button-root { transition: transform 0.08s ease, background-color 0.15s ease, box-shadow 0.15s ease; }
+.mantine-Button-root:active:not(:disabled) { transform: translateY(1px) scale(0.99); }
+.mantine-Table-tr { transition: background-color 0.12s ease; }
+.mantine-NavLink-root, .mantine-ActionIcon-root { transition: background-color 0.15s ease, color 0.15s ease; }
+
+@keyframes pulse-dot { 0% { box-shadow: 0 0 0 0 rgb(0 109 104 / 0.5); } 70% { box-shadow: 0 0 0 8px rgb(0 109 104 / 0); } 100% { box-shadow: 0 0 0 0 rgb(0 109 104 / 0); } }
+.live-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--mantine-color-brand-6); animation: pulse-dot 2s infinite; flex: none; }
+.live-dot[data-stale] { background: var(--mantine-color-gray-5); animation: none; }
+
+@media (prefers-reduced-motion: reduce) { .page-in, .live-dot { animation: none; } .mantine-Button-root { transition: none; } .mantine-Button-root:active:not(:disabled) { transform: none; } }
