@@ -82,15 +82,15 @@ async function DayBody({ shown, date, min, max, user }: { shown: string; date?: 
         ]} />
       </Section>
 
-      <Section title="Orders" subtitle="Draft orders excluded. Amount is net of VAT and shipping; Total paid is what the customer paid." flush>
+      <Section title="Orders" subtitle="Draft orders excluded. Net sales excludes VAT and shipping; Total paid is what the customer paid, matching the order in Shopify." flush>
         {row.order_list.length === 0 ? <Text c="dimmed" p="md">No orders on this day.</Text> : (
-          <DataTable minWidth={320} rows={row.order_list} rowKey={(o) => o.name} cols={[
+          <DataTable minWidth={340} rows={row.order_list} rowKey={(o) => o.name} cols={[
             { label: "Order", render: (o) => <Text fw={600} size="sm">{o.name}</Text> },
             { label: "Time", render: (o) => timeIn(o.time, tz) },
-            { label: "Amount", align: "right", render: (o) => num2(o.amount) },
+            { label: "Net sales", align: "right", render: (o) => num2(o.amount) },
             { label: "Discount", align: "right", render: (o) => num2(o.discount) },
             { label: "Shipping", align: "right", hideBelow: "sm", render: (o) => num2(o.shipping ?? 0) },
-            { label: "Total paid", align: "right", hideBelow: "sm", render: (o) => num2(o.total ?? o.amount) },
+            { label: "Total paid", align: "right", render: (o) => num2(o.total ?? o.amount) },
           ]} />
         )}
       </Section>
