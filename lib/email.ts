@@ -1,4 +1,4 @@
-import { dateLabel, int, money } from "./format";
+import { dateLabel, int, money, num2, timeIn } from "./format";
 import type { Summary } from "./data";
 
 const C = { teal: "#006D68", linen: "#F9F6EC", ink: "#222222", mute: "#5c5c5c", line: "#E6E3D8" };
@@ -21,6 +21,13 @@ export function buildEmail(s: Summary, appUrl: string) {
     ["Discounts given", money(row.discounts, cur, 2)],
   ];
 
+  const tz = process.env.STORE_TIMEZONE ?? "Europe/London";
+  const th = (t: string, right = false) => `<td ${right ? 'align="right" ' : ""}style="padding:8px 0;font-size:12px;font-weight:700;color:${C.mute};border-bottom:1px solid ${C.line}">${t}</td>`;
+  const td = (t: string, right = false, bold = false) => `<td ${right ? 'align="right" ' : ""}style="padding:10px 0;font-size:14px;color:${C.ink};${bold ? "font-weight:600;" : ""}border-bottom:1px solid ${C.line}">${t}</td>`;
+  const orderRows = row.order_list.length
+    ? row.order_list.map((o) => `<tr>${td(o.name.replace(/</g, "&lt;"), false, true)}${td(timeIn(o.time, tz))}${td(num2(o.amount), true)}${td(num2(o.discount), true)}</tr>`).join("")
+    : `<tr><td colspan="4" style="padding:12px 0;font-size:14px;color:${C.mute}">No orders.</td></tr>`;
+
   const subject = `Love Boo · Daily sales report — ${dateLabel(row.date)}`;
   const html = `<!doctype html><html><body style="margin:0;background:${C.linen};font-family:${font}">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr><td align="center" style="padding:28px 12px">
@@ -34,11 +41,15 @@ export function buildEmail(s: Summary, appUrl: string) {
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-top:4px">
     ${rows.map(([l, v], i) => line(l, v, i === rows.length - 1)).join("")}
   </table>
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-top:24px">
+    <tr>${th("Order")}${th("Time")}${th("Amount", true)}${th("Discount", true)}</tr>${orderRows}
+  </table>
 </td></tr>
 <tr><td style="padding:14px 4px;font-size:12px;color:${C.mute}">Love Boo Ops · ${stamp} (Bahrain)</td></tr>
 </table></td></tr></table></body></html>`;
 
   const text = [`Daily sales report — ${long}`, `View full report: ${link}`, "Draft orders excluded.", "", "Love Boo Store",
-    ...rows.map(([l, v]) => `${l}: ${v}`), "", `Love Boo Ops · ${stamp} (Bahrain)`].join("\n");
+    ...rows.map(([l, v]) => `${l}: ${v}`), "", "Order  Time  Amount  Discount",
+    ...row.order_list.map((o) => `${o.name}  ${timeIn(o.time, tz)}  ${num2(o.amount)}  ${num2(o.discount)}`), "", `Love Boo Ops · ${stamp} (Bahrain)`].join("\n");
   return { subject, html, text };
 }

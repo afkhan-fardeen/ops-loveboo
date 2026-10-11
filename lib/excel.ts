@@ -1,5 +1,6 @@
 import ExcelJS from "exceljs";
 import type { Location, Row } from "./data";
+import { timeIn } from "./format";
 
 const TEAL = "FF006D68", MEADOW = "FFE3EABA";
 
@@ -51,6 +52,17 @@ export async function buildWorkbook(rows: Row[], date: string) {
   [5, 6].forEach((c) => (loc.getColumn(c).numFmt = money));
   loc.getColumn(7).numFmt = "0.0%";
   style(loc, [18, 20, 10, 10, 18, 22, 11], 3);
+
+  const ord = wb.addWorksheet("Orders");
+  ord.addRow(["Date", "Order", "Time", "Amount", "Discount"]);
+  [...month].reverse().forEach((r) => r.order_list.forEach((o) =>
+    ord.addRow([new Date(`${r.date}T00:00:00Z`), o.name, timeIn(o.time, process.env.STORE_TIMEZONE ?? "Europe/London"), o.amount, o.discount])));
+  ord.getColumn(1).numFmt = "ddd d mmm yyyy";
+  [4, 5].forEach((c) => (ord.getColumn(c).numFmt = money));
+  ord.columns.forEach((c, i) => (c.width = [18, 16, 10, 14, 14][i]));
+  ord.getRow(1).font = { bold: true, color: { argb: "FFFFFFFF" } };
+  ord.getRow(1).fill = { type: "pattern", pattern: "solid", fgColor: { argb: TEAL } };
+  ord.views = [{ state: "frozen", ySplit: 1 }];
 
   return Buffer.from(await wb.xlsx.writeBuffer());
 }

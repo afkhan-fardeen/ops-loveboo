@@ -37,3 +37,9 @@ export function dayRange(iso: string, tz: string) {
   };
   return { from: start(iso), to: start(addDays(iso, 1)) };
 }
+
+export const num2 = (n: number) => new Intl.NumberFormat("en-GB", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(n);
+
+/** HH:mm of an instant in the given timezone. */
+export const timeIn = (iso: string, tz: string) =>
+  new Date(iso).toLocaleTimeString("en-GB", { timeZone: tz, hour: "2-digit", minute: "2-digit", hour12: false });

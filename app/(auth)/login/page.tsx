@@ -9,7 +9,8 @@ async function signIn(form: FormData) {
     email: String(form.get("email") ?? "").trim(),
     password: String(form.get("password") ?? ""),
   });
-  redirect(error ? "/login?error=1" : "/");
+  const next = String(form.get("next") ?? "");
+  redirect(error ? "/login?error=1" : next.startsWith("/") && !next.startsWith("//") ? next : "/");
 }
 
 const MSG: Record<string, string> = {
@@ -17,9 +18,9 @@ const MSG: Record<string, string> = {
   access: "Your account doesn’t have access. Ask an admin.",
 };
 
-export default async function Login({ searchParams }: { searchParams: Promise<{ error?: string }> }) {
-  const { error } = await searchParams;
-  if (await getUser()) redirect("/");
+export default async function Login({ searchParams }: { searchParams: Promise<{ error?: string; next?: string }> }) {
+  const { error, next } = await searchParams;
+  if (await getUser()) redirect(next?.startsWith("/") && !next.startsWith("//") ? next : "/");
   const input = "min-h-11 rounded-xl border border-ink/20 bg-white px-3 text-base placeholder:text-ink/50";
   return (
     <main className="grid min-h-dvh place-items-center px-4">
@@ -27,6 +28,7 @@ export default async function Login({ searchParams }: { searchParams: Promise<{ 
         <Butterfly className="h-14 w-14" />
         <h1 className="font-display text-2xl font-semibold text-teal">Love Boo Ops</h1>
         <form action={signIn} className="flex w-full flex-col gap-3 text-left">
+          <input type="hidden" name="next" value={next ?? ""} />
           <label htmlFor="email" className="text-sm font-medium">Email</label>
           <input id="email" name="email" type="email" required autoComplete="username" inputMode="email" className={input} />
           <label htmlFor="password" className="text-sm font-medium">Password</label>

@@ -1,10 +1,12 @@
 import { dayRange } from "./format";
-import type { Location, Product } from "./data";
+import type { Location, Order, Product } from "./data";
 
 const QUERY = `query($q: String!, $after: String) {
   orders(first: 100, after: $after, query: $q) {
     pageInfo { hasNextPage endCursor }
     nodes {
+      name
+      createdAt
       taxesIncluded
       sourceName
       shippingAddress { country city }
@@ -25,6 +27,7 @@ export async function fetchDay(date: string) {
   let net = 0, discounts = 0, orders = 0, units = 0, currency = "GBP", after: string | null = null;
   const products = new Map<string, Product>();
   const places = new Map<string, Location>();
+  const orderList: Order[] = [];
 
   do {
     const res: Response = await fetch(url, {
@@ -44,7 +47,9 @@ export async function fetchDay(date: string) {
       net += orderNet;
       // Discounts are tax-inclusive when prices are; scale to the ex-VAT share of the order.
       const sub = Number(o.currentSubtotalPriceSet.shopMoney.amount);
-      discounts += Number(o.totalDiscountsSet.shopMoney.amount) * (sub ? orderNet / sub : 1);
+      const orderDiscount = Number(o.totalDiscountsSet.shopMoney.amount) * (sub ? orderNet / sub : 1);
+      discounts += orderDiscount;
+      orderList.push({ name: o.name, time: o.createdAt, amount: Math.round(orderNet * 100) / 100, discount: Math.round(orderDiscount * 100) / 100 });
       const country = o.shippingAddress?.country ?? "Unknown";
       const city = (o.shippingAddress?.city ?? "").trim().toLowerCase().replace(/(^|[\s-])\p{L}/gu, (m: string) => m.toUpperCase()) || "Unknown";
       const place = places.get(`${country}|${city}`) ?? { country, city, orders: 0, units: 0, net: 0 };
@@ -68,5 +73,5 @@ export async function fetchDay(date: string) {
   const top = [...products.values()].sort((a, b) => b.net - a.net).slice(0, 5)
     .map((p) => ({ ...p, net: Math.round(p.net * 100) / 100 }));
   const locations = [...places.values()].sort((a, b) => b.net - a.net).map((l) => ({ ...l, net: Math.round(l.net * 100) / 100 }));
-  return { net_sales: Math.round(net * 100) / 100, discounts: Math.round(discounts * 100) / 100, orders, units, top_products: top, locations, currency };
+  return { net_sales: Math.round(net * 100) / 100, discounts: Math.round(discounts * 100) / 100, orders, units, top_products: top, locations, order_list: orderList.sort((a, b) => b.time.localeCompare(a.time)), currency };
 }

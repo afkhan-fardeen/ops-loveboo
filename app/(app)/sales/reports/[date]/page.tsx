@@ -3,8 +3,8 @@ import { notFound } from "next/navigation";
 import { Card, Kpi } from "@/components/ui";
 import { DataTable } from "@/components/ui";
 import { buildEmail } from "@/lib/email";
-import { rowsUpTo, summarise } from "@/lib/data";
-import { dateLabel, int, money } from "@/lib/format";
+import { rowsUpTo, summarise, tz as storeTz } from "@/lib/data";
+import { dateLabel, int, money, num2, timeIn } from "@/lib/format";
 
 export const dynamic = "force-dynamic";
 
@@ -14,7 +14,7 @@ export default async function Day({ params }: { params: Promise<{ date: string }
   const s = summarise(await rowsUpTo(date, 40));
   if (!s || s.row.date !== date) notFound();
 
-  const { row } = s, cur = row.currency;
+  const { row } = s, cur = row.currency, tz = storeTz();
   const email = buildEmail(s, process.env.APP_URL ?? "");
 
   return (
@@ -33,6 +33,19 @@ export default async function Day({ params }: { params: Promise<{ date: string }
         <Kpi label="Average order" value={money(s.aov, cur, 2)} />
         <Kpi label="Month to date" value={money(s.mtdNet, cur)} note={`${int(s.mtdOrders)} orders`} />
       </div>
+
+      <Card className="p-0">
+        <h2 className="px-5 pt-5 font-display text-lg font-semibold">Orders</h2>
+        <p className="px-5 text-sm text-ink/70">Draft orders excluded. Amounts are net of VAT.</p>
+        {row.order_list.length === 0 ? <p className="px-5 py-6 text-ink/70">No orders on this day.</p> : (
+          <DataTable label="Orders on this day" rows={row.order_list} rowKey={(o) => o.name} cols={[
+            { label: "Order", render: (o) => <span className="font-medium">{o.name}</span> },
+            { label: "Time", render: (o) => timeIn(o.time, tz) },
+            { label: "Amount", align: "right", render: (o) => num2(o.amount) },
+            { label: "Discount", align: "right", render: (o) => num2(o.discount) },
+          ]} />
+        )}
+      </Card>
 
       <Card className="p-0">
         <h2 className="px-5 pt-5 font-display text-lg font-semibold">Top products</h2>

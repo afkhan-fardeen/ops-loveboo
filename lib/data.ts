@@ -2,15 +2,16 @@ import { addDays, pctChange } from "./format";
 import { adminClient } from "./supabase";
 
 export type Product = { name: string; units: number; net: number };
+export type Order = { name: string; time: string; amount: number; discount: number };
 export type Location = { country: string; city: string; orders: number; units: number; net: number };
 export type Row = {
   date: string; net_sales: number; discounts: number; orders: number; units: number;
-  top_products: Product[]; locations: Location[]; currency: string; emailed_at: string | null;
+  top_products: Product[]; locations: Location[]; order_list: Order[]; currency: string; emailed_at: string | null;
 };
 
 export const tz = () => process.env.STORE_TIMEZONE ?? "Europe/London";
 
-const norm = (r: Row): Row => ({ ...r, net_sales: Number(r.net_sales), discounts: Number(r.discounts ?? 0), top_products: r.top_products ?? [], locations: r.locations ?? [] });
+const norm = (r: Row): Row => ({ ...r, net_sales: Number(r.net_sales), discounts: Number(r.discounts ?? 0), top_products: r.top_products ?? [], locations: r.locations ?? [], order_list: r.order_list ?? [] });
 
 /** Newest-first rows on or before `upTo` (default: everything). One query, ≤ limit rows. */
 export async function rowsUpTo(upTo?: string, limit = 60): Promise<Row[]> {
