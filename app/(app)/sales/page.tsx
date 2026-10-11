@@ -19,7 +19,7 @@ export default async function Overview({ searchParams }: { searchParams: Promise
   if (!s)
     return (
       <EmptyState title="No sales yet">
-        The first report appears after the daily job runs. You can backfill the last 60 days from the cron route.
+        The first report appears after the daily job runs. Once Shopify is connected, the last 60 days can be backfilled from the cron route.
       </EmptyState>
     );
 

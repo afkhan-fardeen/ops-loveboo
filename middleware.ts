@@ -2,11 +2,8 @@ import { createServerClient, type CookieOptions } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
 export async function middleware(req: NextRequest) {
-  // No Supabase configured yet → local demo mode, no auth.
-  if (!process.env.NEXT_PUBLIC_SUPABASE_URL) return NextResponse.next();
-
   let res = NextResponse.next({ request: req });
-  const supabase = createServerClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!, {
+  const supabase = createServerClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!, {
     cookies: {
       getAll: () => req.cookies.getAll(),
       setAll: (list: { name: string; value: string; options: CookieOptions }[]) => {

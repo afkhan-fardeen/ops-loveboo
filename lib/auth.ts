@@ -1,7 +1,7 @@
 import { cache } from "react";
 import { redirect } from "next/navigation";
 import { moduleIds } from "./modules";
-import { adminClient, hasSupabase, serverClient } from "./supabase";
+import { adminClient, serverClient } from "./supabase";
 
 export type User = { id: string; email: string; name: string | null; role: "admin" | "user"; modules: string[] };
 
@@ -9,7 +9,6 @@ const adminEmails = () => (process.env.ADMIN_EMAILS ?? "").split(",").map((e) =>
 
 /** Signed-in user with an active profile, or null. The first ADMIN_EMAILS login bootstraps its own admin profile. */
 export const getUser = cache(async (): Promise<User | null> => {
-  if (!hasSupabase()) return { id: "demo", email: "demo@loveboo.com", name: "Demo Admin", role: "admin", modules: moduleIds };
   const { data: { user } } = await (await serverClient()).auth.getUser();
   if (!user?.email) return null;
 

@@ -2,7 +2,7 @@
 import { redirect } from "next/navigation";
 import { requireAdmin } from "@/lib/auth";
 import { moduleIds } from "@/lib/modules";
-import { adminClient, hasSupabase } from "@/lib/supabase";
+import { adminClient } from "@/lib/supabase";
 
 const done = (msg: string, ok = true) => redirect(`/admin/users?${ok ? "ok" : "err"}=${encodeURIComponent(msg)}`);
 const str = (f: FormData, k: string) => String(f.get(k) ?? "").trim();
@@ -10,7 +10,6 @@ const mods = (f: FormData) => f.getAll("modules").map(String).filter((m) => modu
 
 export async function createUser(form: FormData) {
   await requireAdmin();
-  if (!hasSupabase()) return done("Connect Supabase to manage users.", false);
   const email = str(form, "email").toLowerCase(), password = str(form, "password");
   if (!email) return done("Email is required.", false);
   if (password.length < 8) return done("Password must be at least 8 characters.", false);
@@ -29,7 +28,6 @@ export async function createUser(form: FormData) {
 
 export async function updateUser(form: FormData) {
   const me = await requireAdmin();
-  if (!hasSupabase()) return done("Connect Supabase to manage users.", false);
   const id = str(form, "id"), password = str(form, "password");
   const self = id === me.id;
   if (password && password.length < 8) return done("Password must be at least 8 characters.", false);

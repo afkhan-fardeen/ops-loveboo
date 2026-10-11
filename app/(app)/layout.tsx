@@ -17,11 +17,6 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         </form>
       </Nav>
       <main id="main" className="mx-auto max-w-[1200px] px-4 pb-16 pt-6 md:px-8 md:pt-10">
-        {!process.env.NEXT_PUBLIC_SUPABASE_URL && (
-          <p role="status" className="glass mb-6 rounded-xl px-4 py-2 text-sm">
-            Demo mode — connect Supabase (see .env.example) to use real sign-in, users and data.
-          </p>
-        )}
         {children}
       </main>
       <footer className="mx-auto max-w-[1200px] px-4 pb-8 text-sm text-ink/70 md:px-8">Love Boo Ops</footer>

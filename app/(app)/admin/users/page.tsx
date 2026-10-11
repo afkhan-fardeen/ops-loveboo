@@ -1,7 +1,7 @@
 import { Badge, Button, Card } from "@/components/ui";
 import { requireAdmin } from "@/lib/auth";
 import { MODULES } from "@/lib/modules";
-import { adminClient, hasSupabase } from "@/lib/supabase";
+import { adminClient } from "@/lib/supabase";
 import { createUser, deleteUser, updateUser } from "./actions";
 
 export const dynamic = "force-dynamic";
@@ -30,9 +30,7 @@ function Modules({ selected = [] }: { selected?: string[] }) {
 export default async function Users({ searchParams }: { searchParams: Promise<{ ok?: string; err?: string }> }) {
   const me = await requireAdmin();
   const { ok, err } = await searchParams;
-  const users: Profile[] = hasSupabase()
-    ? ((await adminClient().from("profiles").select("*").order("created_at")).data as Profile[] | null) ?? []
-    : [{ id: "demo", email: "demo@loveboo.com", name: "Demo Admin", role: "admin", modules: ["sales"], active: true }];
+  const users = ((await adminClient().from("profiles").select("*").order("created_at")).data as Profile[] | null) ?? [];
 
   return (
     <div className="flex flex-col gap-6">

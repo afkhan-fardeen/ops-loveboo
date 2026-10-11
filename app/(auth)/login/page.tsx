@@ -1,11 +1,10 @@
 import { redirect } from "next/navigation";
 import { Butterfly, Button, Card } from "@/components/ui";
 import { getUser } from "@/lib/auth";
-import { hasSupabase, serverClient } from "@/lib/supabase";
+import { serverClient } from "@/lib/supabase";
 
 async function signIn(form: FormData) {
   "use server";
-  if (!hasSupabase()) redirect("/");
   const { error } = await (await serverClient()).auth.signInWithPassword({
     email: String(form.get("email") ?? "").trim(),
     password: String(form.get("password") ?? ""),
