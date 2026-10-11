@@ -1,6 +1,6 @@
+import Image from "next/image";
 import { redirect } from "next/navigation";
-import { Box, Center, Paper, PasswordInput, Stack, Text, TextInput, Title } from "@mantine/core";
-import { IconChartBar } from "@tabler/icons-react";
+import { Center, Paper, PasswordInput, Stack, Text, TextInput, Title } from "@mantine/core";
 import SubmitButton from "@/components/SubmitButton";
 import { getUser } from "@/lib/auth";
 import { serverClient } from "@/lib/supabase";
@@ -25,8 +25,8 @@ export default async function Login({ searchParams }: { searchParams: Promise<{ 
       <Paper withBorder shadow="sm" radius="md" p="xl" w="100%" maw={400}>
         <Stack gap="lg">
           <Stack gap={4} align="center">
-            <Box c="blue"><IconChartBar size={36} aria-hidden /></Box>
-            <Title order={2}>Love Boo Ops</Title>
+            <Image src="/logo.png" alt="Love Boo" width={150} height={47} priority />
+            <Title order={2} size="h3">Ops portal</Title>
             <Text c="dimmed" size="sm">Sign in to continue</Text>
           </Stack>
           <form action={signIn}>

@@ -1,21 +1,17 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import { Suspense } from "react";
-import { ColorSchemeScript, MantineProvider, createTheme, mantineHtmlProps } from "@mantine/core";
+import { ColorSchemeScript, MantineProvider, mantineHtmlProps } from "@mantine/core";
 import { Notifications } from "@mantine/notifications";
 import FlashToast from "@/components/FlashToast";
+import { makeTheme } from "@/lib/theme";
 import "@mantine/core/styles.css";
 import "@mantine/charts/styles.css";
 import "@mantine/notifications/styles.css";
 
 const inter = Inter({ subsets: ["latin"], display: "swap" });
 
-const theme = createTheme({
-  primaryColor: "blue",
-  fontFamily: inter.style.fontFamily,
-  headings: { fontFamily: inter.style.fontFamily, fontWeight: "650" },
-  defaultRadius: "md",
-});
+const theme = makeTheme(inter.style.fontFamily);
 
 export const metadata: Metadata = { title: "Love Boo Ops", robots: { index: false } };
 

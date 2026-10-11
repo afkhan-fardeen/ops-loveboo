@@ -2,7 +2,7 @@ import ExcelJS from "exceljs";
 import type { Row } from "./data";
 import { timeIn } from "./format";
 
-const TEAL = "FF1C7ED6", MEADOW = "FFE7F5FF";
+const TEAL = "FF006D68", MEADOW = "FFE6F4F3";
 
 function finish(ws: ExcelJS.Worksheet, widths: number[], numericFrom: number) {
   ws.columns.forEach((c, i) => (c.width = widths[i]));

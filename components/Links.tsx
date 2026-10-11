@@ -29,7 +29,7 @@ export function ModuleCard({ href, title, text, icon, badge }: { href: string; t
         </Group>
         <Title order={3} size="h4">{title}</Title>
         <Text c="dimmed" size="sm">{text}</Text>
-        <Group gap={4} mt="auto" c="blue" fw={500}><Text size="sm" fw={500} c="blue">Open</Text><IconArrowRight size={16} /></Group>
+        <Group gap={4} mt="auto" c="brand" fw={500}><Text size="sm" fw={500} c="brand">Open</Text><IconArrowRight size={16} /></Group>
       </Stack>
     </Paper>
   );

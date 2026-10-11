@@ -1,10 +1,10 @@
 "use client";
-import { AreaChart } from "@mantine/charts";
+import dynamic from "next/dynamic";
+import { Skeleton } from "@mantine/core";
 
-export default function SalesChart({ data, currency }: { data: { date: string; "Net sales": number }[]; currency: string }) {
-  const fmt = (v: number) => new Intl.NumberFormat("en-GB", { style: "currency", currency, maximumFractionDigits: 0 }).format(v);
-  return (
-    <AreaChart h={240} data={data} dataKey="date" series={[{ name: "Net sales", color: "blue.6" }]} curveType="monotone"
-      withDots={false} valueFormatter={fmt} gridAxis="y" tickLine="none" />
-  );
+// The chart library is the heaviest dependency: load it after first paint.
+const Chart = dynamic(() => import("./SalesChartInner"), { ssr: false, loading: () => <Skeleton h={240} /> });
+
+export default function SalesChart(props: { data: { date: string; "Net sales": number }[]; currency: string }) {
+  return <Chart {...props} />;
 }

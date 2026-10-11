@@ -14,7 +14,9 @@ export async function middleware(req: NextRequest) {
     },
   });
 
-  const { data: { user } } = await supabase.auth.getUser();
+  // getClaims verifies the JWT locally (no network call) and refreshes the cookie when needed.
+  const { data } = await supabase.auth.getClaims();
+  const user = data?.claims ?? null;
   const isPublic = req.nextUrl.pathname === "/login";
   if (!user && !isPublic) {
     const to = new URL("/login", req.url);
@@ -24,4 +26,4 @@ export async function middleware(req: NextRequest) {
   return res;
 }
 
-export const config = { matcher: ["/((?!_next/static|_next/image|favicon.ico|api/cron).*)"] };
+export const config = { matcher: ["/((?!_next/static|_next/image|api/cron|.*\\.(?:png|svg|jpg|jpeg|webp|ico)$).*)"] };

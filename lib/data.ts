@@ -14,13 +14,21 @@ export const tz = () => process.env.STORE_TIMEZONE ?? "Europe/London";
 const norm = (r: Row): Row => ({ ...r, net_sales: Number(r.net_sales), discounts: Number(r.discounts ?? 0), top_products: r.top_products ?? [], locations: r.locations ?? [], order_list: r.order_list ?? [] });
 
 /** Newest-first rows on or before `upTo` (default: everything). One query, ≤ limit rows. */
-export async function rowsUpTo(upTo?: string, limit = 60): Promise<Row[]> {
+const LIGHT = "date,net_sales,discounts,orders,units,currency,emailed_at";
+
+export async function rowsUpTo(upTo?: string, limit = 60, light = false): Promise<Row[]> {
   const db = adminClient();
-  let q = db.from("daily_sales").select("*").order("date", { ascending: false }).limit(limit);
+  let q = db.from("daily_sales").select((light ? LIGHT : "*") as "*").order("date", { ascending: false }).limit(limit);
   if (upTo) q = q.lte("date", upTo);
   const { data, error } = await q;
   if (error) throw error;
-  return (data as Row[]).map(norm);
+  return (data as unknown as Row[]).map(norm);
+}
+
+/** Newest day in full plus lighter rows behind it (for deltas and month-to-date): smaller payload, parallel queries. */
+export async function rowsForSummary(upTo?: string, limit = 40): Promise<Row[]> {
+  const [head, rest] = await Promise.all([rowsUpTo(upTo, 1), rowsUpTo(upTo, limit, true)]);
+  return head.length ? [head[0], ...rest.filter((r) => r.date !== head[0].date)] : [];
 }
 
 /** Everything the UI and the email need about one day, derived from stored rows. */

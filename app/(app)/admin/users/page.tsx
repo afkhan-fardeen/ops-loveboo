@@ -54,7 +54,7 @@ export default async function Users() {
                     {u.name && <Text size="sm" c="dimmed" truncate>{u.email}</Text>}
                   </div>
                   <Group gap={6} wrap="nowrap">
-                    <Badge variant="light" color={u.role === "admin" ? "blue" : "gray"}>{u.role === "admin" ? "Admin" : "User"}</Badge>
+                    <Badge variant="light" color={u.role === "admin" ? "brand" : "gray"}>{u.role === "admin" ? "Admin" : "User"}</Badge>
                     {!u.active && <Badge variant="light" color="red">Disabled</Badge>}
                   </Group>
                 </Group>

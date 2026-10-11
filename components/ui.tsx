@@ -8,7 +8,7 @@ export function Delta({ value, label }: { value: number | null; label?: string }
   const up = value >= 0;
   return (
     <Group gap={6} wrap="nowrap">
-      <Badge variant="light" color={up ? "teal" : "red"} leftSection={up ? <IconArrowUpRight size={12} /> : <IconArrowDownRight size={12} />}>
+      <Badge variant="light" color={up ? "brand" : "red"} leftSection={up ? <IconArrowUpRight size={12} /> : <IconArrowDownRight size={12} />}>
         {pct(value)}<span style={{ position: "absolute", width: 1, height: 1, overflow: "hidden", clip: "rect(0 0 0 0)" }}>{up ? " increase" : " decrease"}</span>
       </Badge>
       {label && <Text size="xs" c="dimmed">{label}</Text>}

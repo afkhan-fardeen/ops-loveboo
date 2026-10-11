@@ -3,7 +3,7 @@ import { SimpleGrid, Stack, Text } from "@mantine/core";
 import { DownloadButton, TextLink } from "@/components/Links";
 import { DataTable, Kpi, PageHeader, Section } from "@/components/ui";
 import { buildEmail } from "@/lib/email";
-import { rowsUpTo, summarise, tz as storeTz } from "@/lib/data";
+import { rowsForSummary, summarise, tz as storeTz } from "@/lib/data";
 import { dateLabel, int, money, num2, timeIn } from "@/lib/format";
 
 export const dynamic = "force-dynamic";
@@ -11,7 +11,7 @@ export const dynamic = "force-dynamic";
 export default async function Day({ params }: { params: Promise<{ date: string }> }) {
   const { date } = await params;
   if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) notFound();
-  const s = summarise(await rowsUpTo(date, 40));
+  const s = summarise(await rowsForSummary(date));
   if (!s || s.row.date !== date) notFound();
 
   const { row } = s, cur = row.currency, tz = storeTz();

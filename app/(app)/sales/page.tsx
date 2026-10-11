@@ -3,14 +3,14 @@ import SubmitButton from "@/components/SubmitButton";
 import { DownloadButton } from "@/components/Links";
 import SalesChart from "@/components/SalesChart";
 import { DataTable, EmptyState, Kpi, PageHeader, Section } from "@/components/ui";
-import { rowsUpTo, summarise } from "@/lib/data";
+import { rowsForSummary, summarise } from "@/lib/data";
 import { dateLabel, int, money } from "@/lib/format";
 import { sendTestEmail } from "../actions";
 
 export const dynamic = "force-dynamic";
 
 export default async function Overview() {
-  const rows = await rowsUpTo(undefined, 40);
+  const rows = await rowsForSummary();
   const s = summarise(rows);
 
   if (!s) return <EmptyState title="No sales yet">The first report appears after the daily job runs.</EmptyState>;

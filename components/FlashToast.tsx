@@ -18,7 +18,7 @@ export default function FlashToast() {
     shown.current = `${path}|${msg}`;
     notifications.show(
       ok
-        ? { color: "teal", title: "Done", message: ok, icon: <IconCheck size={18} />, autoClose: 4000 }
+        ? { color: "brand", title: "Done", message: ok, icon: <IconCheck size={18} />, autoClose: 4000 }
         : { color: "red", title: "Something went wrong", message: err!, icon: <IconAlertCircle size={18} />, autoClose: 7000 },
     );
     const rest = new URLSearchParams(params.toString());

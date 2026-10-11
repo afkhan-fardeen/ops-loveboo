@@ -1,7 +1,7 @@
 import { dateLabel, int, money, num2, timeIn } from "./format";
 import type { Summary } from "./data";
 
-const C = { teal: "#1c7ed6", linen: "#f1f3f5", ink: "#212529", mute: "#868e96", line: "#e9ecef" };
+const C = { teal: "#006D68", linen: "#f1f3f5", ink: "#212529", mute: "#868e96", line: "#e9ecef" };
 const font = "-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif";
 
 const line = (label: string, value: string, last = false) =>
@@ -32,7 +32,7 @@ export function buildEmail(s: Summary, appUrl: string) {
   const html = `<!doctype html><html><body style="margin:0;background:${C.linen};font-family:${font}">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr><td align="center" style="padding:28px 12px">
 <table role="presentation" width="560" cellpadding="0" cellspacing="0" style="max-width:560px;width:100%">
-<tr><td style="padding:0 4px 14px;font-size:20px;font-weight:700;color:${C.ink}">Love Boo</td></tr>
+<tr><td style="padding:0 4px 14px;font-size:20px;font-weight:700;color:${C.teal}">${appUrl.startsWith("https") ? `<img src="${appUrl}/logo.png" width="112" alt="Love Boo" style="display:block;border:0">` : "Love Boo"}</td></tr>
 <tr><td style="background:#ffffff;border-radius:16px;padding:28px 28px 24px">
   <div style="font-size:20px;font-weight:700;color:${C.ink};line-height:1.3">Daily sales report — ${long}</div>
   <div style="margin-top:10px;font-size:14px"><a href="${link}" style="color:${C.teal};font-weight:600;text-decoration:none">View full report →</a></div>

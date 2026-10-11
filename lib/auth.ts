@@ -9,7 +9,8 @@ const adminEmails = () => (process.env.ADMIN_EMAILS ?? "").split(",").map((e) =>
 
 /** Signed-in user with an active profile, or null. The first ADMIN_EMAILS login bootstraps its own admin profile. */
 export const getUser = cache(async (): Promise<User | null> => {
-  const { data: { user } } = await (await serverClient()).auth.getUser();
+  const { data } = await (await serverClient()).auth.getClaims();
+  const user = data?.claims ? { id: data.claims.sub, email: data.claims.email as string | undefined } : null;
   if (!user?.email) return null;
 
   const db = adminClient();
