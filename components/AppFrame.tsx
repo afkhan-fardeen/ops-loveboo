@@ -28,9 +28,9 @@ export default function AppFrame({ isAdmin, showSales, who, signOut, signOutComp
 
   const railItems = [
     { href: "/", label: "Home", icon: IconHome2, on: path === "/", show: true },
-    { href: "/sales", label: "Sales overview", icon: IconChartBar, on: path === "/sales", show: showSales },
-    { href: "/sales/reports", label: "Sales reports", icon: IconFileText, on: path.startsWith("/sales/reports"), show: showSales },
-    { href: "/sales/settings", label: "Sales settings", icon: IconSettings, on: path.startsWith("/sales/settings"), show: showSales && isAdmin },
+    { href: "/sales", label: "Overview", icon: IconChartBar, on: path === "/sales", show: showSales },
+    { href: "/sales/reports", label: "Reports", icon: IconFileText, on: path.startsWith("/sales/reports"), show: showSales },
+    { href: "/sales/settings", label: "Settings", icon: IconSettings, on: path.startsWith("/sales/settings"), show: showSales && isAdmin },
     { href: "/admin/users", label: "Users", icon: IconUsers, on: path.startsWith("/admin"), show: isAdmin },
   ].filter((i) => i.show);
 
@@ -53,7 +53,7 @@ export default function AppFrame({ isAdmin, showSales, who, signOut, signOutComp
         <Stack gap={2}>
           <NavLink {...link} href="/" label="Home" leftSection={<IconHome2 size={18} />} active={path === "/"} />
           {showSales && (
-            <NavLink label="Sales Reporting" leftSection={<IconChartBar size={18} />} defaultOpened={path.startsWith("/sales")} active={path.startsWith("/sales")} variant="subtle" childrenOffset={28}>
+            <NavLink label="Sales" leftSection={<IconChartBar size={18} />} defaultOpened={path.startsWith("/sales")} active={path.startsWith("/sales")} variant="subtle" childrenOffset={28}>
               <NavLink {...link} href="/sales" label="Overview" active={path === "/sales"} />
               <NavLink {...link} href="/sales/reports" label="Reports" active={path.startsWith("/sales/reports")} />
               {isAdmin && <NavLink {...link} href="/sales/settings" label="Settings" active={path.startsWith("/sales/settings")} />}

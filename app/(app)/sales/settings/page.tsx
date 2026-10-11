@@ -1,4 +1,5 @@
-import { Checkbox, Divider, Group, Paper, Stack, Text, Textarea } from "@mantine/core";
+import { Checkbox, Divider, Group, Paper, Stack, Text } from "@mantine/core";
+import RecipientsField from "@/components/RecipientsField";
 import SubmitButton from "@/components/SubmitButton";
 import { PageHeader } from "@/components/ui";
 import { requireAdmin } from "@/lib/auth";
@@ -23,9 +24,7 @@ export default async function Settings() {
       <Paper withBorder radius="lg" shadow="xs" p="lg">
         <form action={save}>
           <Stack gap="md">
-            <Textarea name="recipients" label="Recipients" autosize minRows={4} defaultValue={cfg.recipients.join("\n")} spellCheck={false}
-              placeholder={"name@loveboo.com\nanother@loveboo.com"}
-              description="One email per line (commas work too). Until loveboo.com is verified in Resend, only the Resend account owner’s address will receive mail." />
+            <RecipientsField initial={cfg.recipients} />
             <Checkbox name="emailEnabled" label="Send the daily email" defaultChecked={cfg.emailEnabled} />
             <Checkbox name="attachExcel" label="Attach the Excel file" defaultChecked={cfg.attachExcel} />
             <Group><SubmitButton>Save settings</SubmitButton></Group>
