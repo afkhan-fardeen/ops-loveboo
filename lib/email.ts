@@ -9,9 +9,10 @@ const line = (label: string, value: string, last = false) =>
   `<tr><td style="padding:12px 0;${last ? "" : `border-bottom:1px solid ${C.line};`}font-size:15px;color:${C.mute}">${label}</td>
    <td align="right" style="padding:12px 0;${last ? "" : `border-bottom:1px solid ${C.line};`}font-size:15px;font-weight:600;color:${C.ink}">${value}</td></tr>`;
 
-export function buildEmail(s: Summary, appUrl: string) {
+export function buildEmail(s: Summary, appUrl: string, name?: string) {
   const { row } = s, cur = row.currency;
-  const long = new Date(`${row.date}T12:00:00Z`).toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short", year: "numeric", timeZone: "UTC" }).replace(/^(\w+)/, "$1,");
+  const at = new Date(`${row.date}T12:00:00Z`);
+  const long = `${at.toLocaleDateString("en-GB", { weekday: "short", timeZone: "UTC" })}, ${at.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" })}`;
   const link = esc(`${appUrl}/sales?date=${row.date}`);
   const stamp = new Date().toLocaleString("en-GB", { timeZone: "Asia/Bahrain", hour12: false });
 
@@ -28,6 +29,8 @@ export function buildEmail(s: Summary, appUrl: string) {
 <table role="presentation" width="560" cellpadding="0" cellspacing="0" style="max-width:560px;width:100%">
 <tr><td style="padding:0 4px 14px;font-size:20px;font-weight:700;color:${C.teal}">${appUrl.startsWith("https") ? `<img src="${esc(appUrl)}/logo.png" width="112" alt="Love Boo" style="display:block;border:0">` : "Love Boo"}</td></tr>
 <tr><td style="background:#ffffff;border-radius:16px;padding:28px 28px 24px">
+  ${name ? `<div style="font-size:16px;color:${C.ink}">Hello ${esc(name)},</div>
+  <div style="margin:4px 0 18px;font-size:14px;color:${C.mute}">Here’s your sales overview for ${long}.</div>` : ""}
   <div style="font-size:20px;font-weight:700;color:${C.ink};line-height:1.3">Daily sales report — ${long}</div>
   <div style="margin-top:10px;font-size:14px"><a href="${link}" style="color:${C.teal};font-weight:600;text-decoration:none">View full report →</a></div>
   <div style="margin-top:6px;font-size:13px;color:${C.mute}">Draft orders excluded.</div>
@@ -39,7 +42,7 @@ export function buildEmail(s: Summary, appUrl: string) {
 <tr><td style="padding:14px 4px;font-size:12px;color:${C.mute}">Love Boo Ops · ${stamp} (Bahrain)</td></tr>
 </table></td></tr></table></body></html>`;
 
-  const text = [`Daily sales report — ${long}`, `View full report: ${link}`, "Draft orders excluded.", "", "Love Boo Store",
+  const text = [...(name ? [`Hello ${name},`, `Here’s your sales overview for ${long}.`, ""] : []), `Daily sales report — ${long}`, `View full report: ${link}`, "Draft orders excluded.", "", "Love Boo Store",
     ...rows.map(([l, v]) => `${l}: ${v}`), "", `Love Boo Ops · ${stamp} (Bahrain)`].join("\n");
   return { subject, html, text };
 }

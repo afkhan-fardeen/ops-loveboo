@@ -9,13 +9,14 @@ import { DataTable, EmptyState, Kpi, PageHeader, Section } from "@/components/ui
 import { dateBounds, rowsForSummary, summarise, tz as storeTz } from "@/lib/data";
 import { buildEmail } from "@/lib/email";
 import { dateLabel, int, money, num2, timeIn } from "@/lib/format";
+import { firstName } from "@/lib/names";
 import { requireModule } from "@/lib/auth";
 import { sendTestEmail } from "../actions";
 
 export const dynamic = "force-dynamic";
 
 export default async function Overview({ searchParams }: { searchParams: Promise<{ date?: string }> }) {
-  await requireModule("sales");
+  const user = await requireModule("sales");
   const { date: raw } = await searchParams;
   const date = raw && /^\d{4}-\d{2}-\d{2}$/.test(raw) ? raw : undefined;
   const [bounds, rows] = await Promise.all([dateBounds(), rowsForSummary(date)]);
@@ -35,7 +36,7 @@ export default async function Overview({ searchParams }: { searchParams: Promise
 
   const { row } = s, cur = row.currency, tz = storeTz();
   const trend = rows.slice(0, 14).reverse().map((r) => ({ date: dateLabel(r.date), "Net sales": r.net_sales }));
-  const email = buildEmail(s, process.env.APP_URL ?? "");
+  const email = buildEmail(s, process.env.APP_URL ?? "", firstName(user.email, user.name));
 
   return (
     <Stack gap="lg">
