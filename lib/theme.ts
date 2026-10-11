@@ -11,4 +11,5 @@ export const makeTheme = (fontFamily: string) =>
     fontFamily,
     headings: { fontFamily, fontWeight: "650" },
     defaultRadius: "md",
+    components: { Paper: { defaultProps: { radius: "lg" } } },
   });

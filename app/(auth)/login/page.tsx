@@ -21,8 +21,8 @@ export default async function Login({ searchParams }: { searchParams: Promise<{ 
   const { next } = await searchParams;
   if (await getUser()) redirect(safe(next));
   return (
-    <Center mih="100dvh" p="md" bg="var(--mantine-color-gray-0)">
-      <Paper withBorder shadow="sm" radius="md" p="xl" w="100%" maw={400}>
+    <Center mih="100dvh" p="md">
+      <Paper withBorder shadow="sm" radius="lg" p="xl" w="100%" maw={400}>
         <Stack gap="lg">
           <Stack gap={4} align="center">
             <Image src="/logo.png" alt="Love Boo" width={150} height={47} priority />

@@ -21,10 +21,10 @@ const ICONS = { sales: IconChartBar, users: IconUsers };
 export function ModuleCard({ href, title, text, icon, badge }: { href: string; title: string; text: string; icon: keyof typeof ICONS; badge?: string }) {
   const Icon = ICONS[icon];
   return (
-    <Paper component={Link} href={href} withBorder p="lg" radius="md" shadow="xs" h="100%" style={{ textDecoration: "none", color: "inherit", display: "block" }}>
+    <Paper component={Link} href={href} withBorder p="lg" radius="lg" shadow="xs" h="100%" className="lift" style={{ textDecoration: "none", color: "inherit", display: "block" }}>
       <Stack gap="sm" h="100%">
         <Group justify="space-between">
-          <ThemeIcon size={44} radius="md" variant="light"><Icon size={24} /></ThemeIcon>
+          <ThemeIcon size={44} radius="lg" variant="light"><Icon size={24} /></ThemeIcon>
           {badge && <Badge variant="light" color="gray">{badge}</Badge>}
         </Group>
         <Title order={3} size="h4">{title}</Title>

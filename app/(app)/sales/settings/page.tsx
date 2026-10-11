@@ -20,7 +20,7 @@ export default async function Settings() {
     <Stack gap="lg" maw={720}>
       <PageHeader title="Settings" eyebrow="Daily email recipients and options. Admins only." />
 
-      <Paper withBorder radius="md" shadow="xs" p="lg">
+      <Paper withBorder radius="lg" shadow="xs" p="lg">
         <form action={save}>
           <Stack gap="md">
             <Textarea name="recipients" label="Recipients" autosize minRows={4} defaultValue={cfg.recipients.join("\n")} spellCheck={false}
@@ -33,7 +33,7 @@ export default async function Settings() {
         </form>
       </Paper>
 
-      <Paper withBorder radius="md" shadow="xs" p="lg">
+      <Paper withBorder radius="lg" shadow="xs" p="lg">
         <Stack gap="sm">
           {info.map(([k, v], i) => (
             <div key={k}>

@@ -8,6 +8,7 @@ import { makeTheme } from "@/lib/theme";
 import "@mantine/core/styles.css";
 import "@mantine/charts/styles.css";
 import "@mantine/notifications/styles.css";
+import "./globals.css";
 
 const inter = Inter({ subsets: ["latin"], display: "swap" });
 

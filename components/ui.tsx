@@ -18,7 +18,7 @@ export function Delta({ value, label }: { value: number | null; label?: string }
 
 export function Kpi({ label, value, note, deltas }: { label: string; value: string; note?: string; deltas?: { label: string; value: number | null }[] }) {
   return (
-    <Paper withBorder p="md" radius="md" shadow="xs" h="100%">
+    <Paper withBorder p="md" radius="lg" shadow="xs" h="100%">
       <Stack gap={6}>
         <Text size="xs" tt="uppercase" fw={700} c="dimmed" style={{ letterSpacing: 0.4 }}>{label}</Text>
         <Text fz={{ base: 24, sm: 28 }} fw={700} lh={1.2}>{value}</Text>
@@ -53,7 +53,7 @@ export function DataTable<T>({ cols, rows, rowKey, minWidth = 420 }: { cols: Col
 
 export function Section({ title, subtitle, children, flush }: { title: string; subtitle?: string; children: ReactNode; flush?: boolean }) {
   return (
-    <Paper withBorder radius="md" shadow="xs" p={flush ? 0 : "md"}>
+    <Paper withBorder radius="lg" shadow="xs" p={flush ? 0 : "md"}>
       <Stack gap={2} p={flush ? "md" : 0} pb={flush ? "xs" : "sm"}>
         <Title order={3} size="h5">{title}</Title>
         {subtitle && <Text size="sm" c="dimmed">{subtitle}</Text>}
@@ -65,7 +65,7 @@ export function Section({ title, subtitle, children, flush }: { title: string; s
 
 export function EmptyState({ title, children }: { title: string; children?: ReactNode }) {
   return (
-    <Paper withBorder radius="md" p="xl">
+    <Paper withBorder radius="lg" p="xl">
       <Stack align="center" gap="xs" ta="center">
         <ThemeIcon size={48} radius="xl" variant="light" color="gray"><IconInbox size={24} /></ThemeIcon>
         <Title order={3} size="h4">{title}</Title>

@@ -15,7 +15,7 @@ export default async function Reports() {
       {rows.length === 0 ? (
         <EmptyState title="No reports yet">Past days will be listed here once the daily job has run.</EmptyState>
       ) : (
-        <Paper withBorder radius="md" shadow="xs">
+        <Paper withBorder radius="lg" shadow="xs">
           <DataTable minWidth={620} rows={rows} rowKey={(r) => r.date} cols={[
             { label: "Date", render: (r) => <TextLink href={`/sales/reports/${r.date}`}>{dateLabel(r.date, true)}</TextLink> },
             { label: "Net sales", align: "right", render: (r) => money(r.net_sales, r.currency) },
