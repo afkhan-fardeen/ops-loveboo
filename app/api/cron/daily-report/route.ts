@@ -24,7 +24,11 @@ export async function GET(req: NextRequest) {
   try {
     const end = yesterdayIn(process.env.STORE_TIMEZONE ?? "Europe/London");
     if (backfill > 0) {
-      for (let i = backfill; i >= 1; i--) await run(addDays(end, -i), { email: false }).catch(() => null);
+      const { fetchRefunds } = await import("@/lib/shopify");
+      const { dayRange } = await import("@/lib/format");
+      const tz = process.env.STORE_TIMEZONE ?? "Europe/London";
+      const refunds = await fetchRefunds(dayRange(addDays(end, -backfill), tz).from);
+      for (let i = backfill; i >= 1; i--) await run(addDays(end, -i), { email: false, refunds }).catch(() => null);
     }
     const result = await run(url.searchParams.get("date") ?? end, { resend: url.searchParams.has("resend") });
     revalidateTag("sales");

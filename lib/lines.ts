@@ -16,3 +16,29 @@ export function lineAmounts(l: RawLine) {
     returned: exVat * (1 - kept),
   };
 }
+
+export type RefundInput = {
+  taxesIncluded: boolean;
+  items: { quantity: number; subtotal: number; tax: number }[];
+  shipping: { subtotal: number; tax: number }[];
+};
+
+/**
+ * What one refund removes from sales, in the shop currency. When prices include VAT, Shopify's refund
+ * subtotals include it too, so the ex-VAT value is subtotal − tax. Mirrors Shopify's Sales report:
+ * returns (items ex VAT), shipping (ex VAT), tax, and the total taken back from "Total sales".
+ */
+export function refundAmounts(r: RefundInput) {
+  const sum = (xs: number[]) => xs.reduce((a, b) => a + b, 0);
+  const itemsSub = sum(r.items.map((i) => i.subtotal)), itemsTax = sum(r.items.map((i) => i.tax));
+  const shipSub = sum(r.shipping.map((s) => s.subtotal)), shipTax = sum(r.shipping.map((s) => s.tax));
+  const ex = (sub: number, tax: number) => (r.taxesIncluded ? sub - tax : sub);
+  const gross = (sub: number, tax: number) => (r.taxesIncluded ? sub : sub + tax);
+  return {
+    returnsEx: ex(itemsSub, itemsTax),
+    shippingEx: ex(shipSub, shipTax),
+    tax: itemsTax + shipTax,
+    total: gross(itemsSub, itemsTax) + gross(shipSub, shipTax),
+    units: sum(r.items.map((i) => i.quantity)),
+  };
+}

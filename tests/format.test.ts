@@ -67,3 +67,17 @@ test("norm fills fields missing from older cached rows, so totals are never NaN"
   assert.equal(r.net_sales, 82.86);
   assert.ok([r.gross_sales, r.returns, r.taxes, r.discounts].every((n) => Number.isFinite(n)));
 });
+
+test("refundAmounts matches Shopify's Sales report for real refunds", async () => {
+  const { refundAmounts } = await import("../lib/lines");
+  const close = (a: number, b: number) => assert.ok(Math.abs(a - b) < 1e-9, `${a} !== ${b}`);
+  // LB2778: one item returned, £7.29 incl. £1.22 VAT. Shopify showed sales reversals of −£6.07 on that day.
+  let r = refundAmounts({ taxesIncluded: true, items: [{ quantity: 1, subtotal: 7.29, tax: 1.22 }], shipping: [] });
+  close(r.returnsEx, 6.07); close(r.tax, 1.22); close(r.total, 7.29); close(r.shippingEx, 0); assert.equal(r.units, 1);
+  // LB2866: shipping-only refund of £18.52 (no VAT). Shopify showed shipping −£18.52 on 7 Oct.
+  r = refundAmounts({ taxesIncluded: true, items: [], shipping: [{ subtotal: 18.52, tax: 0 }] });
+  close(r.shippingEx, 18.52); close(r.total, 18.52); close(r.returnsEx, 0);
+  // Prices excluding VAT: subtotal is already ex VAT, tax comes on top.
+  r = refundAmounts({ taxesIncluded: false, items: [{ quantity: 2, subtotal: 20, tax: 4 }], shipping: [{ subtotal: 5, tax: 1 }] });
+  close(r.returnsEx, 20); close(r.shippingEx, 5); close(r.tax, 5); close(r.total, 30);
+});
