@@ -1,0 +1,25 @@
+import { NextRequest, NextResponse } from "next/server";
+import { addDays, yesterdayIn } from "@/lib/format";
+import { run, sendFailure } from "@/lib/report";
+
+export const dynamic = "force-dynamic";
+export const maxDuration = 60;
+
+export async function GET(req: NextRequest) {
+  if (!process.env.CRON_SECRET || req.headers.get("authorization") !== `Bearer ${process.env.CRON_SECRET}`)
+    return new NextResponse("Unauthorized", { status: 401 });
+
+  const url = new URL(req.url);
+  // ?backfill=60 loops the last N days through the same function (no emails)
+  const backfill = Number(url.searchParams.get("backfill") ?? 0);
+  try {
+    const end = yesterdayIn(process.env.STORE_TIMEZONE ?? "Europe/London");
+    if (backfill > 0) {
+      for (let i = backfill; i >= 1; i--) await run(addDays(end, -i), { email: false }).catch(() => null);
+    }
+    return NextResponse.json(await run(url.searchParams.get("date") ?? end, { resend: url.searchParams.has("resend") }));
+  } catch (e) {
+    await sendFailure(e).catch(() => null);
+    return NextResponse.json({ error: String(e) }, { status: 500 });
+  }
+}

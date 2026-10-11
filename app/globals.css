@@ -1,0 +1,63 @@
+@import "tailwindcss";
+
+/* Love Boo toolkit palette — the only colours used in the portal */
+@theme {
+  --color-teal: #006d68;   /* Dark Teal / Fern: primary */
+  --color-meadow: #e3eaba; /* Meadowsweet: soft green */
+  --color-linen: #f9f6ec;  /* Linen: canvas */
+  --color-ink: #222222;    /* Shadow: text */
+  --color-berry: #ff3b40;  /* Strawberry: rare highlight */
+
+  --breakpoint-md: 48rem;
+  --breakpoint-xl: 75rem;
+
+  --font-sans: var(--font-inter), system-ui, sans-serif;
+  --font-display: var(--font-fraunces), Georgia, serif;
+}
+
+html { color-scheme: light; }
+
+body {
+  background-color: var(--color-linen);
+  background-image: radial-gradient(60rem 28rem at 85% -8%, rgb(227 234 186 / 0.75), transparent 70%);
+  background-attachment: fixed;
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  font-size: 16px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+.tnum { font-variant-numeric: tabular-nums; }
+
+:focus-visible { outline: 2px solid var(--color-teal); outline-offset: 2px; border-radius: 6px; }
+
+/* Glass: only on cards and the nav surface. Opaque fallbacks keep text AA. */
+.glass {
+  background: rgb(255 255 255 / 0.78);
+  border: 1px solid rgb(34 34 34 / 0.08);
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+}
+@media (min-width: 75rem) {
+  .glass { -webkit-backdrop-filter: blur(20px); backdrop-filter: blur(20px); }
+}
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .glass { background: #fff; }
+}
+@media (prefers-reduced-transparency: reduce) {
+  .glass { background: #fff; -webkit-backdrop-filter: none; backdrop-filter: none; }
+}
+
+/* Tables become stacked cards on small screens (CSS only) */
+@media (max-width: 47.99rem) {
+  .rtable thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+  .rtable, .rtable tbody, .rtable tr, .rtable td { display: block; }
+  .rtable tr { position: relative; padding: 0.75rem 1rem; border-bottom: 1px solid rgb(34 34 34 / 0.08); }
+  .rtable td { display: flex; justify-content: space-between; gap: 1rem; padding: 0.25rem 0 !important; text-align: right !important; }
+  .rtable td::before { content: attr(data-label); color: rgb(34 34 34 / 0.7); text-align: left; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+}
