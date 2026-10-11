@@ -17,7 +17,7 @@ export default async function Reports() {
       ) : (
         <Paper withBorder radius="lg" shadow="xs">
           <DataTable minWidth={620} rows={rows} rowKey={(r) => r.date} cols={[
-            { label: "Date", render: (r) => <TextLink href={`/sales/reports/${r.date}`}>{dateLabel(r.date, true)}</TextLink> },
+            { label: "Date", render: (r) => <TextLink href={`/sales?date=${r.date}`}>{dateLabel(r.date, true)}</TextLink> },
             { label: "Net sales", align: "right", render: (r) => money(r.net_sales, r.currency) },
             { label: "Orders", align: "right", render: (r) => int(r.orders) },
             { label: "AOV", align: "right", render: (r) => money(r.orders ? r.net_sales / r.orders : 0, r.currency, 2) },

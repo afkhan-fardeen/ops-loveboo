@@ -1,39 +1,64 @@
-import { SimpleGrid, Stack } from "@mantine/core";
-import SubmitButton from "@/components/SubmitButton";
+import { Accordion, AccordionControl, AccordionItem, AccordionPanel, SimpleGrid, Stack, Text } from "@mantine/core";
 import { DownloadButton } from "@/components/Links";
+import DateSwitcher from "@/components/DateSwitcher";
 import SalesChart from "@/components/SalesChart";
+import SubmitButton from "@/components/SubmitButton";
 import { DataTable, EmptyState, Kpi, PageHeader, Section } from "@/components/ui";
-import { rowsForSummary, summarise } from "@/lib/data";
-import { dateLabel, int, money } from "@/lib/format";
+import { dateBounds, rowsForSummary, summarise, tz as storeTz } from "@/lib/data";
+import { buildEmail } from "@/lib/email";
+import { dateLabel, int, money, num2, timeIn } from "@/lib/format";
 import { sendTestEmail } from "../actions";
 
 export const dynamic = "force-dynamic";
 
-export default async function Overview() {
-  const rows = await rowsForSummary();
+export default async function Overview({ searchParams }: { searchParams: Promise<{ date?: string }> }) {
+  const { date: raw } = await searchParams;
+  const date = raw && /^\d{4}-\d{2}-\d{2}$/.test(raw) ? raw : undefined;
+  const [bounds, rows] = await Promise.all([dateBounds(), rowsForSummary(date)]);
+
+  if (!bounds) return <EmptyState title="No sales yet">The first report appears after the daily job runs.</EmptyState>;
+
   const s = summarise(rows);
+  const shown = date ?? bounds.max;
 
-  if (!s) return <EmptyState title="No sales yet">The first report appears after the daily job runs.</EmptyState>;
+  if (!s || s.row.date !== shown)
+    return (
+      <Stack gap="lg">
+        <PageHeader title="Sales"><DateSwitcher value={shown} min={bounds.min} max={bounds.max} /></PageHeader>
+        <EmptyState title={`No report for ${dateLabel(shown, true)}`}>Pick another day. Reports exist from {dateLabel(bounds.min)} to {dateLabel(bounds.max)}.</EmptyState>
+      </Stack>
+    );
 
-  const { row } = s, cur = row.currency;
+  const { row } = s, cur = row.currency, tz = storeTz();
   const trend = rows.slice(0, 14).reverse().map((r) => ({ date: dateLabel(r.date), "Net sales": r.net_sales }));
+  const email = buildEmail(s, process.env.APP_URL ?? "");
 
   return (
     <Stack gap="lg">
-      <PageHeader eyebrow="Latest report" title={dateLabel(row.date, true)}>
-        <DownloadButton href={`/sales/export?date=${row.date}`}>Download Excel</DownloadButton>
-        <form action={sendTestEmail}><SubmitButton variant="default">Email me this</SubmitButton></form>
+      <PageHeader eyebrow={row.date === bounds.max ? "Latest report" : "Sales report"} title={dateLabel(row.date, true)}>
+        <DateSwitcher value={row.date} min={bounds.min} max={bounds.max} />
       </PageHeader>
 
       <SimpleGrid cols={{ base: 2, md: 4 }}>
-        <Kpi label="Net sales" value={money(row.net_sales, cur)} deltas={[{ label: "vs yesterday", value: s.vsPrev }, { label: "vs last week", value: s.vsWeek }]} />
+        <Kpi label="Net sales" value={money(row.net_sales, cur)} note={`${money(row.discounts, cur, 2)} discounts`} deltas={[{ label: "vs yesterday", value: s.vsPrev }, { label: "vs last week", value: s.vsWeek }]} />
         <Kpi label="Orders" value={int(row.orders)} note={`${int(row.units)} units`} />
         <Kpi label="Average order" value={money(s.aov, cur, 2)} />
         <Kpi label="Month to date" value={money(s.mtdNet, cur)} note={`${int(s.mtdOrders)} orders`} />
       </SimpleGrid>
 
-      <Section title="Last 14 days" subtitle="Net sales per day">
+      <Section title="Last 14 days" subtitle={`Net sales per day, up to ${dateLabel(row.date)}`}>
         <SalesChart data={trend} currency={cur} />
+      </Section>
+
+      <Section title="Orders" subtitle="Draft orders excluded. Amounts are net of VAT." flush>
+        {row.order_list.length === 0 ? <Text c="dimmed" p="md">No orders on this day.</Text> : (
+          <DataTable rows={row.order_list} rowKey={(o) => o.name} cols={[
+            { label: "Order", render: (o) => <Text fw={600} size="sm">{o.name}</Text> },
+            { label: "Time", render: (o) => timeIn(o.time, tz) },
+            { label: "Amount", align: "right", render: (o) => num2(o.amount) },
+            { label: "Discount", align: "right", render: (o) => num2(o.discount) },
+          ]} />
+        )}
       </Section>
 
       <SimpleGrid cols={{ base: 1, lg: 2 }}>
@@ -52,6 +77,26 @@ export default async function Overview() {
           ]} />
         </Section>
       </SimpleGrid>
+
+      <Section title="Share this day" subtitle="Download the Excel report or email this day’s summary to yourself." >
+        <form action={sendTestEmail}>
+          <input type="hidden" name="date" value={row.date} />
+          <SimpleGrid cols={{ base: 1, xs: 2 }} maw={420}>
+            <DownloadButton href={`/sales/export?date=${row.date}`}>Download Excel</DownloadButton>
+            <SubmitButton variant="default">Email me this day</SubmitButton>
+          </SimpleGrid>
+        </form>
+      </Section>
+
+      <Accordion variant="contained" radius="lg" chevronPosition="right">
+        <AccordionItem value="email">
+          <AccordionControl>Email preview</AccordionControl>
+          <AccordionPanel>
+            <Text size="sm" c="dimmed" mb="sm">Subject: {email.subject}</Text>
+            <iframe title="Email preview" sandbox="" srcDoc={email.html} style={{ width: "100%", height: 460, border: "1px solid var(--mantine-color-default-border)", borderRadius: 8, background: "#fff" }} />
+          </AccordionPanel>
+        </AccordionItem>
+      </Accordion>
     </Stack>
   );
 }

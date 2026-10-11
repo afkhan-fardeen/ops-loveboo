@@ -25,6 +25,16 @@ export async function rowsUpTo(upTo?: string, limit = 60, light = false): Promis
   return (data as unknown as Row[]).map(norm);
 }
 
+/** Oldest and newest stored dates, for the date switcher limits. */
+export async function dateBounds(): Promise<{ min: string; max: string } | null> {
+  const db = adminClient();
+  const [a, b] = await Promise.all([
+    db.from("daily_sales").select("date").order("date", { ascending: true }).limit(1),
+    db.from("daily_sales").select("date").order("date", { ascending: false }).limit(1),
+  ]);
+  return a.data?.[0] && b.data?.[0] ? { min: a.data[0].date, max: b.data[0].date } : null;
+}
+
 /** Newest day in full plus lighter rows behind it (for deltas and month-to-date): smaller payload, parallel queries. */
 export async function rowsForSummary(upTo?: string, limit = 40): Promise<Row[]> {
   const [head, rest] = await Promise.all([rowsUpTo(upTo, 1), rowsUpTo(upTo, limit, true)]);

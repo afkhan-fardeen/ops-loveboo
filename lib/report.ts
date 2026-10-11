@@ -40,8 +40,8 @@ export async function sendFailure(err: unknown) {
   });
 }
 
-export async function sendTest(to: string) {
-  const s = summarise(await rowsUpTo(undefined, 60));
+export async function sendTest(to: string, date?: string) {
+  const s = summarise(await rowsUpTo(date, 60));
   if (!s) throw new Error("No data yet");
   const { subject, html, text } = buildEmail(s, process.env.APP_URL ?? "");
   const attachments = [{ filename: workbookName(s.row.date), content: await buildWorkbook(s.row) }];
