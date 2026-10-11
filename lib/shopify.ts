@@ -1,5 +1,6 @@
 import { dayRange } from "./format";
 import type { Location, Order, Product } from "./data";
+import { lineAmounts } from "./lines";
 
 const QUERY = `query($q: String!, $after: String) {
   orders(first: 100, after: $after, query: $q) {
@@ -9,6 +10,9 @@ const QUERY = `query($q: String!, $after: String) {
       createdAt
       taxesIncluded
       sourceName
+      discountCodes
+      currentTotalPriceSet { shopMoney { amount } }
+      currentTotalTaxSet { shopMoney { amount } }
       currentSubtotalPriceSet { shopMoney { currencyCode } }
       shippingAddress { country city }
       lineItems(first: 100) {
@@ -29,7 +33,8 @@ type LineItem = {
   discountAllocations: { allocatedAmountSet: Money }[]; taxLines: { priceSet: Money }[];
 };
 type ShopifyOrder = {
-  name: string; createdAt: string; taxesIncluded: boolean; sourceName: string | null;
+  name: string; createdAt: string; taxesIncluded: boolean; sourceName: string | null; discountCodes: string[];
+  currentTotalPriceSet: Money; currentTotalTaxSet: Money;
   currentSubtotalPriceSet: { shopMoney: { currencyCode: string } };
   shippingAddress: { country: string | null; city: string | null } | null;
   lineItems: { nodes: LineItem[] };
@@ -50,7 +55,7 @@ export async function fetchDay(date: string) {
   const q = `created_at:>='${from}' created_at:<'${to}' -status:cancelled -test:true`;
   const url = `https://${process.env.SHOPIFY_STORE_DOMAIN}/admin/api/${process.env.SHOPIFY_API_VERSION ?? "2025-07"}/graphql.json`;
 
-  let net = 0, discounts = 0, orders = 0, units = 0, currency = "GBP", after: string | null = null;
+  let net = 0, discounts = 0, returns = 0, shipping = 0, taxes = 0, totalSales = 0, orders = 0, units = 0, currency = "GBP", after: string | null = null;
   const products = new Map<string, Product>();
   const places = new Map<string, Location>();
   const orderList: Order[] = [];
@@ -74,16 +79,16 @@ export async function fetchDay(date: string) {
       const country = o.shippingAddress?.country ?? "Unknown", city = tidyCity(o.shippingAddress?.city);
       const place = places.get(`${country}|${city}`) ?? { country, city, orders: 0, units: 0, net: 0 };
       place.orders++;
-      const entry: Order = { name: o.name, time: o.createdAt, units: 0, amount: 0, discount: 0 };
+      const entry: Order = { name: o.name, time: o.createdAt, units: 0, amount: 0, discount: 0, country, codes: o.discountCodes };
+      let returned = 0;
 
       for (const li of o.lineItems.nodes) {
-        const kept = li.quantity ? li.currentQuantity / li.quantity : 1; // quantity left after returns
         const allocated = li.discountAllocations.reduce((t, d) => t + amount(d.allocatedAmountSet), 0);
-        const afterDiscount = amount(li.originalTotalSet) - allocated;
         const vat = o.taxesIncluded ? li.taxLines.reduce((t, x) => t + amount(x.priceSet), 0) : 0;
-        const lineNet = (afterDiscount - vat) * kept;
-        // Express the discount ex-VAT as well, so net + discount ties back to pre-discount sales.
-        const lineDiscount = (afterDiscount > 0 ? allocated * ((afterDiscount - vat) / afterDiscount) : allocated) * kept;
+        const { net: lineNet, discount: lineDiscount, returned: lineReturned } = lineAmounts({
+          quantity: li.quantity, currentQuantity: li.currentQuantity, original: amount(li.originalTotalSet), allocated, vat,
+        });
+        returned += lineReturned;
 
         entry.amount += lineNet;
         entry.discount += lineDiscount;
@@ -97,11 +102,15 @@ export async function fetchDay(date: string) {
         products.set(li.name, p);
       }
 
+      // What the customer paid, and the VAT inside it. Shipping (ex VAT) is what remains after items and VAT.
+      const total = amount(o.currentTotalPriceSet), tax = amount(o.currentTotalTaxSet);
+      const ship = Math.max(0, total - entry.amount - tax);
+
       place.net += entry.amount;
       places.set(`${country}|${city}`, place);
-      net += entry.amount;
-      discounts += entry.discount;
-      orderList.push({ ...entry, amount: round2(entry.amount), discount: round2(entry.discount) });
+      net += entry.amount; discounts += entry.discount; returns += returned;
+      shipping += ship; taxes += tax; totalSales += total;
+      orderList.push({ ...entry, amount: round2(entry.amount), discount: round2(entry.discount), gross: round2(entry.amount + entry.discount + returned), shipping: round2(ship), tax: round2(tax), total: round2(total) });
     }
     after = page.pageInfo.hasNextPage ? page.pageInfo.endCursor : null;
   } while (after);
@@ -109,7 +118,8 @@ export async function fetchDay(date: string) {
   const top = [...products.values()].sort((a, b) => b.net - a.net).slice(0, 15).map((p) => ({ ...p, net: round2(p.net) }));
   const locations = [...places.values()].sort((a, b) => b.net - a.net).map((l) => ({ ...l, net: round2(l.net) }));
   return {
-    net_sales: round2(net), discounts: round2(discounts), orders, units, top_products: top, locations,
+    net_sales: round2(net), discounts: round2(discounts), returns: round2(returns), gross_sales: round2(net + discounts + returns),
+    shipping: round2(shipping), taxes: round2(taxes), total_sales: round2(totalSales), orders, units, top_products: top, locations,
     order_list: orderList.sort((a, b) => b.time.localeCompare(a.time)), currency,
   };
 }

@@ -4,7 +4,7 @@ import { addDays, dayRange, pct, pctChange } from "../lib/format";
 import { summarise, type Row } from "../lib/data";
 
 const row = (date: string, net: number, orders = 1): Row => ({
-  date, net_sales: net, discounts: 0, orders, units: orders, currency: "GBP", emailed_at: null, top_products: [], locations: [], order_list: [],
+  date, net_sales: net, discounts: 0, gross_sales: net, returns: 0, shipping: 0, taxes: 0, total_sales: net, orders, units: orders, currency: "GBP", emailed_at: null, top_products: [], locations: [], order_list: [],
 });
 
 test("addDays crosses month and year boundaries", () => {
@@ -36,4 +36,24 @@ test("summarise derives deltas and month-to-date from stored rows", () => {
   assert.equal(s.mtdNet, 280);
   assert.equal(s.mtdOrders, 6);
   assert.equal(s.aov, 30);
+});
+
+test("lineAmounts: discount, VAT and returns", async () => {
+  const { lineAmounts } = await import("../lib/lines");
+  const close = (a: number, b: number) => assert.ok(Math.abs(a - b) < 1e-9, `${a} !== ${b}`);
+  // £12 item, no discount, no VAT
+  let r = lineAmounts({ quantity: 1, currentQuantity: 1, original: 12, allocated: 0, vat: 0 });
+  close(r.net, 12); close(r.discount, 0); close(r.returned, 0);
+  // £12 with £2 discount: net 10, discount 2
+  r = lineAmounts({ quantity: 1, currentQuantity: 1, original: 12, allocated: 2, vat: 0 });
+  close(r.net, 10); close(r.discount, 2);
+  // VAT-inclusive: £12 with £2 discount, £1.67 VAT inside → net 8.33; discount ex VAT = 2 × (8.33/10)
+  r = lineAmounts({ quantity: 1, currentQuantity: 1, original: 12, allocated: 2, vat: 1.67 });
+  close(r.net, 8.33); close(r.discount, 2 * (8.33 / 10));
+  // 2 bought, 1 returned: half stays, half is returned
+  r = lineAmounts({ quantity: 2, currentQuantity: 1, original: 20, allocated: 0, vat: 0 });
+  close(r.net, 10); close(r.returned, 10);
+  // fully discounted line has no division by zero
+  r = lineAmounts({ quantity: 1, currentQuantity: 1, original: 5, allocated: 5, vat: 0 });
+  close(r.net, 0); close(r.discount, 5);
 });

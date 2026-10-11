@@ -2,7 +2,11 @@ import type { Location, Product, Row } from "./data";
 
 export function totals(rows: Row[]) {
   const net = rows.reduce((a, r) => a + r.net_sales, 0), orders = rows.reduce((a, r) => a + r.orders, 0);
-  return { net, orders, units: rows.reduce((a, r) => a + r.units, 0), discounts: rows.reduce((a, r) => a + r.discounts, 0), aov: orders ? net / orders : 0 };
+  const sum = (f: (r: Row) => number) => rows.reduce((a, r) => a + f(r), 0);
+  return {
+    net, orders, units: sum((r) => r.units), discounts: sum((r) => r.discounts), aov: orders ? net / orders : 0,
+    gross: sum((r) => r.gross_sales), returns: sum((r) => r.returns), shipping: sum((r) => r.shipping), taxes: sum((r) => r.taxes), total: sum((r) => r.total_sales),
+  };
 }
 
 export function aggProducts(rows: Row[]): Product[] {

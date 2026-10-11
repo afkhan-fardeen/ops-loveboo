@@ -4,6 +4,11 @@ create table daily_sales (
   orders       int           not null,
   units        int           not null,
   discounts    numeric(12,2) not null default 0,
+  gross_sales  numeric(12,2) not null default 0,   -- net + discounts + returns
+  returns      numeric(12,2) not null default 0,
+  shipping     numeric(12,2) not null default 0,   -- ex VAT
+  taxes        numeric(12,2) not null default 0,
+  total_sales  numeric(12,2) not null default 0,   -- what customers paid: net + shipping + taxes
   top_products jsonb         not null default '[]',
   order_list   jsonb         not null default '[]',  -- [{name, time, amount, discount}]
   locations    jsonb         not null default '[]',  -- [{country, city, orders, units, net}]

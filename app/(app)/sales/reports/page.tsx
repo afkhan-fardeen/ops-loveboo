@@ -79,10 +79,10 @@ async function ReportBody({ from, to, n, min, max, isAdmin }: { from: string; to
       ) : (
         <>
           <SimpleGrid cols={{ base: 2, md: 4 }}>
-            <Kpi icon={<IconCurrencyPound size={16} />} label="Net sales" value={money(t.net, cur)} deltas={[{ label, value: vs(t.net, p.net) }]} />
+            <Kpi icon={<IconCurrencyPound size={16} />} label="Net sales" value={money(t.net, cur)} note={`${money(t.discounts, cur)} discounts`} deltas={[{ label, value: vs(t.net, p.net) }]} />
             <Kpi icon={<IconShoppingBag size={16} />} label="Orders" value={int(t.orders)} note={`${int(t.units)} units`} deltas={[{ label, value: vs(t.orders, p.orders) }]} />
             <Kpi icon={<IconReceipt2 size={16} />} label="Average order" value={money(t.aov, cur, 2)} deltas={[{ label, value: vs(t.aov, p.aov) }]} />
-            <Kpi icon={<IconDiscount2 size={16} />} label="Discounts" value={money(t.discounts, cur)} note={`${share(t.discounts, t.net + t.discounts)} of pre-discount sales`} />
+            <Kpi icon={<IconDiscount2 size={16} />} label="Total sales" value={money(t.total, cur)} note={`${money(t.shipping, cur)} shipping + ${money(t.taxes, cur)} VAT`} deltas={[{ label, value: vs(t.total, p.total) }]} />
           </SimpleGrid>
 
           <Section title="Daily net sales" subtitle={hasPrev && prevRows.length ? "Compared with the previous period of the same length" : "No earlier data to compare with"}>
@@ -102,7 +102,8 @@ async function ReportBody({ from, to, n, min, max, isAdmin }: { from: string; to
                   { label: "Date", render: (r) => <TextLink href={`/sales?date=${r.date}`}>{dateLabel(r.date, true)}</TextLink> },
                   { label: "Net sales", align: "right", render: (r) => money(r.net_sales, cur) },
                   { label: "Orders", align: "right", render: (r) => int(r.orders) },
-                  { label: "AOV", align: "right", hideBelow: "sm", render: (r) => money(r.orders ? r.net_sales / r.orders : 0, cur, 2) },
+                  { label: "Total sales", align: "right", hideBelow: "sm", render: (r) => money(r.total_sales, cur) },
+                  { label: "AOV", align: "right", hideBelow: "md", render: (r) => money(r.orders ? r.net_sales / r.orders : 0, cur, 2) },
                   { label: "Discounts", align: "right", hideBelow: "md", render: (r) => money(r.discounts, cur, 2) },
                   ...(isAdmin ? [{ label: "Send", align: "right" as const, render: (r: { date: string }) => (
                     <form action={sendReportNow}>

@@ -25,7 +25,8 @@ function summary(ws: ExcelJS.Worksheet, headers: (string | number)[], rows: (str
   const h = ws.addRow(headers);
   h.font = { bold: true, color: { argb: "FFFFFFFF" } };
   h.fill = fill(TEAL);
-  const body = [...rows, total];
+  const tidy = (r: (string | number)[]) => r.map((v) => (typeof v === "number" ? Math.round(v * 100) / 100 : v));
+  const body = [...rows, total].map(tidy);
   body.forEach((values, i) => {
     const r = ws.addRow(values);
     if (i === body.length - 1) { r.font = { bold: true }; r.fill = fill(MEADOW); }
@@ -39,27 +40,53 @@ function summary(ws: ExcelJS.Worksheet, headers: (string | number)[], rows: (str
 
 const moneyFmt = (currency: string) => `[$${currency === "GBP" ? "£" : currency + " "}]#,##0.00`;
 const sum = <T,>(xs: T[], f: (x: T) => number) => xs.reduce((a, x) => a + f(x), 0);
+const round = (n: number) => Math.round(n * 100) / 100;
 
-/** One report day: orders with totals, then a by-country summary; plus a Location Sales sheet. */
+/** One report day: orders with totals, a Shopify-style sales summary and a by-country summary; plus a Location Sales sheet. */
 export async function buildWorkbook(row: Row) {
   const tz = process.env.STORE_TIMEZONE ?? "Europe/London";
   const money = moneyFmt(row.currency);
   const wb = new ExcelJS.Workbook();
   const countries = byCountry(row.locations);
 
+  const orders = row.order_list;
   const sales = wb.addWorksheet("Daily Sales");
-  sales.addRow(["Order", "Time", "Units", "Amount", "Discount"]);
-  row.order_list.forEach((o) => sales.addRow([o.name, time12(o.time, tz), o.units ?? 0, o.amount, o.discount]));
-  const e = row.order_list.length + 1;
-  sales.addRow([`Total (${row.order_list.length} orders)`, "",
-    { formula: `SUM(C2:C${e})`, result: sum(row.order_list, (o) => o.units ?? 0) },
-    { formula: `SUM(D2:D${e})`, result: sum(row.order_list, (o) => o.amount) },
-    { formula: `SUM(E2:E${e})`, result: sum(row.order_list, (o) => o.discount) }]);
-  [4, 5].forEach((c) => (sales.getColumn(c).numFmt = money));
-  finish(sales, [30, 12, 10, 16, 16], 3);
-  summary(sales, ["Summary by location", "Orders", "Units", "Net sales"],
-    countries.map((c) => [c.country, c.orders, c.units, c.net]),
-    ["Total", sum(countries, (c) => c.orders), sum(countries, (c) => c.units), sum(countries, (c) => c.net)], { 4: money });
+  sales.addRow(["Order", "Time", "Country", "Units", "Gross", "Discount", "Net sales", "Shipping", "VAT", "Total paid", "Discount code"]);
+  orders.forEach((o) => sales.addRow([
+    o.name, time12(o.time, tz), o.country ?? "", o.units ?? 0,
+    o.gross ?? o.amount + o.discount, o.discount, o.amount, o.shipping ?? 0, o.tax ?? 0, o.total ?? o.amount, (o.codes ?? []).join(", "),
+  ]));
+  const e = orders.length + 1;
+  const col = (f: (o: Row["order_list"][number]) => number) => sum(orders, f);
+  const colSum = (letter: string, result: number) => ({ formula: `SUM(${letter}2:${letter}${e})`, result });
+  sales.addRow([`Total (${orders.length} orders)`, "", "", colSum("D", col((o) => o.units ?? 0)),
+    colSum("E", col((o) => o.gross ?? o.amount + o.discount)), colSum("F", col((o) => o.discount)), colSum("G", col((o) => o.amount)),
+    colSum("H", col((o) => o.shipping ?? 0)), colSum("I", col((o) => o.tax ?? 0)), colSum("J", col((o) => o.total ?? o.amount)), ""]);
+  [5, 6, 7, 8, 9, 10].forEach((c) => (sales.getColumn(c).numFmt = money));
+  finish(sales, [30, 12, 20, 8, 12, 12, 13, 12, 12, 13, 18], 4);
+  sales.getColumn(11).alignment = { horizontal: "left" };
+
+  // Reconciles to Shopify's Sales report: gross − discounts − returns = net; net + shipping + VAT = total.
+  summary(sales, ["Sales summary", "Amount"],
+    [["Gross sales", row.gross_sales], ["Discounts", -row.discounts], ["Returns", -row.returns], ["Net sales", row.net_sales], ["Shipping", row.shipping], ["VAT", row.taxes]],
+    ["Total sales", row.total_sales], { 2: money });
+
+  // By country, from the orders when they carry a country (newer data), else from the stored locations.
+  const hasCountry = orders.length > 0 && orders.every((o) => o.country);
+  const byC = new Map<string, { orders: number; units: number; net: number; shipping: number; total: number }>();
+  if (hasCountry) {
+    for (const o of orders) {
+      const x = byC.get(o.country!) ?? { orders: 0, units: 0, net: 0, shipping: 0, total: 0 };
+      x.orders++; x.units += o.units ?? 0; x.net += o.amount; x.shipping += o.shipping ?? 0; x.total += o.total ?? o.amount;
+      byC.set(o.country!, x);
+    }
+  } else {
+    for (const c of countries) byC.set(c.country, { orders: c.orders, units: c.units, net: c.net, shipping: 0, total: c.net });
+  }
+  const cRows = [...byC.entries()].sort((a, b) => b[1].net - a[1].net).map(([k, v]) => [k, v.orders, v.units, round(v.net), round(v.shipping), round(v.total)]);
+  summary(sales, ["Summary by location", "Orders", "Units", "Net sales", "Shipping", "Total paid"], cRows,
+    ["Total", sum(cRows, (r) => r[1] as number), sum(cRows, (r) => r[2] as number), round(sum(cRows, (r) => r[3] as number)), round(sum(cRows, (r) => r[4] as number)), round(sum(cRows, (r) => r[5] as number))],
+    { 4: money, 5: money, 6: money });
 
   const loc = wb.addWorksheet("Location Sales");
   loc.addRow(["Country", "City", "Orders", "Units", "Net sales", "% of total"]);
@@ -94,14 +121,21 @@ export async function buildRangeWorkbook(rows: Row[]) {
   const countries = byCountry(locs);
 
   const d = wb.addWorksheet("Daily Sales");
-  d.addRow(["Date", "Net sales", "Orders", "Units", "AOV", "Discounts"]);
-  days.forEach((r, i) => d.addRow([new Date(`${r.date}T00:00:00Z`), r.net_sales, r.orders, r.units, { formula: `IF(C${i + 2}=0,0,B${i + 2}/C${i + 2})`, result: r.orders ? r.net_sales / r.orders : 0 }, r.discounts]));
+  d.addRow(["Date", "Gross", "Discounts", "Returns", "Net sales", "Shipping", "VAT", "Total sales", "Orders", "Units", "AOV (net)"]);
+  days.forEach((r, i) => d.addRow([new Date(`${r.date}T00:00:00Z`), r.gross_sales, r.discounts, r.returns, r.net_sales, r.shipping, r.taxes, r.total_sales, r.orders, r.units,
+    { formula: `IF(I${i + 2}=0,0,E${i + 2}/I${i + 2})`, result: r.orders ? r.net_sales / r.orders : 0 }]));
   const last = days.length + 1, t = last + 1;
-  d.addRow(["Total", { formula: `SUM(B2:B${last})`, result: sum(days, (r) => r.net_sales) }, { formula: `SUM(C2:C${last})`, result: sum(days, (r) => r.orders) }, { formula: `SUM(D2:D${last})`, result: sum(days, (r) => r.units) },
-    { formula: `IF(C${t}=0,0,B${t}/C${t})`, result: sum(days, (r) => r.orders) ? sum(days, (r) => r.net_sales) / sum(days, (r) => r.orders) : 0 }, { formula: `SUM(F2:F${last})`, result: sum(days, (r) => r.discounts) }]);
+  const tot = (f: (r: Row) => number) => sum(days, f);
+  const S = (letter: string, result: number) => ({ formula: `SUM(${letter}2:${letter}${last})`, result });
+  d.addRow(["Total", S("B", tot((r) => r.gross_sales)), S("C", tot((r) => r.discounts)), S("D", tot((r) => r.returns)), S("E", tot((r) => r.net_sales)),
+    S("F", tot((r) => r.shipping)), S("G", tot((r) => r.taxes)), S("H", tot((r) => r.total_sales)), S("I", tot((r) => r.orders)), S("J", tot((r) => r.units)),
+    { formula: `IF(I${t}=0,0,E${t}/I${t})`, result: tot((r) => r.orders) ? tot((r) => r.net_sales) / tot((r) => r.orders) : 0 }]);
   d.getColumn(1).numFmt = "ddd d mmm yyyy";
-  [2, 5, 6].forEach((c) => (d.getColumn(c).numFmt = money));
-  finish(d, [22, 16, 10, 10, 14, 14], 2);
+  [2, 3, 4, 5, 6, 7, 8, 11].forEach((c) => (d.getColumn(c).numFmt = money));
+  finish(d, [22, 12, 12, 11, 13, 12, 12, 13, 9, 9, 12], 2);
+  summary(d, ["Sales summary", "Amount"],
+    [["Gross sales", tot((r) => r.gross_sales)], ["Discounts", -tot((r) => r.discounts)], ["Returns", -tot((r) => r.returns)], ["Net sales", tot((r) => r.net_sales)], ["Shipping", tot((r) => r.shipping)], ["VAT", tot((r) => r.taxes)]],
+    ["Total sales", tot((r) => r.total_sales)], { 2: money });
   summary(d, ["Summary by location", "Net sales", "Orders", "Units"],
     countries.map((c) => [c.country, c.net, c.orders, c.units]),
     ["Total", sum(countries, (c) => c.net), sum(countries, (c) => c.orders), sum(countries, (c) => c.units)], { 2: money });

@@ -57,7 +57,7 @@ async function DayBody({ shown, date, min, max, user }: { shown: string; date?: 
       {row.date === max && <LiveToday currency={cur} />}
 
       <SimpleGrid cols={{ base: 2, md: 4 }}>
-        <Kpi icon={<IconCurrencyPound size={16} />} label="Net sales" value={money(row.net_sales, cur)} note={`${money(row.discounts, cur, 2)} discounts`} deltas={[{ label: "vs yesterday", value: s.vsPrev }, { label: "vs last week", value: s.vsWeek }]} />
+        <Kpi icon={<IconCurrencyPound size={16} />} label="Net sales" value={money(row.net_sales, cur)} note={`Total sales ${money(row.total_sales, cur)} incl. shipping & VAT`} deltas={[{ label: "vs yesterday", value: s.vsPrev }, { label: "vs last week", value: s.vsWeek }]} />
         <Kpi icon={<IconShoppingBag size={16} />} label="Orders" value={int(row.orders)} note={`${int(row.units)} units`} />
         <Kpi icon={<IconReceipt2 size={16} />} label="Average order" value={money(s.aov, cur, 2)} />
         <Kpi icon={<IconCalendarStats size={16} />} label="Month to date" value={money(s.mtdNet, cur)} note={`${int(s.mtdOrders)} orders`} />
@@ -67,13 +67,30 @@ async function DayBody({ shown, date, min, max, user }: { shown: string; date?: 
         <SalesChart data={trend} currency={cur} />
       </Section>
 
-      <Section title="Orders" subtitle="Draft orders excluded. Amounts are net of VAT." flush>
+      <Section title="Sales breakdown" subtitle="Same layout as Shopify’s Sales report, so every line can be checked there." flush>
+        <DataTable minWidth={0} rows={[
+          { label: "Gross sales", value: row.gross_sales, kind: "" },
+          { label: "Discounts", value: -row.discounts, kind: "" },
+          { label: "Returns", value: -row.returns, kind: "" },
+          { label: "Net sales", value: row.net_sales, kind: "sub" },
+          { label: "Shipping", value: row.shipping, kind: "" },
+          { label: "VAT", value: row.taxes, kind: "" },
+          { label: "Total sales", value: row.total_sales, kind: "total" },
+        ]} rowKey={(r) => r.label} cols={[
+          { label: "Line", render: (r) => <Text size="sm" fw={r.kind ? 700 : 400}>{r.label}</Text> },
+          { label: "Amount", align: "right", render: (r) => <Text size="sm" fw={r.kind ? 700 : 400} c={r.kind === "total" ? "brand" : undefined}>{r.value < 0 ? "−" : ""}{money(Math.abs(r.value), cur, 2)}</Text> },
+        ]} />
+      </Section>
+
+      <Section title="Orders" subtitle="Draft orders excluded. Amount is net of VAT and shipping; Total paid is what the customer paid." flush>
         {row.order_list.length === 0 ? <Text c="dimmed" p="md">No orders on this day.</Text> : (
           <DataTable minWidth={320} rows={row.order_list} rowKey={(o) => o.name} cols={[
             { label: "Order", render: (o) => <Text fw={600} size="sm">{o.name}</Text> },
             { label: "Time", render: (o) => timeIn(o.time, tz) },
             { label: "Amount", align: "right", render: (o) => num2(o.amount) },
             { label: "Discount", align: "right", render: (o) => num2(o.discount) },
+            { label: "Shipping", align: "right", hideBelow: "sm", render: (o) => num2(o.shipping ?? 0) },
+            { label: "Total paid", align: "right", hideBelow: "sm", render: (o) => num2(o.total ?? o.amount) },
           ]} />
         )}
       </Section>

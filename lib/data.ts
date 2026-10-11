@@ -3,19 +3,24 @@ import { unstable_cache } from "next/cache";
 import { adminClient } from "./supabase";
 
 export type Product = { name: string; units: number; net: number };
-export type Order = { name: string; time: string; units?: number; amount: number; discount: number };
+export type Order = {
+  name: string; time: string; units?: number; amount: number; discount: number;
+  gross?: number; shipping?: number; tax?: number; total?: number; country?: string; codes?: string[];
+};
 export type Location = { country: string; city: string; orders: number; units: number; net: number };
 export type Row = {
-  date: string; net_sales: number; discounts: number; orders: number; units: number;
+  date: string; net_sales: number; discounts: number;
+  gross_sales: number; returns: number; shipping: number; taxes: number; total_sales: number; orders: number; units: number;
   top_products: Product[]; locations: Location[]; order_list: Order[]; currency: string; emailed_at: string | null;
 };
 
 export const tz = () => process.env.STORE_TIMEZONE ?? "Europe/London";
 
-const norm = (r: Row): Row => ({ ...r, net_sales: Number(r.net_sales), discounts: Number(r.discounts ?? 0), top_products: r.top_products ?? [], locations: r.locations ?? [], order_list: r.order_list ?? [] });
+const norm = (r: Row): Row => ({ ...r, net_sales: Number(r.net_sales), discounts: Number(r.discounts ?? 0),
+  gross_sales: Number(r.gross_sales ?? 0), returns: Number(r.returns ?? 0), shipping: Number(r.shipping ?? 0), taxes: Number(r.taxes ?? 0), total_sales: Number(r.total_sales ?? 0), top_products: r.top_products ?? [], locations: r.locations ?? [], order_list: r.order_list ?? [] });
 
 /** Newest-first rows on or before `upTo` (default: everything). One query, ≤ limit rows. */
-const LIGHT = "date,net_sales,discounts,orders,units,currency,emailed_at";
+const LIGHT = "date,net_sales,discounts,gross_sales,returns,shipping,taxes,total_sales,orders,units,currency,emailed_at";
 
 /** Uncached read. Use this right after writing (cron, send now) so emails never use stale numbers. */
 export async function fetchRows(upTo?: string, limit = 60, light = false): Promise<Row[]> {
