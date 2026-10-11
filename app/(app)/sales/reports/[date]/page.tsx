@@ -20,7 +20,7 @@ export default async function Day({ params }: { params: Promise<{ date: string }
   return (
     <div className="flex flex-col gap-6">
       <div>
-        <Link href="/reports" className="inline-flex min-h-11 items-center text-teal underline-offset-4 hover:underline">← All reports</Link>
+        <Link href="/sales/reports" className="inline-flex min-h-11 items-center text-teal underline-offset-4 hover:underline">← All reports</Link>
         <h1 className="font-display text-3xl font-semibold">{dateLabel(date, true)}</h1>
       </div>
 

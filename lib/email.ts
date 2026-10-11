@@ -38,13 +38,13 @@ export function buildEmail(s: Summary, appUrl: string) {
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="font-size:14px;margin:0 6px;width:calc(100% - 12px)">
     <tr><td style="color:${C.mute};font-size:12px">Product</td><td align="right" style="color:${C.mute};font-size:12px">Units</td><td align="right" style="color:${C.mute};font-size:12px">Net</td></tr>${products}
   </table>
-  <div style="text-align:center;margin-top:24px"><a href="${appUrl}/reports/${row.date}" style="display:inline-block;background:${C.teal};color:#fff;text-decoration:none;padding:12px 24px;border-radius:10px;font-weight:600">Open portal</a></div>
+  <div style="text-align:center;margin-top:24px"><a href="${appUrl}/sales/reports/${row.date}" style="display:inline-block;background:${C.teal};color:#fff;text-decoration:none;padding:12px 24px;border-radius:10px;font-weight:600">Open portal</a></div>
 </td></tr></table></td></tr></table></body></html>`;
 
   const text = [subject, "",
     `Net sales: ${money(row.net_sales, cur)}`, `Orders: ${row.orders}`, `AOV: ${money(s.aov, cur, 2)}`,
     `Month to date: ${money(s.mtdNet, cur)} / ${s.mtdOrders} orders`, "", "Top products:",
-    ...row.top_products.map((p, i) => `${i + 1}. ${p.name} — ${p.units} units, ${money(p.net, cur)}`), "", `${appUrl}/reports/${row.date}`].join("\n");
+    ...row.top_products.map((p, i) => `${i + 1}. ${p.name} — ${p.units} units, ${money(p.net, cur)}`), "", `${appUrl}/sales/reports/${row.date}`].join("\n");
 
   return { subject, html, text };
 }

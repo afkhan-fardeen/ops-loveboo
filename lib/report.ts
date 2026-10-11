@@ -16,7 +16,7 @@ export async function run(date: string, opts: { resend?: boolean; email?: boolea
 
   if (opts.email === false) return { date, emailed: false, reason: "backfill" };
 
-  const rows = await rowsUpTo(date, 60, true);
+  const rows = await rowsUpTo(date, 60);
   const s = summarise(rows)!;
   if (s.row.emailed_at && !opts.resend) return { date, emailed: false, reason: "already emailed" };
 

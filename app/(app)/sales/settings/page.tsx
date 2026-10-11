@@ -1,5 +1,4 @@
-import { Button, Card } from "@/components/ui";
-import { signOut } from "../actions";
+import { Card } from "@/components/ui";
 
 export const dynamic = "force-dynamic";
 
@@ -27,7 +26,6 @@ export default function Settings() {
           ))}
         </dl>
       </Card>
-      <form action={signOut}><Button variant="ghost" type="submit">Sign out</Button></form>
     </div>
   );
 }

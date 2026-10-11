@@ -1,5 +1,5 @@
 import { addDays, pctChange, yesterdayIn } from "./format";
-import { adminClient, hasSupabase, serverClient } from "./supabase";
+import { adminClient, hasSupabase } from "./supabase";
 
 export type Product = { name: string; units: number; net: number };
 export type Row = {
@@ -30,9 +30,9 @@ function demoRows(): Row[] {
 const norm = (r: Row): Row => ({ ...r, net_sales: Number(r.net_sales), top_products: r.top_products ?? [] });
 
 /** Newest-first rows on or before `upTo` (default: everything). One query, ≤ limit rows. */
-export async function rowsUpTo(upTo?: string, limit = 60, admin = false): Promise<Row[]> {
+export async function rowsUpTo(upTo?: string, limit = 60): Promise<Row[]> {
   if (isDemo()) return demoRows().filter((r) => !upTo || r.date <= upTo).slice(0, limit);
-  const db = admin ? adminClient() : await serverClient();
+  const db = adminClient();
   let q = db.from("daily_sales").select("*").order("date", { ascending: false }).limit(limit);
   if (upTo) q = q.lte("date", upTo);
   const { data, error } = await q;

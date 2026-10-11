@@ -19,7 +19,7 @@ export default async function Reports() {
             rows={rows}
             rowKey={(r) => r.date}
             cols={[
-              { label: "Date", render: (r) => <Link href={`/reports/${r.date}`} className="font-medium text-teal underline-offset-4 hover:underline after:absolute after:inset-0">{dateLabel(r.date, true)}</Link> },
+              { label: "Date", render: (r) => <Link href={`/sales/reports/${r.date}`} className="font-medium text-teal underline-offset-4 hover:underline after:absolute after:inset-0">{dateLabel(r.date, true)}</Link> },
               { label: "Net sales", align: "right", render: (r) => money(r.net_sales, r.currency) },
               { label: "Orders", align: "right", render: (r) => int(r.orders) },
               { label: "AOV", align: "right", render: (r) => money(r.orders ? r.net_sales / r.orders : 0, r.currency, 2) },
