@@ -49,3 +49,10 @@ body {
 .live-dot[data-stale] { background: var(--mantine-color-gray-5); animation: none; }
 
 @media (prefers-reduced-motion: reduce) { .page-in, .live-dot { animation: none; } .mantine-Button-root { transition: none; } .mantine-Button-root:active:not(:disabled) { transform: none; } }
+
+/* Top progress bar and skip link */
+.top-progress { position: fixed; inset: 0 0 auto 0; height: 3px; z-index: 1000; pointer-events: none; transition: opacity 0.25s ease; }
+.top-progress > div { height: 100%; background: var(--mantine-color-brand-6); border-radius: 0 3px 3px 0; box-shadow: 0 0 8px rgb(0 109 104 / 0.5); transition: width 0.25s ease; }
+.skip-link { position: fixed; left: 12px; top: -48px; z-index: 1100; padding: 8px 14px; border-radius: 10px; background: var(--mantine-color-brand-6); color: #fff; font-weight: 600; text-decoration: none; transition: top 0.15s ease; }
+.skip-link:focus { top: 12px; }
+@media (prefers-reduced-motion: reduce) { .top-progress, .top-progress > div, .skip-link { transition: none; } }

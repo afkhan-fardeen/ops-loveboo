@@ -24,6 +24,8 @@ const POINTS = [
   { icon: IconFileSpreadsheet, title: "Every day on record", text: "Jump to any date and export it in one click." },
 ];
 
+export const metadata = { title: "Sign in" };
+
 export default async function Login({ searchParams }: { searchParams: Promise<{ next?: string }> }) {
   const { next } = await searchParams;
   if (await getUser()) redirect(safe(next));

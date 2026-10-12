@@ -4,6 +4,7 @@ import { Suspense } from "react";
 import { ColorSchemeScript, MantineProvider, mantineHtmlProps } from "@mantine/core";
 import { Notifications } from "@mantine/notifications";
 import FlashToast from "@/components/FlashToast";
+import TopProgress from "@/components/TopProgress";
 import { makeTheme } from "@/lib/theme";
 import "@mantine/core/styles.css";
 import "@mantine/charts/styles.css";
@@ -15,7 +16,7 @@ const inter = Inter({ subsets: ["latin"], display: "swap" });
 
 const theme = makeTheme(inter.style.fontFamily);
 
-export const metadata: Metadata = { title: "Love Boo Ops", robots: { index: false } };
+export const metadata: Metadata = { title: { default: "Love Boo Ops", template: "%s · Love Boo Ops" }, robots: { index: false } };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -24,7 +25,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body>
         <MantineProvider theme={theme} defaultColorScheme="light">
           <Notifications position="top-right" limit={3} />
-          <Suspense><FlashToast /></Suspense>
+          <Suspense><FlashToast /><TopProgress /></Suspense>
           {children}
         </MantineProvider>
       </body>

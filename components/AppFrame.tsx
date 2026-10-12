@@ -117,6 +117,8 @@ export default function AppFrame({ isAdmin, showSales, who, email, signOut, sign
   );
 
   return (
+    <>
+    <a href="#main" className="skip-link">Skip to content</a>
     <AppShell
       header={{ height: { base: 56, sm: 0 } }}
       navbar={{ width: { base: WIDE, sm: rail ? RAIL : WIDE }, breakpoint: "sm", collapsed: { mobile: !opened } }}
@@ -138,5 +140,6 @@ export default function AppFrame({ isAdmin, showSales, who, email, signOut, sign
         <Container size={1100} p={0} id="main">{children}</Container>
       </AppShell.Main>
     </AppShell>
+    </>
   );
 }

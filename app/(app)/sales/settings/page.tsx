@@ -12,6 +12,8 @@ import { save, testRecipients } from "./actions";
 
 export const dynamic = "force-dynamic";
 
+export const metadata = { title: "Settings" };
+
 export default async function Settings() {
   await requireAdmin();
   const [cfg, users, tick, last] = await Promise.all([

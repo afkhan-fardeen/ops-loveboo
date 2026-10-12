@@ -19,6 +19,8 @@ export const dynamic = "force-dynamic";
 const ISO = /^\d{4}-\d{2}-\d{2}$/;
 const share = (n: number, total: number) => (total ? `${((n / total) * 100).toFixed(1)}%` : "—");
 
+export const metadata = { title: "Reports" };
+
 export default async function Reports({ searchParams }: { searchParams: Promise<{ from?: string; to?: string }> }) {
   const user = await requireModule("sales");
   const isAdmin = user.role === "admin";

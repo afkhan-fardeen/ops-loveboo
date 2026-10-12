@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { ActionIcon, Button, Group, Loader } from "@mantine/core";
 import { DatePickerInput } from "@mantine/dates";
 import { useHotkeys } from "@mantine/hooks";
+import { startProgress } from "@/lib/progress";
 import { IconCalendar, IconChevronLeft, IconChevronRight } from "@tabler/icons-react";
 
 const shift = (iso: string, n: number) => {
@@ -21,7 +22,7 @@ export default function DateSwitcher({ value: current, min, max }: { value: stri
   const prev = shift(value, -1), next = shift(value, 1);
   const canPrev = prev >= min, canNext = next <= max;
 
-  const go = (d: string) => { setValue(d); start(() => router.push(d === max ? "/sales" : `/sales?date=${d}`)); };
+  const go = (d: string) => { startProgress(); setValue(d); start(() => router.push(d === max ? "/sales" : `/sales?date=${d}`)); };
   useHotkeys([["ArrowLeft", () => canPrev && go(prev)], ["ArrowRight", () => canNext && go(next)]]);
 
   return (

@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ActionIcon, Alert, Avatar, Button, Drawer, Group, Paper, Select, Stack, Switch, Text, TextInput, Tooltip } from "@mantine/core";
 import { IconAlertTriangle, IconPencil, IconPlus, IconTrash } from "@tabler/icons-react";
 
@@ -17,6 +17,13 @@ export default function RecipientsManager({ initial, candidates }: { initial: Re
   const [error, setError] = useState<string | null>(null);
 
   const dirty = JSON.stringify(list) !== JSON.stringify(initial);
+  // Warn before closing or reloading the tab with unsaved recipient changes.
+  useEffect(() => {
+    if (!dirty) return;
+    const warn = (e: BeforeUnloadEvent) => { e.preventDefault(); e.returnValue = ""; };
+    window.addEventListener("beforeunload", warn);
+    return () => window.removeEventListener("beforeunload", warn);
+  }, [dirty]);
   const open = (i: number | "new") => {
     const r = i === "new" ? { name: "", email: "" } : list[i];
     setName(r.name); setEmail(r.email); setError(null); setEditing(i);

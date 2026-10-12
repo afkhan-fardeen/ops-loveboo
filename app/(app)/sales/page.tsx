@@ -19,6 +19,8 @@ import { activeRecipients, getSettings } from "@/lib/settings";
 
 export const dynamic = "force-dynamic";
 
+export const metadata = { title: "Sales" };
+
 export default async function Overview({ searchParams }: { searchParams: Promise<{ date?: string }> }) {
   const user = await requireModule("sales");
   const { date: raw } = await searchParams;

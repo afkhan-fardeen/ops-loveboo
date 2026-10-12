@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { Group, Loader, SegmentedControl } from "@mantine/core";
 import { DatePickerInput } from "@mantine/dates";
 import { IconCalendar } from "@tabler/icons-react";
+import { startProgress } from "@/lib/progress";
 
 const shift = (iso: string, n: number) => {
   const d = new Date(`${iso}T12:00:00Z`);
@@ -29,7 +30,7 @@ export default function RangePicker({ from, to, min, max }: { from: string; to: 
   const [picked, setPicked] = useState(actual);
   useEffect(() => setPicked(actual), [actual, from, to]);
   const current = picked;
-  const go = (f: string, t: string) => start(() => router.push(`/sales/reports?from=${f}&to=${t}`));
+  const go = (f: string, t: string) => { startProgress(); start(() => router.push(`/sales/reports?from=${f}&to=${t}`)); };
 
   return (
     <Group gap="xs" wrap="wrap">

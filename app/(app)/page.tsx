@@ -11,6 +11,8 @@ const greeting = () => {
   return h < 12 ? "Good morning" : h < 18 ? "Good afternoon" : "Good evening";
 };
 
+export const metadata = { title: "Home" };
+
 export default async function Home() {
   const user = await requireUser();
   const mine = MODULES.filter((m) => user.modules.includes(m.id));
