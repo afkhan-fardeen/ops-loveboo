@@ -3,21 +3,23 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState, type ReactNode } from "react";
-import { ActionIcon, AppShell, Avatar, Burger, Container, Divider, Group, NavLink, ScrollArea, Stack, Text, ThemeIcon, Tooltip } from "@mantine/core";
-import { useDisclosure } from "@mantine/hooks";
-import { IconChartBar, IconFileText, IconHome2, IconLayoutSidebarLeftCollapse, IconLayoutSidebarLeftExpand, IconSettings, IconUsers } from "@tabler/icons-react";
+import { ActionIcon, AppShell, Avatar, Box, Divider, Drawer, Group, NavLink, ScrollArea, Stack, Text, ThemeIcon, Tooltip, UnstyledButton } from "@mantine/core";
+import { IconChartBar, IconFileText, IconHome2, IconLayoutSidebarLeftCollapse, IconLayoutSidebarLeftExpand, IconSettings, IconUser, IconUsers } from "@tabler/icons-react";
 
 const Logo = () => <Image src="/logo.png" alt="Love Boo" width={92} height={29} priority />;
 const WIDE = 248, RAIL = 84;
 
-/** Sidebar layout: collapsible to an icon rail on desktop (remembered in a cookie), burger + drawer on phones. */
+/**
+ * Desktop: collapsible sidebar (remembered in a cookie).
+ * Phone: app-style layout with a slim top bar (logo + account) and a bottom tab bar; the sidebar is not used.
+ */
 export default function AppFrame({ isAdmin, showSales, who, email, signOut, signOutCompact, initialCollapsed, children }: {
   isAdmin: boolean; showSales: boolean; who: string; email: string; signOut: ReactNode; signOutCompact: ReactNode; initialCollapsed: boolean; children: ReactNode;
 }) {
   const path = usePathname();
-  const [opened, { toggle, close }] = useDisclosure();
   const [rail, setRail] = useState(initialCollapsed);
-  const link = { component: Link, onClick: close } as const;
+  const [sheet, setSheet] = useState(false);
+  const link = { component: Link } as const;
 
   const toggleRail = () => {
     setRail((r) => {
@@ -28,17 +30,25 @@ export default function AppFrame({ isAdmin, showSales, who, email, signOut, sign
 
   const railItems = [
     { href: "/", label: "Home", icon: IconHome2, on: path === "/", show: true },
-    { href: "/sales", label: "Overview", icon: IconChartBar, on: path === "/sales", show: showSales },
-    { href: "/sales/reports", label: "Reports", icon: IconFileText, on: path.startsWith("/sales/reports"), show: showSales },
-    { href: "/sales/settings", label: "Settings", icon: IconSettings, on: path.startsWith("/sales/settings"), show: showSales && isAdmin },
+    { href: "/sales", label: "Sales overview", icon: IconChartBar, on: path === "/sales", show: showSales },
+    { href: "/sales/reports", label: "Sales reports", icon: IconFileText, on: path.startsWith("/sales/reports"), show: showSales },
+    { href: "/sales/settings", label: "Sales settings", icon: IconSettings, on: path.startsWith("/sales/settings"), show: showSales && isAdmin },
     { href: "/admin/users", label: "Users", icon: IconUsers, on: path.startsWith("/admin"), show: isAdmin },
   ].filter((i) => i.show);
+
+  // Phone tab bar: the everyday places, plus Account (opens a sheet with Settings and Sign out).
+  const tabs = [
+    { href: "/", label: "Home", icon: IconHome2, on: path === "/", show: true },
+    { href: "/sales", label: "Overview", icon: IconChartBar, on: path === "/sales", show: showSales },
+    { href: "/sales/reports", label: "Reports", icon: IconFileText, on: path.startsWith("/sales/reports"), show: showSales },
+    { href: "/admin/users", label: "Users", icon: IconUsers, on: path.startsWith("/admin"), show: isAdmin },
+  ].filter((t) => t.show);
 
   const initial = (who.trim()[0] ?? "?").toUpperCase();
 
   const wide = (
     <>
-      <AppShell.Section mb="md" visibleFrom="sm">
+      <AppShell.Section mb="md">
         <Group justify="space-between" wrap="nowrap" pl={12}>
           <Link href="/" aria-label="Love Boo Ops home"><Logo /></Link>
           <Tooltip label="Collapse sidebar" position="right" withArrow>
@@ -118,28 +128,70 @@ export default function AppFrame({ isAdmin, showSales, who, email, signOut, sign
 
   return (
     <>
-    <a href="#main" className="skip-link">Skip to content</a>
-    <AppShell
-      header={{ height: { base: 56, sm: 0 } }}
-      navbar={{ width: { base: WIDE, sm: rail ? RAIL : WIDE }, breakpoint: "sm", collapsed: { mobile: !opened } }}
-      padding={{ base: "md", sm: "xl" }}
-    >
-      <AppShell.Header hiddenFrom="sm">
-        <Group h="100%" px="md" gap="sm">
-          <Burger opened={opened} onClick={toggle} size="sm" aria-label="Toggle navigation" />
-          <Link href="/" onClick={close} aria-label="Love Boo Ops home"><Logo /></Link>
+      <a href="#main" className="skip-link">Skip to content</a>
+      <AppShell
+        header={{ height: { base: 56, sm: 0 } }}
+        footer={{ height: { base: "calc(62px + env(safe-area-inset-bottom, 0px))", sm: 0 } }}
+        navbar={{ width: rail ? RAIL : WIDE, breakpoint: "sm", collapsed: { mobile: true } }}
+        padding={{ base: "md", sm: "xl" }}
+      >
+        {/* Phone: top app bar */}
+        <AppShell.Header hiddenFrom="sm">
+          <Group h="100%" px="md" justify="space-between" wrap="nowrap">
+            <Link href="/" aria-label="Love Boo Ops home"><Logo /></Link>
+            <UnstyledButton onClick={() => setSheet(true)} aria-label="Account" style={{ lineHeight: 0 }}>
+              <Avatar color="brand" radius="xl" size={36}>{initial}</Avatar>
+            </UnstyledButton>
+          </Group>
+        </AppShell.Header>
+
+        {/* Desktop: collapsible sidebar */}
+        <AppShell.Navbar p={10} component="nav" aria-label="Main" withBorder={false} bg="transparent" visibleFrom="sm">
+          <Stack gap={0} h="100%" p={rail ? 8 : "md"} className="sidebar-panel" style={{ overflow: "hidden" }}>{rail ? compact : wide}</Stack>
+        </AppShell.Navbar>
+
+        <AppShell.Main>
+          <Container id="main">{children}</Container>
+        </AppShell.Main>
+
+        {/* Phone: bottom tab bar */}
+        <AppShell.Footer hiddenFrom="sm" component="nav" aria-label="Main" className="tabbar">
+          {tabs.map(({ href, label, icon: Icon, on }) => (
+            <Link key={href} href={href} className="tab" data-active={on || undefined} aria-current={on ? "page" : undefined}>
+              <span className="tab-icon"><Icon size={22} stroke={on ? 2.2 : 1.7} /></span>
+              <span className="tab-label">{label}</span>
+            </Link>
+          ))}
+          <button type="button" className="tab" data-active={sheet || undefined} onClick={() => setSheet(true)} aria-haspopup="dialog">
+            <span className="tab-icon"><IconUser size={22} stroke={sheet ? 2.2 : 1.7} /></span>
+            <span className="tab-label">Account</span>
+          </button>
+        </AppShell.Footer>
+      </AppShell>
+
+      {/* Phone: account sheet */}
+      <Drawer opened={sheet} onClose={() => setSheet(false)} position="bottom" size="auto" radius="lg" withCloseButton={false} hiddenFrom="sm" zIndex={300}
+        styles={{ content: { borderTopLeftRadius: 20, borderTopRightRadius: 20 }, body: { paddingBottom: "calc(16px + env(safe-area-inset-bottom, 0px))" } }}>
+        <Box w={40} h={4} mx="auto" mb="md" style={{ borderRadius: 4, background: "var(--mantine-color-gray-4)" }} aria-hidden />
+        <Group gap="sm" mb="md" wrap="nowrap">
+          <Avatar color="brand" radius="xl" size={46}>{initial}</Avatar>
+          <div style={{ minWidth: 0 }}>
+            <Text fw={600} truncate>{who}</Text>
+            <Text size="sm" c="dimmed" truncate>{email}</Text>
+          </div>
         </Group>
-      </AppShell.Header>
-
-      <AppShell.Navbar p={10} component="nav" aria-label="Main" withBorder={false} bg="transparent">
-        <Stack gap={0} h="100%" p="md" className="sidebar-panel" hiddenFrom="sm">{wide}</Stack>
-        <Stack gap={0} h="100%" p={rail ? 8 : "md"} className="sidebar-panel" visibleFrom="sm" style={{ overflow: "hidden" }}>{rail ? compact : wide}</Stack>
-      </AppShell.Navbar>
-
-      <AppShell.Main>
-        <Container size={1100} p={0} id="main">{children}</Container>
-      </AppShell.Main>
-    </AppShell>
+        <Stack gap={4} mb="md">
+          {showSales && isAdmin && (
+            <NavLink {...link} href="/sales/settings" label="Sales settings" leftSection={<IconSettings size={18} />} onClick={() => setSheet(false)} active={path.startsWith("/sales/settings")} />
+          )}
+        </Stack>
+        {signOut}
+      </Drawer>
     </>
   );
+}
+
+// Page content wrapper (kept local so the file stays self-contained).
+function Container({ id, children }: { id: string; children: ReactNode }) {
+  return <Box id={id} maw={1100} mx="auto">{children}</Box>;
 }

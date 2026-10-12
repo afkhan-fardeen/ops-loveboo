@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import { Suspense } from "react";
 import { ColorSchemeScript, MantineProvider, mantineHtmlProps } from "@mantine/core";
@@ -16,7 +16,13 @@ const inter = Inter({ subsets: ["latin"], display: "swap" });
 
 const theme = makeTheme(inter.style.fontFamily);
 
-export const metadata: Metadata = { title: { default: "Love Boo Ops", template: "%s · Love Boo Ops" }, robots: { index: false } };
+export const metadata: Metadata = {
+  title: { default: "Love Boo Ops", template: "%s · Love Boo Ops" },
+  robots: { index: false },
+  appleWebApp: { capable: true, title: "Love Boo Ops", statusBarStyle: "default" },
+  formatDetection: { telephone: false },
+};
+export const viewport: Viewport = { themeColor: "#006d68", viewportFit: "cover", width: "device-width", initialScale: 1 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (

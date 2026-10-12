@@ -26,4 +26,4 @@ export async function middleware(req: NextRequest) {
   return res;
 }
 
-export const config = { matcher: ["/((?!_next/static|_next/image|api/cron|.*\\.(?:png|svg|jpg|jpeg|webp|ico)$).*)"] };
+export const config = { matcher: ["/((?!_next/static|_next/image|api/cron|manifest\\.webmanifest|.*\\.(?:png|svg|jpg|jpeg|webp|ico)$).*)"] };
