@@ -2,16 +2,25 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState, type ReactNode } from "react";
-import { ActionIcon, AppShell, Avatar, Box, Divider, Drawer, Group, NavLink, ScrollArea, Stack, Text, ThemeIcon, Tooltip, UnstyledButton } from "@mantine/core";
-import { IconFileText, IconHome2, IconLayoutSidebarLeftCollapse, IconLayoutSidebarLeftExpand, IconSettings, IconUser, IconUsers } from "@tabler/icons-react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
+import { ActionIcon, AppShell, Avatar, Badge, Box, Divider, Drawer, Group, NavLink, ScrollArea, Stack, Text, ThemeIcon, Tooltip, UnstyledButton } from "@mantine/core";
+import { IconArrowLeft, IconChevronRight, IconFileText, IconHome2, IconLayoutSidebarLeftCollapse, IconLayoutSidebarLeftExpand, IconSettings, IconUser, IconUsers, IconX } from "@tabler/icons-react";
 
 const Logo = () => <Image src="/logo.png" alt="Love Boo" width={92} height={29} priority />;
 const WIDE = 248, RAIL = 84;
 
+/** Phone screens: a title for the app bar, and (for sub-screens) where Back goes. Everything else is a tab root. */
+const SCREENS: { match: (p: string) => boolean; title: string | null; back?: string }[] = [
+  { match: (p) => p === "/", title: null },
+  { match: (p) => p === "/reports/daily-sales/settings", title: "Email settings", back: "/reports/daily-sales" },
+  { match: (p) => p.startsWith("/reports"), title: "Daily Sales" },
+  { match: (p) => p.startsWith("/admin"), title: "Users" },
+];
+
 /**
  * Desktop: collapsible sidebar (remembered in a cookie).
- * Phone: app-style layout with a slim top bar (logo + account) and a bottom tab bar; the sidebar is not used.
+ * Phone: app layout. Bottom tabs for the main places, an app bar (logo or title, Back on sub-screens, account button),
+ * and an account sheet that closes with its button, a swipe down, a tap outside, Escape, or by navigating.
  */
 export default function AppFrame({ isAdmin, showReports, who, email, signOut, signOutCompact, initialCollapsed, children }: {
   isAdmin: boolean; showReports: boolean; who: string; email: string; signOut: ReactNode; signOutCompact: ReactNode; initialCollapsed: boolean; children: ReactNode;
@@ -20,6 +29,16 @@ export default function AppFrame({ isAdmin, showReports, who, email, signOut, si
   const [rail, setRail] = useState(initialCollapsed);
   const [sheet, setSheet] = useState(false);
   const link = { component: Link } as const;
+
+  // Account sheet: close on navigation; swipe down to dismiss.
+  useEffect(() => setSheet(false), [path]);
+  const startY = useRef<number | null>(null);
+  const [drag, setDrag] = useState(0);
+  const touch = {
+    onTouchStart: (e: React.TouchEvent) => { startY.current = e.touches[0].clientY; },
+    onTouchMove: (e: React.TouchEvent) => { if (startY.current !== null) setDrag(Math.max(0, e.touches[0].clientY - startY.current)); },
+    onTouchEnd: () => { if (drag > 70) setSheet(false); setDrag(0); startY.current = null; },
+  };
 
   const toggleRail = () => {
     setRail((r) => {
@@ -34,9 +53,7 @@ export default function AppFrame({ isAdmin, showReports, who, email, signOut, si
     { href: "/admin/users", label: "Users", icon: IconUsers, on: path.startsWith("/admin"), show: isAdmin },
   ].filter((i) => i.show);
 
-  // Phone tab bar: the everyday places, plus Account (opens a sheet with Sign out).
-  const tabs = railItems.map((i) => ({ ...i, label: i.label }));
-
+  const screen = SCREENS.find((s) => s.match(path)) ?? SCREENS[0];
   const initial = (who.trim()[0] ?? "?").toUpperCase();
 
   const wide = (
@@ -113,6 +130,8 @@ export default function AppFrame({ isAdmin, showReports, who, email, signOut, si
     </>
   );
 
+  const tabs = [...railItems, { href: "#account", label: "Account", icon: IconUser, on: sheet, show: true }];
+
   return (
     <>
       <a href="#main" className="skip-link">Skip to content</a>
@@ -122,13 +141,24 @@ export default function AppFrame({ isAdmin, showReports, who, email, signOut, si
         navbar={{ width: rail ? RAIL : WIDE, breakpoint: "sm", collapsed: { mobile: true } }}
         padding={{ base: "md", sm: "xl" }}
       >
-        {/* Phone: top app bar */}
+        {/* Phone app bar: logo or title; Back on sub-screens; account button on main screens */}
         <AppShell.Header hiddenFrom="sm">
-          <Group h="100%" px="md" justify="space-between" wrap="nowrap">
-            <Link href="/" aria-label="Love Boo Ops home"><Logo /></Link>
-            <UnstyledButton onClick={() => setSheet(true)} aria-label="Account" style={{ lineHeight: 0 }}>
-              <Avatar color="brand" radius="xl" size={36}>{initial}</Avatar>
-            </UnstyledButton>
+          <Group h="100%" px="sm" justify="space-between" wrap="nowrap">
+            <Group gap={4} wrap="nowrap" style={{ minWidth: 0 }}>
+              {screen.back && (
+                <ActionIcon component={Link} href={screen.back} variant="subtle" color="gray" size={44} aria-label="Back" style={{ marginLeft: -6 }}>
+                  <IconArrowLeft size={22} />
+                </ActionIcon>
+              )}
+              {screen.title === null
+                ? <Link href="/" aria-label="Love Boo Ops home" style={{ paddingLeft: 6, lineHeight: 0 }}><Logo /></Link>
+                : <Text fw={700} size="lg" truncate style={{ paddingLeft: screen.back ? 0 : 6 }}>{screen.title}</Text>}
+            </Group>
+            {!screen.back && (
+              <UnstyledButton onClick={() => setSheet(true)} aria-label="Open account" aria-haspopup="dialog" style={{ lineHeight: 0, padding: 4 }}>
+                <Avatar color="brand" radius="xl" size={36}>{initial}</Avatar>
+              </UnstyledButton>
+            )}
           </Group>
         </AppShell.Header>
 
@@ -138,47 +168,55 @@ export default function AppFrame({ isAdmin, showReports, who, email, signOut, si
         </AppShell.Navbar>
 
         <AppShell.Main>
-          <Container id="main">{children}</Container>
+          <Box id="main" maw={1100} mx="auto">{children}</Box>
         </AppShell.Main>
 
-        {/* Phone: bottom tab bar */}
+        {/* Phone: bottom tab bar. Tapping the current tab scrolls to the top. */}
         <AppShell.Footer hiddenFrom="sm" component="nav" aria-label="Main" className="tabbar">
-          {tabs.map(({ href, label, icon: Icon, on }) => (
-            <Link key={href} href={href} className="tab" data-active={on || undefined} aria-current={on ? "page" : undefined}>
-              <span className="tab-icon"><Icon size={22} stroke={on ? 2.2 : 1.7} /></span>
-              <span className="tab-label">{label}</span>
-            </Link>
-          ))}
-          <button type="button" className="tab" data-active={sheet || undefined} onClick={() => setSheet(true)} aria-haspopup="dialog">
-            <span className="tab-icon"><IconUser size={22} stroke={sheet ? 2.2 : 1.7} /></span>
-            <span className="tab-label">Account</span>
-          </button>
+          {tabs.map(({ href, label, icon: Icon, on }) =>
+            href === "#account" ? (
+              <button key={href} type="button" className="tab" data-active={on || undefined} onClick={() => setSheet(true)} aria-haspopup="dialog">
+                <span className="tab-icon"><Icon size={22} stroke={on ? 2.2 : 1.7} /></span>
+                <span className="tab-label">{label}</span>
+              </button>
+            ) : (
+              <Link key={href} href={href} className="tab" data-active={on || undefined} aria-current={on ? "page" : undefined}
+                onClick={() => { if (on) window.scrollTo({ top: 0, behavior: "smooth" }); }}>
+                <span className="tab-icon"><Icon size={22} stroke={on ? 2.2 : 1.7} /></span>
+                <span className="tab-label">{label}</span>
+              </Link>
+            ),
+          )}
         </AppShell.Footer>
       </AppShell>
 
-      {/* Phone: account sheet */}
-      <Drawer opened={sheet} onClose={() => setSheet(false)} position="bottom" size="auto" radius="lg" withCloseButton={false} hiddenFrom="sm" zIndex={300}
-        styles={{ content: { borderTopLeftRadius: 20, borderTopRightRadius: 20 }, body: { paddingBottom: "calc(16px + env(safe-area-inset-bottom, 0px))" } }}>
-        <Box w={40} h={4} mx="auto" mb="md" style={{ borderRadius: 4, background: "var(--mantine-color-gray-4)" }} aria-hidden />
+      {/* Phone: account sheet (always closable: X button, swipe down, tap outside, Escape, or navigating) */}
+      <Drawer opened={sheet} onClose={() => setSheet(false)} position="bottom" size="auto" withCloseButton={false} zIndex={400}
+        closeOnClickOutside closeOnEscape overlayProps={{ opacity: 0.35, blur: 2 }}
+        styles={{
+          content: { borderTopLeftRadius: 20, borderTopRightRadius: 20, transform: drag ? `translateY(${drag}px)` : undefined, transition: drag ? "none" : undefined },
+          body: { paddingBottom: "calc(16px + env(safe-area-inset-bottom, 0px))" },
+        }}>
+        <div {...touch} style={{ touchAction: "none" }}>
+          <Box w={40} h={5} mx="auto" mb="xs" style={{ borderRadius: 4, background: "var(--mantine-color-gray-4)" }} aria-hidden />
+          <Group justify="space-between" mb="md" wrap="nowrap">
+            <Text fw={700} size="lg">Account</Text>
+            <ActionIcon variant="subtle" color="gray" size={44} onClick={() => setSheet(false)} aria-label="Close account"><IconX size={22} /></ActionIcon>
+          </Group>
+        </div>
         <Group gap="sm" mb="md" wrap="nowrap">
-          <Avatar color="brand" radius="xl" size={46}>{initial}</Avatar>
+          <Avatar color="brand" radius="xl" size={48}>{initial}</Avatar>
           <div style={{ minWidth: 0 }}>
-            <Text fw={600} truncate>{who}</Text>
+            <Group gap={6} wrap="nowrap"><Text fw={600} truncate>{who}</Text>{isAdmin && <Badge variant="light" size="sm">Admin</Badge>}</Group>
             <Text size="sm" c="dimmed" truncate>{email}</Text>
           </div>
         </Group>
-        <Stack gap={4} mb="md">
-          {showReports && isAdmin && (
-            <NavLink {...link} href="/reports/daily-sales/settings" label="Email settings" leftSection={<IconSettings size={18} />} onClick={() => setSheet(false)} active={path.startsWith("/reports/daily-sales/settings")} />
-          )}
-        </Stack>
+        {showReports && isAdmin && (
+          <NavLink {...link} href="/reports/daily-sales/settings" label="Email settings" description="Recipients and send time" leftSection={<IconSettings size={20} />}
+            rightSection={<IconChevronRight size={16} />} onClick={() => setSheet(false)} mb="md" />
+        )}
         {signOut}
       </Drawer>
     </>
   );
-}
-
-// Page content wrapper (kept local so the file stays self-contained).
-function Container({ id, children }: { id: string; children: ReactNode }) {
-  return <Box id={id} maw={1100} mx="auto">{children}</Box>;
 }

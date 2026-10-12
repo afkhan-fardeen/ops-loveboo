@@ -78,3 +78,14 @@ body { -webkit-tap-highlight-color: transparent; }
 .tab[data-active] .tab-label { font-weight: 700; }
 @media (prefers-reduced-motion: reduce) { .tab, .tab-icon { transition: none; } .tab:active { transform: none; } }
 @media (prefers-reduced-transparency: reduce) { .mantine-AppShell-footer.tabbar { background-color: #fff; -webkit-backdrop-filter: none; backdrop-filter: none; } }
+
+/* ---- Cohesive controls on phones: one tap-target size, one corner radius ---- */
+@media (max-width: 47.99em) {
+  .mantine-Button-root { min-height: 44px; height: auto; padding-inline: 18px; font-size: 15px; }
+  .mantine-Button-root[data-size="compact-sm"] { min-height: 36px; }
+  .mantine-ActionIcon-root { min-width: 40px; min-height: 40px; }
+  .mantine-SegmentedControl-root { min-height: 44px; }
+  .mantine-SegmentedControl-label { min-height: 40px; display: grid; place-items: center; }
+  .mantine-NavLink-root { min-height: 48px; }
+  .mantine-Paper-root { border-radius: 16px; }
+}

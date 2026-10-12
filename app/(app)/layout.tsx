@@ -17,8 +17,8 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       who={user.name || user.email}
       email={user.email}
       initialCollapsed={collapsed}
-      signOut={<form action={signOut}><SubmitButton variant="default" size="xs" fullWidth>Sign out</SubmitButton></form>}
-      signOutCompact={<form action={signOut}><SubmitButton variant="subtle" color="gray" px={8} aria-label="Sign out"><IconLogout size={18} /></SubmitButton></form>}
+      signOut={<form action={signOut}><SubmitButton variant="light" color="red" fullWidth leftSection={<IconLogout size={16} />}>Sign out</SubmitButton></form>}
+      signOutCompact={<form action={signOut}><SubmitButton variant="subtle" color="red" px={8} aria-label="Sign out"><IconLogout size={18} /></SubmitButton></form>}
     >
       {children}
     </AppFrame>
