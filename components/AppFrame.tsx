@@ -13,8 +13,8 @@ const WIDE = 248, RAIL = 84;
  * Desktop: collapsible sidebar (remembered in a cookie).
  * Phone: app-style layout with a slim top bar (logo + account) and a bottom tab bar; the sidebar is not used.
  */
-export default function AppFrame({ isAdmin, showSales, who, email, signOut, signOutCompact, initialCollapsed, children }: {
-  isAdmin: boolean; showSales: boolean; who: string; email: string; signOut: ReactNode; signOutCompact: ReactNode; initialCollapsed: boolean; children: ReactNode;
+export default function AppFrame({ isAdmin, showReports, who, email, signOut, signOutCompact, initialCollapsed, children }: {
+  isAdmin: boolean; showReports: boolean; who: string; email: string; signOut: ReactNode; signOutCompact: ReactNode; initialCollapsed: boolean; children: ReactNode;
 }) {
   const path = usePathname();
   const [rail, setRail] = useState(initialCollapsed);
@@ -30,17 +30,15 @@ export default function AppFrame({ isAdmin, showSales, who, email, signOut, sign
 
   const railItems = [
     { href: "/", label: "Home", icon: IconHome2, on: path === "/", show: true },
-    { href: "/sales", label: "Sales overview", icon: IconChartBar, on: path === "/sales", show: showSales },
-    { href: "/sales/reports", label: "Sales reports", icon: IconFileText, on: path.startsWith("/sales/reports"), show: showSales },
-    { href: "/sales/settings", label: "Sales settings", icon: IconSettings, on: path.startsWith("/sales/settings"), show: showSales && isAdmin },
+    { href: "/reports", label: "Reports", icon: IconFileText, on: path === "/reports", show: showReports },
+    { href: "/reports/daily-sales", label: "Daily Sales", icon: IconChartBar, on: path.startsWith("/reports/daily-sales"), show: showReports },
     { href: "/admin/users", label: "Users", icon: IconUsers, on: path.startsWith("/admin"), show: isAdmin },
   ].filter((i) => i.show);
 
-  // Phone tab bar: the everyday places, plus Account (opens a sheet with Settings and Sign out).
+  // Phone tab bar: the everyday places, plus Account (opens a sheet with Sign out).
   const tabs = [
     { href: "/", label: "Home", icon: IconHome2, on: path === "/", show: true },
-    { href: "/sales", label: "Overview", icon: IconChartBar, on: path === "/sales", show: showSales },
-    { href: "/sales/reports", label: "Reports", icon: IconFileText, on: path.startsWith("/sales/reports"), show: showSales },
+    { href: "/reports", label: "Reports", icon: IconFileText, on: path.startsWith("/reports"), show: showReports },
     { href: "/admin/users", label: "Users", icon: IconUsers, on: path.startsWith("/admin"), show: isAdmin },
   ].filter((t) => t.show);
 
@@ -63,11 +61,9 @@ export default function AppFrame({ isAdmin, showSales, who, email, signOut, sign
         <Stack gap={2}>
           <Text size="xs" tt="uppercase" fw={700} c="dimmed" px="sm" pb={4} style={{ letterSpacing: 0.5 }}>Menu</Text>
           <NavLink {...link} href="/" label="Home" leftSection={<IconHome2 size={18} />} active={path === "/"} />
-          {showSales && (
-            <NavLink label="Sales" leftSection={<IconChartBar size={18} />} defaultOpened={path.startsWith("/sales")} active={path.startsWith("/sales")} variant="subtle" childrenOffset={28}>
-              <NavLink {...link} href="/sales" label="Overview" active={path === "/sales"} />
-              <NavLink {...link} href="/sales/reports" label="Reports" active={path.startsWith("/sales/reports")} />
-              {isAdmin && <NavLink {...link} href="/sales/settings" label="Settings" active={path.startsWith("/sales/settings")} />}
+          {showReports && (
+            <NavLink {...link} href="/reports" label="Reports" leftSection={<IconFileText size={18} />} defaultOpened={path.startsWith("/reports")} active={path === "/reports"} variant="subtle" childrenOffset={28}>
+              <NavLink {...link} href="/reports/daily-sales" label="Daily Sales" active={path.startsWith("/reports/daily-sales")} />
             </NavLink>
           )}
           {isAdmin && <Text size="xs" tt="uppercase" fw={700} c="dimmed" px="sm" pt="md" pb={4} style={{ letterSpacing: 0.5 }}>Admin</Text>}
@@ -181,8 +177,8 @@ export default function AppFrame({ isAdmin, showSales, who, email, signOut, sign
           </div>
         </Group>
         <Stack gap={4} mb="md">
-          {showSales && isAdmin && (
-            <NavLink {...link} href="/sales/settings" label="Sales settings" leftSection={<IconSettings size={18} />} onClick={() => setSheet(false)} active={path.startsWith("/sales/settings")} />
+          {showReports && isAdmin && (
+            <NavLink {...link} href="/reports/daily-sales/settings" label="Daily Sales email settings" leftSection={<IconSettings size={18} />} onClick={() => setSheet(false)} active={path.startsWith("/reports/daily-sales/settings")} />
           )}
         </Stack>
         {signOut}

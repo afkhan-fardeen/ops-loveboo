@@ -16,7 +16,7 @@ export function TextLink({ href, children }: { href: string; children: ReactNode
   return <Anchor component={Link} href={href} fw={500}>{children}</Anchor>;
 }
 
-const ICONS = { sales: IconChartBar, users: IconUsers };
+const ICONS = { reports: IconChartBar, users: IconUsers };
 
 export function ModuleCard({ href, title, text, icon, badge, stat }: { href: string; title: string; text: string; icon: keyof typeof ICONS; badge?: string; stat?: { label: string; value: string; delta?: string; up?: boolean } }) {
   const Icon = ICONS[icon];

@@ -13,7 +13,7 @@ export function buildEmail(s: Summary, appUrl: string, name?: string) {
   const { row } = s, cur = row.currency;
   const at = new Date(`${row.date}T12:00:00Z`);
   const long = `${at.toLocaleDateString("en-GB", { weekday: "short", timeZone: "UTC" })}, ${at.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" })}`;
-  const link = esc(`${appUrl}/sales?date=${row.date}`);
+  const link = esc(`${appUrl}/reports/daily-sales?date=${row.date}`);
   const stamp = new Date().toLocaleString("en-GB", { timeZone: "Asia/Bahrain", hour12: false });
 
   const rows: [string, string][] = [

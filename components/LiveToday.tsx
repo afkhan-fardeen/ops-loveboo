@@ -15,7 +15,7 @@ export default function LiveToday({ currency }: { currency: string }) {
   const load = useCallback(async () => {
     setBusy(true);
     try {
-      const res = await fetch("/sales/live", { cache: "no-store" });
+      const res = await fetch("/reports/daily-sales/live", { cache: "no-store" });
       if (!res.ok) throw new Error();
       setData(await res.json());
       setFailed(false);

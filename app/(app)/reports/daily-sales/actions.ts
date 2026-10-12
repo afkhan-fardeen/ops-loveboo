@@ -15,8 +15,8 @@ const toast = (path: string, k: "ok" | "err", m: string) => {
 export async function sendReportNow(form: FormData) {
   await requireAdmin();
   const date = String(form.get("date") ?? "");
-  const raw = String(form.get("returnTo") ?? "/sales");
-  const back = raw.startsWith("/sales") && !raw.startsWith("//") && !raw.includes("\\") ? raw : "/sales";
+  const raw = String(form.get("returnTo") ?? "/reports/daily-sales");
+  const back = raw.startsWith("/reports") && !raw.startsWith("//") && !raw.includes("\\") ? raw : "/reports/daily-sales";
   const go = (k: "ok" | "err", m: string) => redirect(toast(back, k, m));
 
   if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return go("err", "That date isn’t valid.");

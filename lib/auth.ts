@@ -1,7 +1,7 @@
 import { unstable_cache } from "next/cache";
 import { cache } from "react";
 import { redirect } from "next/navigation";
-import { moduleIds } from "./modules";
+import { moduleIds, normaliseModules } from "./modules";
 import { adminClient, serverClient } from "./supabase";
 
 /** Profile lookups are cached for 30 s and cleared immediately when an admin changes a user. */
@@ -20,7 +20,7 @@ export const getUser = cache(async (): Promise<User | null> => {
 
   const p = await profileById(user.id);
   if (!p || !p.active) return null;
-  return { id: user.id, email: p.email, name: p.name, role: p.role, modules: p.role === "admin" ? moduleIds : p.modules ?? [] };
+  return { id: user.id, email: p.email, name: p.name, role: p.role, modules: p.role === "admin" ? moduleIds : normaliseModules(p.modules) };
 });
 
 export async function requireUser() {

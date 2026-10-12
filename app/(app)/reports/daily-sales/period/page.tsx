@@ -19,10 +19,10 @@ export const dynamic = "force-dynamic";
 const ISO = /^\d{4}-\d{2}-\d{2}$/;
 const share = (n: number, total: number) => (total ? `${((n / total) * 100).toFixed(1)}%` : "—");
 
-export const metadata = { title: "Reports" };
+export const metadata = { title: "Daily Sales · Period" };
 
 export default async function Reports({ searchParams }: { searchParams: Promise<{ from?: string; to?: string }> }) {
-  const user = await requireModule("sales");
+  const user = await requireModule("reports");
   const isAdmin = user.role === "admin";
   const q = await searchParams;
   const bounds = await dateBounds();
@@ -40,8 +40,8 @@ export default async function Reports({ searchParams }: { searchParams: Promise<
 
   return (
     <Stack gap="lg">
-      <PageHeader eyebrow="Period report" title={n === 1 ? dateLabel(from, true) : `${dateLabel(from)} – ${dateLabel(to, true)}`}>
-        <DownloadButton href={`/sales/export?from=${from}&to=${to}`}>Download Excel</DownloadButton>
+      <PageHeader eyebrow="Daily Sales · period summary" title={n === 1 ? dateLabel(from, true) : `${dateLabel(from)} – ${dateLabel(to, true)}`}>
+        <DownloadButton href={`/reports/daily-sales/export?from=${from}&to=${to}`}>Download Excel</DownloadButton>
       </PageHeader>
       <RangePicker from={from} to={to} min={bounds.min} max={bounds.max} />
       {/* Keyed Suspense: switching ranges shows the skeleton at once while the numbers load. */}
@@ -59,7 +59,7 @@ async function ReportBody({ from, to, n, min, max, isAdmin }: { from: string; to
 
   const cur = rows[0]?.currency ?? "GBP";
   const recipients = isAdmin ? activeRecipients(await getSettings()) : [];
-  const here = `/sales/reports?from=${from}&to=${to}`;
+  const here = `/reports/daily-sales/period?from=${from}&to=${to}`;
   const t = totals(rows), p = totals(prevRows);
   const vs = (a: number, b: number) => (hasPrev && prevRows.length ? pctChange(a, b) : null);
   const label = `vs previous ${n} ${n === 1 ? "day" : "days"}`;
@@ -106,7 +106,7 @@ async function ReportBody({ from, to, n, min, max, isAdmin }: { from: string; to
             <TabsPanel value="days">
               <Section title={`${rows.length} days`} flush>
                 <DataTable minWidth={0} rows={rows} rowKey={(r) => r.date} cols={[
-                  { label: "Date", render: (r) => <TextLink href={`/sales?date=${r.date}`}>{dateLabel(r.date, true)}</TextLink> },
+                  { label: "Date", render: (r) => <TextLink href={`/reports/daily-sales?date=${r.date}`}>{dateLabel(r.date, true)}</TextLink> },
                   { label: "Net sales", align: "right", render: (r) => money(r.net_sales, cur) },
                   { label: "Orders", align: "right", render: (r) => int(r.orders) },
                   { label: "Total sales", align: "right", hideBelow: "sm", render: (r) => money(r.total_sales, cur) },

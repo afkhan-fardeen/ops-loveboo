@@ -13,16 +13,16 @@ import { buildEmail } from "@/lib/email";
 import { dateLabel, int, money, num2, timeIn } from "@/lib/format";
 import { firstName } from "@/lib/names";
 import { requireModule } from "@/lib/auth";
-import { sendTestEmail } from "../actions";
+import { sendTestEmail } from "../../actions";
 import { sendReportNow } from "./actions";
 import { activeRecipients, getSettings } from "@/lib/settings";
 
 export const dynamic = "force-dynamic";
 
-export const metadata = { title: "Sales" };
+export const metadata = { title: "Daily Sales" };
 
 export default async function Overview({ searchParams }: { searchParams: Promise<{ date?: string }> }) {
-  const user = await requireModule("sales");
+  const user = await requireModule("reports");
   const { date: raw } = await searchParams;
   const date = raw && /^\d{4}-\d{2}-\d{2}$/.test(raw) ? raw : undefined;
   const bounds = await dateBounds();
@@ -31,7 +31,7 @@ export default async function Overview({ searchParams }: { searchParams: Promise
   const shown = date ?? bounds.max;
   return (
     <Stack gap="lg">
-      <PageHeader eyebrow={shown === bounds.max ? "Latest report" : "Sales report"} title={dateLabel(shown, true)}>
+      <PageHeader eyebrow={shown === bounds.max ? "Daily Sales · latest report" : "Daily Sales"} title={dateLabel(shown, true)}>
         <DateSwitcher value={shown} min={bounds.min} max={bounds.max} />
       </PageHeader>
       {/* Keyed Suspense: switching days shows the skeleton at once while the numbers load. */}
@@ -142,7 +142,7 @@ async function DayBody({ shown, date, min, max, user }: { shown: string; date?: 
           {isAdmin && cfg && (
             <form action={sendReportNow}>
               <input type="hidden" name="date" value={row.date} />
-              <input type="hidden" name="returnTo" value={`/sales?date=${row.date}`} />
+              <input type="hidden" name="returnTo" value={`/reports/daily-sales?date=${row.date}`} />
               <SubmitButton fullWidth leftSection={<IconSend size={16} />}
                 confirm={`Send the report for ${dateLabel(row.date, true)} to ${activeRecipients(cfg).length} ${activeRecipients(cfg).length === 1 ? "recipient" : "recipients"} now?\n\n${activeRecipients(cfg).map((r) => r.email).join("\n") || "No active recipients."}`}>
                 Send now to {activeRecipients(cfg).length} {activeRecipients(cfg).length === 1 ? "recipient" : "recipients"}
@@ -152,7 +152,7 @@ async function DayBody({ shown, date, min, max, user }: { shown: string; date?: 
           <form action={sendTestEmail}>
             <input type="hidden" name="date" value={row.date} />
             <SimpleGrid cols={{ base: 1, xs: 2 }}>
-              <DownloadButton href={`/sales/export?date=${row.date}`}>Download Excel</DownloadButton>
+              <DownloadButton href={`/reports/daily-sales/export?date=${row.date}`}>Download Excel</DownloadButton>
               <SubmitButton variant="default">Email me this day</SubmitButton>
             </SimpleGrid>
           </form>

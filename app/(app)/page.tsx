@@ -16,7 +16,7 @@ export const metadata = { title: "Home" };
 export default async function Home() {
   const user = await requireUser();
   const mine = MODULES.filter((m) => user.modules.includes(m.id));
-  const sales = user.modules.includes("sales") ? summarise(await rowsForSummary(undefined, 10).catch(() => [])) : null;
+  const sales = user.modules.includes("reports") ? summarise(await rowsForSummary(undefined, 10).catch(() => [])) : null;
 
   return (
     <Stack gap="xl">
@@ -29,8 +29,8 @@ export default async function Home() {
       ) : (
         <SimpleGrid cols={{ base: 1, sm: 2, lg: 3 }}>
           {mine.map((m) => (
-            <ModuleCard key={m.id} href={m.href} title={m.name} text={m.description} icon="sales"
-              stat={sales && m.id === "sales" ? { label: `Net sales · ${dateLabel(sales.row.date)}`, value: money(sales.row.net_sales, sales.row.currency), delta: sales.vsPrev === null ? undefined : pct(sales.vsPrev), up: (sales.vsPrev ?? 0) >= 0 } : undefined} />
+            <ModuleCard key={m.id} href={m.href} title={m.name} text={m.description} icon="reports"
+              stat={sales && m.id === "reports" ? { label: `Net sales · ${dateLabel(sales.row.date)}`, value: money(sales.row.net_sales, sales.row.currency), delta: sales.vsPrev === null ? undefined : pct(sales.vsPrev), up: (sales.vsPrev ?? 0) >= 0 } : undefined} />
           ))}
           {user.role === "admin" && <ModuleCard href="/admin/users" title="Users" text="Add people, set passwords and choose which modules they can open." icon="users" badge="Admin" />}
         </SimpleGrid>

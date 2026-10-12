@@ -7,7 +7,7 @@ export const dynamic = "force-dynamic";
 const XLSX = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
 
 export async function GET(req: NextRequest) {
-  await requireModule("sales");
+  await requireModule("reports");
   const q = req.nextUrl.searchParams;
   const iso = /^\d{4}-\d{2}-\d{2}$/;
   const from = q.get("from"), to = q.get("to");

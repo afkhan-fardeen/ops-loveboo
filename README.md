@@ -1,6 +1,6 @@
 # Love Boo Ops portal
 
-Internal portal for loveboo.com. Module 1: **Sales** (daily report, period reports, live today, Excel, daily email).
+Internal portal for loveboo.com. Module: **Reports**, starting with **Daily Sales** (a day view with live today, period summaries, Excel and the daily email). More reports plug into the same module.
 
 Stack: Next.js 15 (App Router) · Mantine 8 · Supabase (Auth + Postgres) · Shopify Admin GraphQL · Resend · Vercel.
 
@@ -14,7 +14,7 @@ npm test                     # unit tests (dates, timezones, summaries)
 Database: run `schema.sql` once on a new Supabase project (or the files in `migrations/` in order).
 
 ## Send time (admin setting)
-Admins set the daily send time in **Sales → Settings** (Bahrain time). The portal sends the previous day's report at the first scheduler check after that time, once per day (a manual **Send now** counts, so there are no duplicates).
+Admins set the daily send time in **Reports → Daily Sales → Email settings** (Bahrain time). The portal sends the previous day's report at the first scheduler check after that time, once per day (a manual **Send now** counts, so there are no duplicates).
 The scheduler pings `/api/cron/daily-report` with the cron secret:
 - **Exact times (recommended):** `.github/workflows/daily-report.yml` pings every 15 minutes, for free. In GitHub → Settings → Secrets and variables → Actions, add `APP_URL` (e.g. `https://ops.loveboo.com`) and `CRON_SECRET` (identical to the Vercel value).
 - **Fallback:** `vercel.json` also pings once a day at 05:00 UTC (Vercel Hobby allows daily crons only). On a Pro plan you can change that schedule to `*/15 * * * *` instead.
@@ -38,3 +38,8 @@ Items sold after every discount (line and order level), excluding VAT when price
 
 ## Operations checklist
 Vercel env vars: see `.env.example`. Sender must be on the verified Resend domain (`reports@mail.loveboo.com`). Rotate any key that has been shared in chat or email.
+
+## Structure
+- `/reports` lists the available reports; `/reports/daily-sales` is the Daily Sales report with tabs **Day**, **Period** and **Email settings** (admins).
+- Admins give people the **Reports** module on the Users page. Access saved under the old module id `sales` is mapped to `reports` automatically.
+- Old `/sales/...` addresses (and links in earlier emails) redirect to the new ones.

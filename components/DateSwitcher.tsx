@@ -22,7 +22,7 @@ export default function DateSwitcher({ value: current, min, max }: { value: stri
   const prev = shift(value, -1), next = shift(value, 1);
   const canPrev = prev >= min, canNext = next <= max;
 
-  const go = (d: string) => { startProgress(); setValue(d); start(() => router.push(d === max ? "/sales" : `/sales?date=${d}`)); };
+  const go = (d: string) => { startProgress(); setValue(d); start(() => router.push(d === max ? "/reports/daily-sales" : `/reports/daily-sales?date=${d}`)); };
   useHotkeys([["ArrowLeft", () => canPrev && go(prev)], ["ArrowRight", () => canNext && go(next)]]);
 
   return (

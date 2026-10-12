@@ -13,7 +13,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   return (
     <AppFrame
       isAdmin={user.role === "admin"}
-      showSales={user.modules.includes("sales")}
+      showReports={user.modules.includes("reports")}
       who={user.name || user.email}
       email={user.email}
       initialCollapsed={collapsed}

@@ -1,7 +1,7 @@
 name: Daily report scheduler
 
 # Pings the portal every 15 minutes. The portal itself decides whether it is time to send,
-# based on the send time an admin sets in Sales → Settings, and never sends the same day twice.
+# based on the send time an admin sets in Reports → Daily Sales → Email settings, and never sends the same day twice.
 # Needs repository secrets: APP_URL (e.g. https://ops.loveboo.com) and CRON_SECRET (same value as in Vercel).
 on:
   schedule:

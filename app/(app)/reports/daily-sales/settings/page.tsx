@@ -12,7 +12,7 @@ import { save, testRecipients } from "./actions";
 
 export const dynamic = "force-dynamic";
 
-export const metadata = { title: "Settings" };
+export const metadata = { title: "Daily Sales · Email settings" };
 
 export default async function Settings() {
   await requireAdmin();
@@ -33,7 +33,7 @@ export default async function Settings() {
   ];
   return (
     <Stack gap="lg" maw={720}>
-      <PageHeader title="Settings" eyebrow="Daily email recipients and options. Admins only." />
+      <PageHeader title="Email settings" eyebrow="Daily Sales · who gets the daily email, when and what is in it. Admins only." />
 
       {sandbox && (
         <Alert color="yellow" icon={<IconAlertTriangle size={18} />} title="Emails only reach one person right now">

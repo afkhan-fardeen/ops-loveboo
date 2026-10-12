@@ -9,7 +9,7 @@ const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export async function save(form: FormData) {
   await requireAdmin();
-  const back = (k: "ok" | "err", m: string) => redirect(`/sales/settings?${k}=${encodeURIComponent(m)}`);
+  const back = (k: "ok" | "err", m: string) => redirect(`/reports/daily-sales/settings?${k}=${encodeURIComponent(m)}`);
   let raw: unknown;
   try { raw = JSON.parse(String(form.get("recipients") ?? "[]")); } catch { return back("err", "Couldn’t read the recipients list. Reload and try again."); }
   if (!Array.isArray(raw)) return back("err", "Couldn’t read the recipients list. Reload and try again.");
@@ -34,7 +34,7 @@ export async function save(form: FormData) {
 export async function testRecipients() {
   await requireAdmin();
   const recipients = activeRecipients(await getSettings()).map((r) => r.email);
-  const back = (k: "ok" | "err", m: string) => redirect(`/sales/settings?${k}=${encodeURIComponent(m)}`);
+  const back = (k: "ok" | "err", m: string) => redirect(`/reports/daily-sales/settings?${k}=${encodeURIComponent(m)}`);
   if (!recipients.length) return back("err", "Add and save at least one active recipient first.");
   if (!process.env.RESEND_API_KEY) return back("err", "Email isn’t configured: RESEND_API_KEY is missing.");
   let r;

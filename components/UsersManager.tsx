@@ -88,7 +88,7 @@ export default function UsersManager({ users, meId, modules, createUser, updateU
               )}</CopyButton>
             </Group>
             <NativeSelect name="role" label="Role" data={ROLES} defaultValue="user" description="Admins manage users and settings, and can open every module." />
-            <ModuleChecks selected={["sales"]} />
+            <ModuleChecks selected={["reports"]} />
             <SubmitButton fullWidth>Add user</SubmitButton>
           </Stack>
         </form>

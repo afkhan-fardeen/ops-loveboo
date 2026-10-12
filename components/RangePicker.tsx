@@ -30,7 +30,7 @@ export default function RangePicker({ from, to, min, max }: { from: string; to: 
   const [picked, setPicked] = useState(actual);
   useEffect(() => setPicked(actual), [actual, from, to]);
   const current = picked;
-  const go = (f: string, t: string) => { startProgress(); start(() => router.push(`/sales/reports?from=${f}&to=${t}`)); };
+  const go = (f: string, t: string) => { startProgress(); start(() => router.push(`/reports/daily-sales/period?from=${f}&to=${t}`)); };
 
   return (
     <Group gap="xs" wrap="wrap">

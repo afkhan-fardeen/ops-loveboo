@@ -3,7 +3,7 @@ import { IconShieldCheck, IconUserOff, IconUsers } from "@tabler/icons-react";
 import UsersManager, { type Profile } from "@/components/UsersManager";
 import { Kpi, PageHeader } from "@/components/ui";
 import { requireAdmin } from "@/lib/auth";
-import { MODULES } from "@/lib/modules";
+import { MODULES, normaliseModules } from "@/lib/modules";
 import { adminClient } from "@/lib/supabase";
 import { createUser, deleteUser, updateUser } from "./actions";
 
@@ -13,7 +13,7 @@ export const metadata = { title: "Users" };
 
 export default async function Users() {
   const me = await requireAdmin();
-  const users = ((await adminClient().from("profiles").select("*").order("created_at")).data as Profile[] | null) ?? [];
+  const users = (((await adminClient().from("profiles").select("*").order("created_at")).data as Profile[] | null) ?? []).map((u) => ({ ...u, modules: normaliseModules(u.modules) }));
   return (
     <Stack gap="lg">
       <PageHeader title="Users" eyebrow="Who can sign in and what they can open" />
