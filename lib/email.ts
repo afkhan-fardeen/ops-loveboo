@@ -1,5 +1,5 @@
 import { dateLabel, int, money } from "./format";
-import type { Summary } from "./data";
+import type { Row } from "./data";
 
 const C = { teal: "#006D68", linen: "#f1f3f5", ink: "#212529", mute: "#868e96", line: "#e9ecef" };
 const esc = (v: string) => v.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
@@ -9,8 +9,8 @@ const line = (label: string, value: string, last = false, strong = false) =>
   `<tr><td style="padding:12px 0;${last ? "" : `border-bottom:1px solid ${C.line};`}font-size:15px;color:${strong ? C.ink : C.mute};${strong ? "font-weight:700;" : ""}">${label}</td>
    <td align="right" style="padding:12px 0;${last ? "" : `border-bottom:1px solid ${C.line};`}font-size:${strong ? 17 : 15}px;font-weight:${strong ? 700 : 600};color:${strong ? C.teal : C.ink}">${value}</td></tr>`;
 
-export function buildEmail(s: Summary, appUrl: string, name?: string) {
-  const { row } = s, cur = row.currency;
+export function buildEmail(row: Row, appUrl: string, name?: string) {
+  const cur = row.currency;
   const at = new Date(`${row.date}T12:00:00Z`);
   const long = `${at.toLocaleDateString("en-GB", { weekday: "short", timeZone: "UTC" })}, ${at.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" })}`;
   const link = esc(`${appUrl}/reports/daily-sales?date=${row.date}`);

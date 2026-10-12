@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState, type ReactNode } from "react";
 import { ActionIcon, AppShell, Avatar, Box, Divider, Drawer, Group, NavLink, ScrollArea, Stack, Text, ThemeIcon, Tooltip, UnstyledButton } from "@mantine/core";
-import { IconChartBar, IconFileText, IconHome2, IconLayoutSidebarLeftCollapse, IconLayoutSidebarLeftExpand, IconSettings, IconUser, IconUsers } from "@tabler/icons-react";
+import { IconFileText, IconHome2, IconLayoutSidebarLeftCollapse, IconLayoutSidebarLeftExpand, IconSettings, IconUser, IconUsers } from "@tabler/icons-react";
 
 const Logo = () => <Image src="/logo.png" alt="Love Boo" width={92} height={29} priority />;
 const WIDE = 248, RAIL = 84;
@@ -30,17 +30,12 @@ export default function AppFrame({ isAdmin, showReports, who, email, signOut, si
 
   const railItems = [
     { href: "/", label: "Home", icon: IconHome2, on: path === "/", show: true },
-    { href: "/reports", label: "Reports", icon: IconFileText, on: path === "/reports", show: showReports },
-    { href: "/reports/daily-sales", label: "Daily Sales", icon: IconChartBar, on: path.startsWith("/reports/daily-sales"), show: showReports },
+    { href: "/reports/daily-sales", label: "Reports", icon: IconFileText, on: path.startsWith("/reports"), show: showReports },
     { href: "/admin/users", label: "Users", icon: IconUsers, on: path.startsWith("/admin"), show: isAdmin },
   ].filter((i) => i.show);
 
   // Phone tab bar: the everyday places, plus Account (opens a sheet with Sign out).
-  const tabs = [
-    { href: "/", label: "Home", icon: IconHome2, on: path === "/", show: true },
-    { href: "/reports", label: "Reports", icon: IconFileText, on: path.startsWith("/reports"), show: showReports },
-    { href: "/admin/users", label: "Users", icon: IconUsers, on: path.startsWith("/admin"), show: isAdmin },
-  ].filter((t) => t.show);
+  const tabs = railItems.map((i) => ({ ...i, label: i.label }));
 
   const initial = (who.trim()[0] ?? "?").toUpperCase();
 
@@ -61,11 +56,7 @@ export default function AppFrame({ isAdmin, showReports, who, email, signOut, si
         <Stack gap={2}>
           <Text size="xs" tt="uppercase" fw={700} c="dimmed" px="sm" pb={4} style={{ letterSpacing: 0.5 }}>Menu</Text>
           <NavLink {...link} href="/" label="Home" leftSection={<IconHome2 size={18} />} active={path === "/"} />
-          {showReports && (
-            <NavLink {...link} href="/reports" label="Reports" leftSection={<IconFileText size={18} />} defaultOpened={path.startsWith("/reports")} active={path === "/reports"} variant="subtle" childrenOffset={28}>
-              <NavLink {...link} href="/reports/daily-sales" label="Daily Sales" active={path.startsWith("/reports/daily-sales")} />
-            </NavLink>
-          )}
+          {showReports && <NavLink {...link} href="/reports/daily-sales" label="Reports" leftSection={<IconFileText size={18} />} active={path.startsWith("/reports")} />}
           {isAdmin && <Text size="xs" tt="uppercase" fw={700} c="dimmed" px="sm" pt="md" pb={4} style={{ letterSpacing: 0.5 }}>Admin</Text>}
           {isAdmin && <NavLink {...link} href="/admin/users" label="Users" leftSection={<IconUsers size={18} />} active={path.startsWith("/admin")} />}
         </Stack>
@@ -178,7 +169,7 @@ export default function AppFrame({ isAdmin, showReports, who, email, signOut, si
         </Group>
         <Stack gap={4} mb="md">
           {showReports && isAdmin && (
-            <NavLink {...link} href="/reports/daily-sales/settings" label="Daily Sales email settings" leftSection={<IconSettings size={18} />} onClick={() => setSheet(false)} active={path.startsWith("/reports/daily-sales/settings")} />
+            <NavLink {...link} href="/reports/daily-sales/settings" label="Email settings" leftSection={<IconSettings size={18} />} onClick={() => setSheet(false)} active={path.startsWith("/reports/daily-sales/settings")} />
           )}
         </Stack>
         {signOut}

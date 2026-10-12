@@ -1,31 +1,35 @@
 "use server";
 import { revalidateTag } from "next/cache";
-import { redirect } from "next/navigation";
 import { requireAdmin } from "@/lib/auth";
-import { sendNow } from "@/lib/report";
+import { sendDay } from "@/lib/report";
+import { isEmail } from "@/lib/settings";
 
-/** Adds ?ok= / ?err= to a same-site path, preserving its existing query. */
-const toast = (path: string, k: "ok" | "err", m: string) => {
-  const u = new URL(path, "http://x");
-  u.searchParams.delete("ok"); u.searchParams.delete("err");
-  u.searchParams.set(k, m);
-  return `${u.pathname}${u.search}`;
-};
+export type Result = { ok: boolean; message: string };
+const fail = (message: string): Result => ({ ok: false, message });
 
-export async function sendReportNow(form: FormData) {
+/**
+ * Send one day's report now. mode "recipients" goes to the current recipients;
+ * mode "custom" goes only to the addresses typed in (people who aren't recipients).
+ */
+export async function sendDayEmail(form: FormData): Promise<Result> {
   await requireAdmin();
   const date = String(form.get("date") ?? "");
-  const raw = String(form.get("returnTo") ?? "/reports/daily-sales");
-  const back = raw.startsWith("/reports") && !raw.startsWith("//") && !raw.includes("\\") ? raw : "/reports/daily-sales";
-  const go = (k: "ok" | "err", m: string) => redirect(toast(back, k, m));
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return fail("That date isn’t valid.");
+  if (!process.env.RESEND_API_KEY) return fail("Email isn’t configured: RESEND_API_KEY is missing.");
 
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return go("err", "That date isn’t valid.");
-  if (!process.env.RESEND_API_KEY) return go("err", "Email isn’t configured: RESEND_API_KEY is missing.");
+  let to: string[] | undefined;
+  if (form.get("mode") === "custom") {
+    to = [...new Set(String(form.get("to") ?? "").split(/[\s,;]+/).map((e) => e.trim().toLowerCase()).filter(Boolean))];
+    if (!to.length) return fail("Enter at least one email address.");
+    const bad = to.find((e) => !isEmail(e));
+    if (bad) return fail(`“${bad}” isn’t a valid email address.`);
+    if (to.length > 10) return fail("You can send to up to 10 addresses at a time.");
+  }
 
   let r;
-  try { r = await sendNow(date); revalidateTag("sales"); } catch (e) { return go("err", e instanceof Error ? e.message : "Couldn’t send the report."); }
-  if (r.none) return go("err", "No active recipients. Add or switch on a recipient in Settings first.");
-  if (!r.failed.length) return go("ok", `Report for ${date} sent to ${r.sent.join(", ")}.`);
+  try { r = await sendDay(date, to); revalidateTag("sales"); } catch (e) { return fail(e instanceof Error ? e.message : "Couldn’t send the report."); }
+  if (r.none) return fail("There are no active recipients. Add one in Email settings, or choose Someone else.");
+  if (!r.failed.length) return { ok: true, message: `Sent to ${r.sent.join(", ")}.` };
   const why = r.failed.map((f) => `${f.address}: ${f.error}`).join(" · ");
-  return go("err", `${r.sent.length ? `Sent to ${r.sent.join(", ")}. ` : ""}Failed — ${why}`);
+  return fail(`${r.sent.length ? `Sent to ${r.sent.join(", ")}. ` : ""}Failed: ${why}`);
 }

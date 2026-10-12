@@ -1,5 +1,5 @@
-import { addDays, dayRange } from "./format";
-import type { Location, Order, Product } from "./data";
+import { dayRange } from "./format";
+import type { Location, Order } from "./data";
 import { lineAmounts, refundAmounts } from "./lines";
 
 const REFUNDS = `refunds {
@@ -12,7 +12,7 @@ const ORDERS = `query($q: String!, $after: String) {
   orders(first: 100, after: $after, query: $q) {
     pageInfo { hasNextPage endCursor }
     nodes {
-      name createdAt processedAt taxesIncluded sourceName discountCodes
+      name createdAt processedAt taxesIncluded sourceName
       currentTotalPriceSet { shopMoney { amount } }
       currentTotalTaxSet { shopMoney { amount } }
       currentSubtotalPriceSet { shopMoney { currencyCode } }
@@ -45,7 +45,7 @@ type RefundNode = {
 };
 type Address = { country: string | null; city: string | null } | null;
 type ShopifyOrder = {
-  name: string; createdAt: string; processedAt: string | null; taxesIncluded: boolean; sourceName: string | null; discountCodes: string[];
+  name: string; createdAt: string; processedAt: string | null; taxesIncluded: boolean; sourceName: string | null;
   currentTotalPriceSet: Money; currentTotalTaxSet: Money; currentSubtotalPriceSet: { shopMoney: { currencyCode: string } };
   shippingAddress: Address;
   lineItems: { nodes: { id: string; name: string; quantity: number; currentQuantity: number; originalTotalSet: Money; discountAllocations: { allocatedAmountSet: Money }[]; taxLines: { priceSet: Money }[] }[] };
@@ -53,41 +53,6 @@ type ShopifyOrder = {
 };
 type RefundOrder = { name: string; taxesIncluded: boolean; sourceName: string | null; shippingAddress: Address; refunds: RefundNode[] };
 type Page<T> = { data?: { orders: { pageInfo: { hasNextPage: boolean; endCursor: string }; nodes: T[] } }; errors?: unknown };
-
-const ENDPOINT = () => `https://${process.env.SHOPIFY_STORE_DOMAIN}/admin/api/${process.env.SHOPIFY_API_VERSION ?? "2025-07"}/graphql.json`;
-
-/** Runs a ShopifyQL query and returns its rows. */
-async function shopifyql(query: string): Promise<Record<string, string | null>[]> {
-  const res = await fetch(ENDPOINT(), {
-    method: "POST",
-    headers: { "Content-Type": "application/json", "X-Shopify-Access-Token": process.env.SHOPIFY_ADMIN_TOKEN! },
-    body: JSON.stringify({ query: `{ shopifyqlQuery(query: ${JSON.stringify(query)}) { tableData { rows } parseErrors } }` }),
-    cache: "no-store",
-  });
-  const json = (await res.json()) as { data?: { shopifyqlQuery: { tableData: { rows: Record<string, string | null>[] } | null; parseErrors: string[] } }; errors?: unknown };
-  if (!res.ok || json.errors || !json.data) throw new Error(`ShopifyQL: ${JSON.stringify(json.errors ?? res.status)}`);
-  if (json.data.shopifyqlQuery.parseErrors.length) throw new Error(`ShopifyQL: ${json.data.shopifyqlQuery.parseErrors.join("; ")}`);
-  return json.data.shopifyqlQuery.tableData?.rows ?? [];
-}
-
-export type Traffic = { sessions: number; conversion: number; sources: { source: string; sessions: number }[] };
-
-/** Online-store sessions, conversion rate and traffic sources for each day in [from, to], keyed by YYYY-MM-DD. */
-export async function fetchTraffic(from: string, to: string): Promise<Map<string, Traffic>> {
-  const span = `SINCE ${from} UNTIL ${to}`;
-  const [days, sources] = await Promise.all([
-    shopifyql(`FROM sessions SHOW sessions, conversion_rate GROUP BY day ${span} ORDER BY day`),
-    shopifyql(`FROM sessions SHOW sessions GROUP BY day, referrer_source ${span}`),
-  ]);
-  const out = new Map<string, Traffic>();
-  for (const r of days) out.set(r.day!, { sessions: Math.round(Number(r.sessions)), conversion: Number(r.conversion_rate ?? 0), sources: [] });
-  for (const r of sources) {
-    const t = out.get(r.day!);
-    if (t && Number(r.sessions) > 0) t.sources.push({ source: r.referrer_source ?? "unknown", sessions: Math.round(Number(r.sessions)) });
-  }
-  for (const t of out.values()) t.sources.sort((a, b) => b.sessions - a.sessions);
-  return out;
-}
 
 const amount = (m: Money) => Number(m.shopMoney.amount);
 const round2 = (n: number) => Math.round(n * 100) / 100;
@@ -119,7 +84,7 @@ async function paginate<T>(query: string, q: string): Promise<T[]> {
 }
 
 /** One refund or return that happened on some day, on any order. Orders from drafts and test orders are skipped. */
-export type RefundEvent = ReturnType<typeof refundAmounts> & { order: string; at: string; country: string; city: string; names: { name: string; net: number }[] };
+export type RefundEvent = ReturnType<typeof refundAmounts> & { order: string; at: string; country: string; city: string };
 
 /** Every refund booked since `sinceIso`, across all orders. Fetch once and reuse when loading many days. */
 export async function fetchRefunds(sinceIso: string): Promise<RefundEvent[]> {
@@ -131,8 +96,7 @@ export async function fetchRefunds(sinceIso: string): Promise<RefundEvent[]> {
       if (r.createdAt < sinceIso) continue;
       const a = refundAmounts(refundInput(o.taxesIncluded, r));
       events.push({
-        ...a, order: o.name, at: r.createdAt, country: o.shippingAddress?.country ?? "Unknown", city: tidyCity(o.shippingAddress?.city),
-        names: r.refundLineItems.nodes.map((i) => ({ name: i.lineItem?.name ?? "Item", net: o.taxesIncluded ? amount(i.subtotalSet) - amount(i.totalTaxSet) : amount(i.subtotalSet) })),
+        ...a, order: o.name, at: r.createdAt, country: o.shippingAddress?.country ?? "Unknown", city: tidyCity(o.shippingAddress?.city)
       });
     }
   }
@@ -143,18 +107,15 @@ export async function fetchRefunds(sinceIso: string): Promise<RefundEvent[]> {
  * One day of sales in the store timezone, booked the way Shopify's Sales report books it:
  * an order counts on the day it was processed (Shopify dates sales by processed time; items after every discount, ex VAT when prices include it, ex shipping),
  * and each refund or return counts as a negative line on the day it happened, even for older orders.
- * Draft orders are skipped. Day total, products, locations and the order list are all built from the same lines.
+ * Draft orders are skipped. The day total, locations and the order list are all built from the same lines.
  */
-export async function fetchDay(date: string, opts: { refunds?: RefundEvent[]; traffic?: Map<string, Traffic> } = {}) {
+export async function fetchDay(date: string, opts: { refunds?: RefundEvent[] } = {}) {
   const tz = process.env.STORE_TIMEZONE ?? "Europe/London";
   const { from, to } = dayRange(date, tz);
   const orders = await paginate<ShopifyOrder>(ORDERS, `processed_at:>='${from}' processed_at:<'${to}' -status:cancelled -test:true`);
-  const [allRefunds, traffic] = await Promise.all([opts.refunds ?? fetchRefunds(from), opts.traffic ?? fetchTraffic(date, date)]);
-  const refunds = allRefunds.filter((e) => e.at >= from && e.at < to);
-  const visits = traffic.get(date) ?? { sessions: 0, conversion: 0, sources: [] };
+  const refunds = (opts.refunds ?? (await fetchRefunds(from))).filter((e) => e.at >= from && e.at < to);
 
-  let net = 0, discounts = 0, returns = 0, shipping = 0, taxes = 0, totalSales = 0, count = 0, units = 0, currency = "GBP";
-  const products = new Map<string, Product>();
+  let net = 0, discounts = 0, shipping = 0, taxes = 0, totalSales = 0, count = 0, units = 0, currency = "GBP";
   const places = new Map<string, Location>();
   const orderList: Order[] = [];
   const place = (country: string, city: string) => {
@@ -171,7 +132,7 @@ export async function fetchDay(date: string, opts: { refunds?: RefundEvent[]; tr
     const country = o.shippingAddress?.country ?? "Unknown", city = tidyCity(o.shippingAddress?.city);
     const p = place(country, city);
     p.orders++;
-    const entry: Order = { name: o.name, time: o.processedAt ?? o.createdAt, units: 0, amount: 0, discount: 0, country, codes: o.discountCodes };
+    const entry: Order = { name: o.name, time: o.processedAt ?? o.createdAt, units: 0, amount: 0, discount: 0, country };
 
     // Quantity taken out by refunds is booked on the refund day; only order *edits* reduce the order's own day.
     const refundedQty = new Map<string, number>();
@@ -186,9 +147,6 @@ export async function fetchDay(date: string, opts: { refunds?: RefundEvent[]; tr
 
       entry.amount += lineNet; entry.discount += lineDiscount; entry.units! += standing;
       p.units += standing; units += standing;
-      const prod = products.get(li.name) ?? { name: li.name, units: 0, net: 0 };
-      prod.units += standing; prod.net += lineNet;
-      products.set(li.name, prod);
     }
 
     // What the customer paid before any refund, and the VAT inside it. Shipping (ex VAT) is what remains after items and VAT.
@@ -198,38 +156,18 @@ export async function fetchDay(date: string, opts: { refunds?: RefundEvent[]; tr
 
     p.net += entry.amount;
     net += entry.amount; discounts += entry.discount; shipping += ship; taxes += tax; totalSales += total;
-    orderList.push({ ...entry, amount: round2(entry.amount), discount: round2(entry.discount), gross: round2(entry.amount + entry.discount), shipping: round2(ship), tax: round2(tax), total: round2(total) });
+    orderList.push({ ...entry, amount: round2(entry.amount), discount: round2(entry.discount), shipping: round2(ship), tax: round2(tax), total: round2(total) });
   }
 
   for (const e of refunds) {
-    returns += e.returnsEx; net -= e.returnsEx; shipping -= e.shippingEx; taxes -= e.tax; totalSales -= e.total; units -= e.units;
+    net -= e.returnsEx; shipping -= e.shippingEx; taxes -= e.tax; totalSales -= e.total; units -= e.units;
     place(e.country, e.city).net -= e.returnsEx;
-    for (const n of e.names) {
-      const prod = products.get(n.name) ?? { name: n.name, units: 0, net: 0 };
-      prod.net -= n.net;
-      products.set(n.name, prod);
-    }
-    orderList.push({ name: `${e.order} · refund`, time: e.at, units: -e.units, amount: -round2(e.returnsEx), discount: 0, gross: -round2(e.returnsEx), shipping: -round2(e.shippingEx), tax: -round2(e.tax), total: -round2(e.total), country: e.country, codes: [] });
+    orderList.push({ name: `${e.order} · refund`, time: e.at, units: -e.units, amount: -round2(e.returnsEx), discount: 0, shipping: -round2(e.shippingEx), tax: -round2(e.tax), total: -round2(e.total), country: e.country });
   }
 
-  // Discount codes: an order's discount is split evenly across the codes it used.
-  const codes = new Map<string, { code: string; orders: number; discount: number }>();
-  for (const o of orderList) {
-    const used = o.codes ?? [];
-    for (const code of used) {
-      const c = codes.get(code) ?? { code, orders: 0, discount: 0 };
-      c.orders++; c.discount += o.discount / used.length;
-      codes.set(code, c);
-    }
-  }
-  const discountCodes = [...codes.values()].sort((a, b) => b.orders - a.orders || b.discount - a.discount).map((c) => ({ ...c, discount: round2(c.discount) }));
-
-  const top = [...products.values()].sort((a, b) => b.net - a.net).slice(0, 30).map((x) => ({ ...x, net: round2(x.net) }));
   const locations = [...places.values()].sort((a, b) => b.net - a.net).map((l) => ({ ...l, net: round2(l.net) }));
   return {
-    net_sales: round2(net), discounts: round2(discounts), returns: round2(returns), gross_sales: round2(net + discounts + returns),
-    shipping: round2(shipping), taxes: round2(taxes), total_sales: round2(totalSales), orders: count, units, top_products: top, locations,
-    order_list: orderList.sort((a, b) => b.time.localeCompare(a.time)), currency,
-    sessions: visits.sessions, conversion: visits.conversion, sources: visits.sources, discount_codes: discountCodes,
+    net_sales: round2(net), discounts: round2(discounts), shipping: round2(shipping), taxes: round2(taxes), total_sales: round2(totalSales),
+    orders: count, units, locations, order_list: orderList.sort((a, b) => b.time.localeCompare(a.time)), currency,
   };
 }

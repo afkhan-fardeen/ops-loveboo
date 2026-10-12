@@ -36,12 +36,3 @@ export async function saveSettings(s: ReportSettings) {
   const { error } = await adminClient().from("settings").upsert({ key: "report", value: s });
   if (error) throw error;
 }
-
-/** The scheduler pings the cron route; remember when, so Settings can show whether it is alive. */
-export async function touchScheduler() {
-  await adminClient().from("settings").upsert({ key: "scheduler", value: { lastTick: new Date().toISOString() } });
-}
-export async function lastTick(): Promise<string | null> {
-  const { data } = await adminClient().from("settings").select("value").eq("key", "scheduler").maybeSingle();
-  return (data?.value as { lastTick?: string } | null)?.lastTick ?? null;
-}

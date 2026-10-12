@@ -1,8 +1,8 @@
 "use client";
 import Link from "next/link";
 import type { ReactNode } from "react";
-import { Anchor, Badge, Button, Group, Paper, Stack, Text, ThemeIcon, Title } from "@mantine/core";
-import { IconArrowRight, IconChartBar, IconUsers } from "@tabler/icons-react";
+import { ActionIcon, Anchor, Badge, Button, Group, Paper, Stack, Text, ThemeIcon, Title, Tooltip } from "@mantine/core";
+import { IconArrowRight, IconChartBar, IconSettings, IconUsers } from "@tabler/icons-react";
 
 export function LinkButton({ href, children, variant = "filled" }: { href: string; children: ReactNode; variant?: string }) {
   return <Button component={Link} href={href} variant={variant}>{children}</Button>;
@@ -38,5 +38,13 @@ export function ModuleCard({ href, title, text, icon, badge, stat }: { href: str
         <Group gap={4} mt="auto" c="brand" fw={500}><Text size="sm" fw={500} c="brand">Open</Text><IconArrowRight size={16} /></Group>
       </Stack>
     </Paper>
+  );
+}
+
+export function SettingsLink({ href }: { href: string }) {
+  return (
+    <Tooltip label="Email settings">
+      <ActionIcon component={Link} href={href} variant="default" size={36} aria-label="Email settings"><IconSettings size={18} /></ActionIcon>
+    </Tooltip>
   );
 }

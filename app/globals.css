@@ -44,11 +44,8 @@ body {
 .mantine-Table-tr { transition: background-color 0.12s ease; }
 .mantine-NavLink-root, .mantine-ActionIcon-root { transition: background-color 0.15s ease, color 0.15s ease; }
 
-@keyframes pulse-dot { 0% { box-shadow: 0 0 0 0 rgb(0 109 104 / 0.5); } 70% { box-shadow: 0 0 0 8px rgb(0 109 104 / 0); } 100% { box-shadow: 0 0 0 0 rgb(0 109 104 / 0); } }
-.live-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--mantine-color-brand-6); animation: pulse-dot 2s infinite; flex: none; }
-.live-dot[data-stale] { background: var(--mantine-color-gray-5); animation: none; }
 
-@media (prefers-reduced-motion: reduce) { .page-in, .live-dot { animation: none; } .mantine-Button-root { transition: none; } .mantine-Button-root:active:not(:disabled) { transform: none; } }
+@media (prefers-reduced-motion: reduce) { .page-in { animation: none; } .mantine-Button-root { transition: none; } .mantine-Button-root:active:not(:disabled) { transform: none; } }
 
 /* Top progress bar and skip link */
 .top-progress { position: fixed; inset: 0 0 auto 0; height: 3px; z-index: 1000; pointer-events: none; transition: opacity 0.25s ease; }

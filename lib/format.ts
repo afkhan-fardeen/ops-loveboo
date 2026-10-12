@@ -3,11 +3,6 @@ export const money = (n: number, currency = "GBP", decimals = 0) =>
 
 export const int = (n: number) => new Intl.NumberFormat("en-GB").format(n);
 
-/** % change of a vs b; null when there is nothing to compare against. */
-export const pctChange = (a: number, b?: number | null) => (b ? ((a - b) / b) * 100 : null);
-
-export const pct = (n: number) => `${n >= 0 ? "+" : "−"}${Math.abs(n).toFixed(1)}%`;
-
 const d = (iso: string) => new Date(`${iso}T12:00:00Z`);
 export const dateLabel = (iso: string, long = false) =>
   d(iso).toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short", ...(long ? { year: "numeric" } : {}), timeZone: "UTC" });
@@ -39,10 +34,6 @@ export function dayRange(iso: string, tz: string) {
 }
 
 export const num2 = (n: number) => new Intl.NumberFormat("en-GB", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(n);
-
-/** HH:mm of an instant in the given timezone. */
-export const timeIn = (iso: string, tz: string) =>
-  new Date(iso).toLocaleTimeString("en-GB", { timeZone: tz, hour: "2-digit", minute: "2-digit", hour12: false });
 
 /** 12-hour clock with AM/PM in the given timezone, e.g. "3:26 PM". */
 export const time12 = (iso: string, tz: string) =>

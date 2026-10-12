@@ -16,16 +16,13 @@ const csp = [
 
 const config: NextConfig = {
   poweredByHeader: false,
-  // Old Sales addresses (including links in emails already sent) keep working.
+  // Old addresses (including links in emails already sent) keep working.
   async redirects() {
     const to = "/reports/daily-sales";
     return [
       { source: "/sales", destination: to, permanent: false },
       { source: "/sales/reports/:date(\\d{4}-\\d{2}-\\d{2})", destination: `${to}?date=:date`, permanent: false },
-      { source: "/sales/reports", destination: `${to}/period`, permanent: false },
-      { source: "/sales/settings", destination: `${to}/settings`, permanent: false },
-      { source: "/sales/export", destination: `${to}/export`, permanent: false },
-      { source: "/sales/live", destination: `${to}/live`, permanent: false },
+      { source: "/sales/:path*", destination: to, permanent: false },
     ];
   },
   async headers() {

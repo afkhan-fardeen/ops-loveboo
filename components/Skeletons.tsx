@@ -1,15 +1,15 @@
-import { Group, Paper, SimpleGrid, Skeleton, Stack } from "@mantine/core";
+import { Group, Paper, Skeleton, Stack } from "@mantine/core";
 
-/** The body of a report page while its data loads: KPI cards, a chart, and a table. */
+/** The body of the daily report while its data loads: the summary card and the orders table. */
 export function BodySkeleton() {
   return (
     <Stack gap="lg" role="status" aria-label="Loading report">
-      <SimpleGrid cols={{ base: 2, md: 4 }}>
-        {[0, 1, 2, 3].map((i) => (
-          <Paper key={i} withBorder p="md"><Stack gap={8}><Skeleton h={10} w={70} /><Skeleton h={28} w="70%" /><Skeleton h={14} w="50%" /></Stack></Paper>
-        ))}
-      </SimpleGrid>
-      <Paper withBorder p="md"><Skeleton h={14} w={120} mb="md" /><Skeleton h={240} /></Paper>
+      <Paper withBorder p="lg">
+        <Stack gap="sm">
+          <Skeleton h={18} w={240} />
+          {[0, 1, 2, 3].map((i) => <Group key={i} justify="space-between"><Skeleton h={14} w={110} /><Skeleton h={14} w={80} /></Group>)}
+        </Stack>
+      </Paper>
       <Paper withBorder p="md"><Stack gap="sm">{[0, 1, 2, 3, 4].map((i) => <Skeleton key={i} h={22} />)}</Stack></Paper>
     </Stack>
   );

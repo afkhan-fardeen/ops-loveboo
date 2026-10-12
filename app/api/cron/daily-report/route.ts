@@ -5,7 +5,7 @@ import { adminClient } from "@/lib/supabase";
 import { addDays, yesterdayIn } from "@/lib/format";
 import { run, sendFailure } from "@/lib/report";
 import { isDue, SEND_TZ } from "@/lib/schedule";
-import { activeRecipients, getSettings, touchScheduler } from "@/lib/settings";
+import { activeRecipients, getSettings } from "@/lib/settings";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
@@ -30,11 +30,10 @@ export async function GET(req: NextRequest) {
     const backfill = Number(url.searchParams.get("backfill") ?? 0);
     if (backfill > 0) {
       // Backfill only loads data, including yesterday. It never sends email.
-      const { fetchRefunds, fetchTraffic } = await import("@/lib/shopify");
+      const { fetchRefunds } = await import("@/lib/shopify");
       const { dayRange } = await import("@/lib/format");
       const refunds = await fetchRefunds(dayRange(addDays(end, -backfill), tz).from);
-      const traffic = await fetchTraffic(addDays(end, -backfill), end);
-      for (let i = backfill; i >= 0; i--) await run(addDays(end, -i), { email: false, refunds, traffic }).catch(() => null);
+      for (let i = backfill; i >= 0; i--) await run(addDays(end, -i), { email: false, refunds }).catch(() => null);
       revalidateTag("sales");
       return NextResponse.json({ backfilled: backfill + 1, through: end });
     }
@@ -45,7 +44,6 @@ export async function GET(req: NextRequest) {
     }
 
     // Scheduled mode (called every ~15 minutes, or once a day by Vercel Cron): send yesterday's report once the admin's send time has passed.
-    await touchScheduler();
     const cfg = await getSettings();
     if (!cfg.emailEnabled) return NextResponse.json({ skipped: "daily email is switched off" });
     if (!activeRecipients(cfg).length) return NextResponse.json({ skipped: "no active recipients" });

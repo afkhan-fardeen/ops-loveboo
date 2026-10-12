@@ -1,22 +1,8 @@
 import type { ReactNode } from "react";
-import { Badge, Group, Paper, Stack, Table, TableTbody, TableTd, TableTh, TableThead, TableTr, TableScrollContainer, Text, ThemeIcon, Title } from "@mantine/core";
-import { IconArrowDownRight, IconArrowUpRight, IconInbox } from "@tabler/icons-react";
-import { pct } from "@/lib/format";
+import { Group, Paper, Stack, Table, TableTbody, TableTd, TableTh, TableThead, TableTr, TableScrollContainer, Text, ThemeIcon, Title } from "@mantine/core";
+import { IconInbox } from "@tabler/icons-react";
 
-export function Delta({ value, label }: { value: number | null; label?: string }) {
-  if (value === null) return <Text size="xs" c="dimmed">{label} —</Text>;
-  const up = value >= 0;
-  return (
-    <Group gap={6} wrap="nowrap">
-      <Badge variant="light" color={up ? "brand" : "red"} leftSection={up ? <IconArrowUpRight size={12} /> : <IconArrowDownRight size={12} />}>
-        {pct(value)}<span style={{ position: "absolute", width: 1, height: 1, overflow: "hidden", clip: "rect(0 0 0 0)" }}>{up ? " increase" : " decrease"}</span>
-      </Badge>
-      {label && <Text size="xs" c="dimmed">{label}</Text>}
-    </Group>
-  );
-}
-
-export function Kpi({ label, value, note, deltas, icon }: { label: string; value: string; note?: string; icon?: ReactNode; deltas?: { label: string; value: number | null }[] }) {
+export function Kpi({ label, value, note, icon }: { label: string; value: string; note?: string; icon?: ReactNode }) {
   return (
     <Paper withBorder p="md" radius="lg" shadow="xs" h="100%">
       <Stack gap={6}>
@@ -26,7 +12,6 @@ export function Kpi({ label, value, note, deltas, icon }: { label: string; value
         </Group>
         <Text fz={{ base: 24, sm: 28 }} fw={700} lh={1.2}>{value}</Text>
         {note && <Text size="sm" c="dimmed">{note}</Text>}
-        {deltas?.map((d) => <Delta key={d.label} {...d} />)}
       </Stack>
     </Paper>
   );

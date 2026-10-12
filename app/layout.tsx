@@ -7,7 +7,6 @@ import FlashToast from "@/components/FlashToast";
 import TopProgress from "@/components/TopProgress";
 import { makeTheme } from "@/lib/theme";
 import "@mantine/core/styles.css";
-import "@mantine/charts/styles.css";
 import "@mantine/dates/styles.css";
 import "@mantine/notifications/styles.css";
 import "./globals.css";
