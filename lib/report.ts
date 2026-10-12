@@ -2,7 +2,7 @@ import { Resend } from "resend";
 import { buildEmail } from "./email";
 import { buildWorkbook, workbookName } from "./excel";
 import { adminClient } from "./supabase";
-import { fetchDay, type RefundEvent } from "./shopify";
+import { fetchDay, type RefundEvent, type Traffic } from "./shopify";
 import { fetchRows as rowsUpTo, summarise } from "./data";
 import { activeRecipients, getSettings, type Recipient } from "./settings";
 import { firstName } from "./names";
@@ -34,9 +34,9 @@ export async function deliver(to: string[], build: Msg | ((address: string) => M
 }
 
 /** fetch → upsert → email. Safe to re-run: upsert by date, no duplicate email once emailed_at is set. */
-export async function run(date: string, opts: { resend?: boolean; email?: boolean; refunds?: RefundEvent[] } = {}) {
+export async function run(date: string, opts: { resend?: boolean; email?: boolean; refunds?: RefundEvent[]; traffic?: Map<string, Traffic> } = {}) {
   const db = adminClient();
-  const day = await fetchDay(date, { refunds: opts.refunds });
+  const day = await fetchDay(date, { refunds: opts.refunds, traffic: opts.traffic });
   const { error } = await db.from("daily_sales").upsert({ date, ...day }, { onConflict: "date" });
   if (error) throw error;
   if (opts.email === false) return { date, emailed: false, reason: "backfill" };

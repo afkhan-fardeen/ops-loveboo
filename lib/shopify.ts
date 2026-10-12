@@ -1,4 +1,4 @@
-import { dayRange } from "./format";
+import { addDays, dayRange } from "./format";
 import type { Location, Order, Product } from "./data";
 import { lineAmounts, refundAmounts } from "./lines";
 
@@ -53,6 +53,41 @@ type ShopifyOrder = {
 };
 type RefundOrder = { name: string; taxesIncluded: boolean; sourceName: string | null; shippingAddress: Address; refunds: RefundNode[] };
 type Page<T> = { data?: { orders: { pageInfo: { hasNextPage: boolean; endCursor: string }; nodes: T[] } }; errors?: unknown };
+
+const ENDPOINT = () => `https://${process.env.SHOPIFY_STORE_DOMAIN}/admin/api/${process.env.SHOPIFY_API_VERSION ?? "2025-07"}/graphql.json`;
+
+/** Runs a ShopifyQL query and returns its rows. */
+async function shopifyql(query: string): Promise<Record<string, string | null>[]> {
+  const res = await fetch(ENDPOINT(), {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "X-Shopify-Access-Token": process.env.SHOPIFY_ADMIN_TOKEN! },
+    body: JSON.stringify({ query: `{ shopifyqlQuery(query: ${JSON.stringify(query)}) { tableData { rows } parseErrors } }` }),
+    cache: "no-store",
+  });
+  const json = (await res.json()) as { data?: { shopifyqlQuery: { tableData: { rows: Record<string, string | null>[] } | null; parseErrors: string[] } }; errors?: unknown };
+  if (!res.ok || json.errors || !json.data) throw new Error(`ShopifyQL: ${JSON.stringify(json.errors ?? res.status)}`);
+  if (json.data.shopifyqlQuery.parseErrors.length) throw new Error(`ShopifyQL: ${json.data.shopifyqlQuery.parseErrors.join("; ")}`);
+  return json.data.shopifyqlQuery.tableData?.rows ?? [];
+}
+
+export type Traffic = { sessions: number; conversion: number; sources: { source: string; sessions: number }[] };
+
+/** Online-store sessions, conversion rate and traffic sources for each day in [from, to], keyed by YYYY-MM-DD. */
+export async function fetchTraffic(from: string, to: string): Promise<Map<string, Traffic>> {
+  const span = `SINCE ${from} UNTIL ${to}`;
+  const [days, sources] = await Promise.all([
+    shopifyql(`FROM sessions SHOW sessions, conversion_rate GROUP BY day ${span} ORDER BY day`),
+    shopifyql(`FROM sessions SHOW sessions GROUP BY day, referrer_source ${span}`),
+  ]);
+  const out = new Map<string, Traffic>();
+  for (const r of days) out.set(r.day!, { sessions: Math.round(Number(r.sessions)), conversion: Number(r.conversion_rate ?? 0), sources: [] });
+  for (const r of sources) {
+    const t = out.get(r.day!);
+    if (t && Number(r.sessions) > 0) t.sources.push({ source: r.referrer_source ?? "unknown", sessions: Math.round(Number(r.sessions)) });
+  }
+  for (const t of out.values()) t.sources.sort((a, b) => b.sessions - a.sessions);
+  return out;
+}
 
 const amount = (m: Money) => Number(m.shopMoney.amount);
 const round2 = (n: number) => Math.round(n * 100) / 100;
@@ -110,11 +145,13 @@ export async function fetchRefunds(sinceIso: string): Promise<RefundEvent[]> {
  * and each refund or return counts as a negative line on the day it happened, even for older orders.
  * Draft orders are skipped. Day total, products, locations and the order list are all built from the same lines.
  */
-export async function fetchDay(date: string, opts: { refunds?: RefundEvent[] } = {}) {
+export async function fetchDay(date: string, opts: { refunds?: RefundEvent[]; traffic?: Map<string, Traffic> } = {}) {
   const tz = process.env.STORE_TIMEZONE ?? "Europe/London";
   const { from, to } = dayRange(date, tz);
   const orders = await paginate<ShopifyOrder>(ORDERS, `processed_at:>='${from}' processed_at:<'${to}' -status:cancelled -test:true`);
-  const refunds = (opts.refunds ?? (await fetchRefunds(from))).filter((e) => e.at >= from && e.at < to);
+  const [allRefunds, traffic] = await Promise.all([opts.refunds ?? fetchRefunds(from), opts.traffic ?? fetchTraffic(date, date)]);
+  const refunds = allRefunds.filter((e) => e.at >= from && e.at < to);
+  const visits = traffic.get(date) ?? { sessions: 0, conversion: 0, sources: [] };
 
   let net = 0, discounts = 0, returns = 0, shipping = 0, taxes = 0, totalSales = 0, count = 0, units = 0, currency = "GBP";
   const products = new Map<string, Product>();
@@ -175,11 +212,24 @@ export async function fetchDay(date: string, opts: { refunds?: RefundEvent[] } =
     orderList.push({ name: `${e.order} · refund`, time: e.at, units: -e.units, amount: -round2(e.returnsEx), discount: 0, gross: -round2(e.returnsEx), shipping: -round2(e.shippingEx), tax: -round2(e.tax), total: -round2(e.total), country: e.country, codes: [] });
   }
 
-  const top = [...products.values()].sort((a, b) => b.net - a.net).slice(0, 15).map((x) => ({ ...x, net: round2(x.net) }));
+  // Discount codes: an order's discount is split evenly across the codes it used.
+  const codes = new Map<string, { code: string; orders: number; discount: number }>();
+  for (const o of orderList) {
+    const used = o.codes ?? [];
+    for (const code of used) {
+      const c = codes.get(code) ?? { code, orders: 0, discount: 0 };
+      c.orders++; c.discount += o.discount / used.length;
+      codes.set(code, c);
+    }
+  }
+  const discountCodes = [...codes.values()].sort((a, b) => b.orders - a.orders || b.discount - a.discount).map((c) => ({ ...c, discount: round2(c.discount) }));
+
+  const top = [...products.values()].sort((a, b) => b.net - a.net).slice(0, 30).map((x) => ({ ...x, net: round2(x.net) }));
   const locations = [...places.values()].sort((a, b) => b.net - a.net).map((l) => ({ ...l, net: round2(l.net) }));
   return {
     net_sales: round2(net), discounts: round2(discounts), returns: round2(returns), gross_sales: round2(net + discounts + returns),
     shipping: round2(shipping), taxes: round2(taxes), total_sales: round2(totalSales), orders: count, units, top_products: top, locations,
     order_list: orderList.sort((a, b) => b.time.localeCompare(a.time)), currency,
+    sessions: visits.sessions, conversion: visits.conversion, sources: visits.sources, discount_codes: discountCodes,
   };
 }

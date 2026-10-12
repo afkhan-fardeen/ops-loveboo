@@ -1,6 +1,6 @@
 import { Suspense } from "react";
 import { Accordion, AccordionControl, AccordionItem, AccordionPanel, SimpleGrid, Stack, Text } from "@mantine/core";
-import { IconCalendarStats, IconCurrencyPound, IconReceipt2, IconSend, IconShoppingBag } from "@tabler/icons-react";
+import { IconCalendarStats, IconCurrencyPound, IconEye, IconPercentage, IconReceipt2, IconSend, IconShoppingBag } from "@tabler/icons-react";
 import { DownloadButton } from "@/components/Links";
 import DateSwitcher from "@/components/DateSwitcher";
 import LiveToday from "@/components/LiveToday";
@@ -56,10 +56,12 @@ async function DayBody({ shown, date, min, max, user }: { shown: string; date?: 
     <Stack gap="lg">
       {row.date === max && <LiveToday currency={cur} />}
 
-      <SimpleGrid cols={{ base: 2, md: 4 }}>
+      <SimpleGrid cols={{ base: 2, md: 3 }}>
         <Kpi icon={<IconCurrencyPound size={16} />} label="Net sales" value={money(row.net_sales, cur)} note={`Total sales ${money(row.total_sales, cur)} incl. shipping & VAT`} deltas={[{ label: "vs yesterday", value: s.vsPrev }, { label: "vs last week", value: s.vsWeek }]} />
         <Kpi icon={<IconShoppingBag size={16} />} label="Orders" value={int(row.orders)} note={`${int(row.units)} units`} />
         <Kpi icon={<IconReceipt2 size={16} />} label="Average order" value={money(s.aov, cur, 2)} />
+        <Kpi icon={<IconEye size={16} />} label="Sessions" value={row.sessions ? int(row.sessions) : "—"} note={row.sources[0] ? `${row.sources[0].source} is ${Math.round((row.sources[0].sessions / row.sessions) * 100)}% of visits` : undefined} />
+        <Kpi icon={<IconPercentage size={16} />} label="Conversion rate" value={row.sessions ? `${(row.conversion * 100).toFixed(2)}%` : "—"} note={row.sessions ? `${int(row.orders)} orders from ${int(row.sessions)} sessions` : undefined} />
         <Kpi icon={<IconCalendarStats size={16} />} label="Month to date" value={money(s.mtdNet, cur)} note={`${int(s.mtdOrders)} orders`} />
       </SimpleGrid>
 
@@ -96,8 +98,29 @@ async function DayBody({ shown, date, min, max, user }: { shown: string; date?: 
       </Section>
 
       <SimpleGrid cols={{ base: 1, lg: 2 }}>
+        <Section title="Where visitors came from" subtitle="Online store sessions" flush>
+          {row.sources.length === 0 ? <Text c="dimmed" p="md">No traffic data for this day.</Text> : (
+            <DataTable minWidth={300} rows={row.sources} rowKey={(x) => x.source} cols={[
+              { label: "Source", render: (x) => <Text size="sm" tt="capitalize">{x.source}</Text> },
+              { label: "Sessions", align: "right", render: (x) => int(x.sessions) },
+              { label: "Share", align: "right", render: (x) => `${Math.round((x.sessions / row.sessions) * 100)}%` },
+            ]} />
+          )}
+        </Section>
+        <Section title="Discount codes" subtitle="Used on this day’s orders" flush>
+          {row.discount_codes.length === 0 ? <Text c="dimmed" p="md">No discount codes were used.</Text> : (
+            <DataTable minWidth={300} rows={row.discount_codes} rowKey={(c) => c.code} cols={[
+              { label: "Code", render: (c) => <Text size="sm" fw={600}>{c.code}</Text> },
+              { label: "Orders", align: "right", render: (c) => int(c.orders) },
+              { label: "Discount", align: "right", render: (c) => money(c.discount, cur, 2) },
+            ]} />
+          )}
+        </Section>
+      </SimpleGrid>
+
+      <SimpleGrid cols={{ base: 1, lg: 2 }}>
         <Section title="Top products" flush>
-          <DataTable rows={row.top_products.slice(0, 5)} rowKey={(p) => p.name} cols={[
+          <DataTable rows={row.top_products.slice(0, 8)} rowKey={(p) => p.name} cols={[
             { label: "Product", render: (p) => p.name },
             { label: "Units", align: "right", render: (p) => int(p.units) },
             { label: "Net sales", align: "right", render: (p) => money(p.net, cur) },

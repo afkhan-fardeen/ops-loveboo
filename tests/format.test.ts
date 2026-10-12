@@ -4,7 +4,7 @@ import { addDays, dayRange, pct, pctChange } from "../lib/format";
 import { summarise, type Row } from "../lib/data";
 
 const row = (date: string, net: number, orders = 1): Row => ({
-  date, net_sales: net, discounts: 0, gross_sales: net, returns: 0, shipping: 0, taxes: 0, total_sales: net, orders, units: orders, currency: "GBP", emailed_at: null, top_products: [], locations: [], order_list: [],
+  date, net_sales: net, discounts: 0, gross_sales: net, returns: 0, shipping: 0, taxes: 0, total_sales: net, sessions: 0, conversion: 0, sources: [], discount_codes: [], orders, units: orders, currency: "GBP", emailed_at: null, top_products: [], locations: [], order_list: [],
 });
 
 test("addDays crosses month and year boundaries", () => {
@@ -80,4 +80,15 @@ test("refundAmounts matches Shopify's Sales report for real refunds", async () =
   // Prices excluding VAT: subtotal is already ex VAT, tax comes on top.
   r = refundAmounts({ taxesIncluded: false, items: [{ quantity: 2, subtotal: 20, tax: 4 }], shipping: [{ subtotal: 5, tax: 1 }] });
   close(r.returnsEx, 20); close(r.shippingEx, 5); close(r.tax, 5); close(r.total, 30);
+});
+
+test("traffic and discount-code aggregation", async () => {
+  const { aggCodes, aggSources, totals } = await import("../lib/aggregate");
+  const a = { ...row("2026-10-09", 100), sessions: 1000, conversion: 0.01, sources: [{ source: "social", sessions: 800 }, { source: "direct", sessions: 200 }], discount_codes: [{ code: "HELLO", orders: 2, discount: 5 }] };
+  const b = { ...row("2026-10-10", 100), sessions: 3000, conversion: 0.03, sources: [{ source: "social", sessions: 2000 }, { source: "search", sessions: 1000 }], discount_codes: [{ code: "HELLO", orders: 1, discount: 2.5 }, { code: "VIP", orders: 5, discount: 9 }] };
+  const t = totals([a, b]);
+  assert.equal(t.sessions, 4000);
+  assert.ok(Math.abs(t.conversion - 0.025) < 1e-12); // (10 + 90) / 4000, not the plain average 0.02
+  assert.deepEqual(aggSources([a, b]).map((s) => [s.source, s.sessions]), [["social", 2800], ["search", 1000], ["direct", 200]]);
+  assert.deepEqual(aggCodes([a, b]).map((c) => [c.code, c.orders, c.discount]), [["VIP", 5, 9], ["HELLO", 3, 7.5]]);
 });

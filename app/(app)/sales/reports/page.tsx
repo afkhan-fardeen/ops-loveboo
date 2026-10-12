@@ -1,6 +1,6 @@
 import { Suspense } from "react";
 import { Badge, SimpleGrid, Stack, Tabs, TabsList, TabsPanel, TabsTab, Text } from "@mantine/core";
-import { IconCheck, IconCurrencyPound, IconDiscount2, IconReceipt2, IconShoppingBag } from "@tabler/icons-react";
+import { IconCheck, IconCurrencyPound, IconDiscount2, IconEye, IconPercentage, IconReceipt2, IconShoppingBag } from "@tabler/icons-react";
 import { DownloadButton, TextLink } from "@/components/Links";
 import RangePicker from "@/components/RangePicker";
 import { BodySkeleton } from "@/components/Skeletons";
@@ -9,7 +9,7 @@ import SubmitButton from "@/components/SubmitButton";
 import { DataTable, EmptyState, Kpi, PageHeader, Section } from "@/components/ui";
 import { activeRecipients, getSettings } from "@/lib/settings";
 import { sendReportNow } from "../actions";
-import { aggLocations, aggProducts, byCountry, totals } from "@/lib/aggregate";
+import { aggCodes, aggLocations, aggProducts, aggSources, byCountry, totals } from "@/lib/aggregate";
 import { requireModule } from "@/lib/auth";
 import { dateBounds, rowsBetween } from "@/lib/data";
 import { addDays, dateLabel, int, money, pctChange } from "@/lib/format";
@@ -71,6 +71,7 @@ async function ReportBody({ from, to, n, min, max, isAdmin }: { from: string; to
 
   const products = aggProducts(rows), pTotal = products.reduce((a, x) => a + x.net, 0);
   const locs = aggLocations(rows), countries = byCountry(locs), lTotal = locs.reduce((a, x) => a + x.net, 0);
+  const sources = aggSources(rows), codes = aggCodes(rows);
 
   return (
     <Stack gap="lg">
@@ -78,10 +79,12 @@ async function ReportBody({ from, to, n, min, max, isAdmin }: { from: string; to
         <EmptyState title="No data in this range">Pick a different period. Reports exist from {dateLabel(min)} to {dateLabel(max)}.</EmptyState>
       ) : (
         <>
-          <SimpleGrid cols={{ base: 2, md: 4 }}>
+          <SimpleGrid cols={{ base: 2, md: 3 }}>
             <Kpi icon={<IconCurrencyPound size={16} />} label="Net sales" value={money(t.net, cur)} note={`${money(t.discounts, cur)} discounts`} deltas={[{ label, value: vs(t.net, p.net) }]} />
             <Kpi icon={<IconShoppingBag size={16} />} label="Orders" value={int(t.orders)} note={`${int(t.units)} units`} deltas={[{ label, value: vs(t.orders, p.orders) }]} />
             <Kpi icon={<IconReceipt2 size={16} />} label="Average order" value={money(t.aov, cur, 2)} deltas={[{ label, value: vs(t.aov, p.aov) }]} />
+            <Kpi icon={<IconEye size={16} />} label="Sessions" value={t.sessions ? int(t.sessions) : "—"} deltas={[{ label, value: t.sessions ? vs(t.sessions, p.sessions) : null }]} />
+            <Kpi icon={<IconPercentage size={16} />} label="Conversion rate" value={t.sessions ? `${(t.conversion * 100).toFixed(2)}%` : "—"} deltas={[{ label, value: t.sessions ? vs(t.conversion, p.conversion) : null }]} />
             <Kpi icon={<IconDiscount2 size={16} />} label="Total sales" value={money(t.total, cur)} note={`${money(t.shipping, cur)} shipping + ${money(t.taxes, cur)} VAT`} deltas={[{ label, value: vs(t.total, p.total) }]} />
           </SimpleGrid>
 
@@ -94,6 +97,8 @@ async function ReportBody({ from, to, n, min, max, isAdmin }: { from: string; to
               <TabsTab value="days">Days</TabsTab>
               <TabsTab value="products">Products</TabsTab>
               <TabsTab value="locations">Locations</TabsTab>
+              <TabsTab value="traffic">Traffic</TabsTab>
+              <TabsTab value="codes">Discount codes</TabsTab>
             </TabsList>
 
             <TabsPanel value="days">
@@ -147,6 +152,29 @@ async function ReportBody({ from, to, n, min, max, isAdmin }: { from: string; to
                   ]} />
                 </Section>
               </SimpleGrid>
+            </TabsPanel>
+            <TabsPanel value="traffic">
+              <Section title="Where visitors came from" subtitle="Online store sessions in this period" flush>
+                {sources.length === 0 ? <Text c="dimmed" p="md">No traffic data in this period.</Text> : (
+                  <DataTable minWidth={300} rows={sources} rowKey={(x) => x.source} cols={[
+                    { label: "Source", render: (x) => <Text size="sm" tt="capitalize">{x.source}</Text> },
+                    { label: "Sessions", align: "right", render: (x) => int(x.sessions) },
+                    { label: "Share", align: "right", render: (x) => share(x.sessions, t.sessions) },
+                  ]} />
+                )}
+              </Section>
+            </TabsPanel>
+
+            <TabsPanel value="codes">
+              <Section title="Discount codes" subtitle="Orders and discount value by code" flush>
+                {codes.length === 0 ? <Text c="dimmed" p="md">No discount codes were used in this period.</Text> : (
+                  <DataTable minWidth={300} rows={codes.slice(0, 20)} rowKey={(c) => c.code} cols={[
+                    { label: "Code", render: (c) => <Text size="sm" fw={600}>{c.code}</Text> },
+                    { label: "Orders", align: "right", render: (c) => int(c.orders) },
+                    { label: "Discount", align: "right", render: (c) => money(c.discount, cur, 2) },
+                  ]} />
+                )}
+              </Section>
             </TabsPanel>
           </Tabs>
           <Text size="xs" c="dimmed">Amounts are net of VAT and exclude draft orders.</Text>

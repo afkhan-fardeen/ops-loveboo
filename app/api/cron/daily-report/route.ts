@@ -28,14 +28,18 @@ export async function GET(req: NextRequest) {
   try {
     // Manual modes. ?backfill=60 loads the last N days without emails; ?date=…&resend=1 re-runs a specific day.
     const backfill = Number(url.searchParams.get("backfill") ?? 0);
-    if (backfill > 0 || url.searchParams.has("date")) {
-      if (backfill > 0) {
-        const { fetchRefunds } = await import("@/lib/shopify");
-        const { dayRange } = await import("@/lib/format");
-        const refunds = await fetchRefunds(dayRange(addDays(end, -backfill), tz).from);
-        for (let i = backfill; i >= 1; i--) await run(addDays(end, -i), { email: false, refunds }).catch(() => null);
-      }
-      const result = await run(url.searchParams.get("date") ?? end, { resend: url.searchParams.has("resend") });
+    if (backfill > 0) {
+      // Backfill only loads data, including yesterday. It never sends email.
+      const { fetchRefunds, fetchTraffic } = await import("@/lib/shopify");
+      const { dayRange } = await import("@/lib/format");
+      const refunds = await fetchRefunds(dayRange(addDays(end, -backfill), tz).from);
+      const traffic = await fetchTraffic(addDays(end, -backfill), end);
+      for (let i = backfill; i >= 0; i--) await run(addDays(end, -i), { email: false, refunds, traffic }).catch(() => null);
+      revalidateTag("sales");
+      return NextResponse.json({ backfilled: backfill + 1, through: end });
+    }
+    if (url.searchParams.has("date")) {
+      const result = await run(url.searchParams.get("date")!, { resend: url.searchParams.has("resend") });
       revalidateTag("sales");
       return NextResponse.json(result);
     }

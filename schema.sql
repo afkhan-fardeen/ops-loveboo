@@ -9,6 +9,10 @@ create table daily_sales (
   shipping     numeric(12,2) not null default 0,   -- ex VAT
   taxes        numeric(12,2) not null default 0,
   total_sales  numeric(12,2) not null default 0,   -- what customers paid: net + shipping + taxes
+  sessions     int           not null default 0,   -- online store sessions (ShopifyQL)
+  conversion   numeric(8,6)  not null default 0,   -- share of sessions that ordered, 0..1
+  sources      jsonb         not null default '[]',  -- [{source, sessions}]
+  discount_codes jsonb       not null default '[]',  -- [{code, orders, discount}]
   top_products jsonb         not null default '[]',
   order_list   jsonb         not null default '[]',  -- [{name, time, amount, discount}]
   locations    jsonb         not null default '[]',  -- [{country, city, orders, units, net}]

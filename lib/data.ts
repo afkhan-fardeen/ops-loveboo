@@ -8,19 +8,23 @@ export type Order = {
   gross?: number; shipping?: number; tax?: number; total?: number; country?: string; codes?: string[];
 };
 export type Location = { country: string; city: string; orders: number; units: number; net: number };
+export type Source = { source: string; sessions: number };
+export type CodeUse = { code: string; orders: number; discount: number };
 export type Row = {
   date: string; net_sales: number; discounts: number;
-  gross_sales: number; returns: number; shipping: number; taxes: number; total_sales: number; orders: number; units: number;
+  gross_sales: number; returns: number; shipping: number; taxes: number; total_sales: number;
+  sessions: number; conversion: number; sources: Source[]; discount_codes: CodeUse[]; orders: number; units: number;
   top_products: Product[]; locations: Location[]; order_list: Order[]; currency: string; emailed_at: string | null;
 };
 
 export const tz = () => process.env.STORE_TIMEZONE ?? "Europe/London";
 
 export const norm = (r: Row): Row => ({ ...r, net_sales: Number(r.net_sales), discounts: Number(r.discounts ?? 0),
-  gross_sales: Number(r.gross_sales ?? 0), returns: Number(r.returns ?? 0), shipping: Number(r.shipping ?? 0), taxes: Number(r.taxes ?? 0), total_sales: Number(r.total_sales ?? 0), top_products: r.top_products ?? [], locations: r.locations ?? [], order_list: r.order_list ?? [] });
+  gross_sales: Number(r.gross_sales ?? 0), returns: Number(r.returns ?? 0), shipping: Number(r.shipping ?? 0), taxes: Number(r.taxes ?? 0), total_sales: Number(r.total_sales ?? 0),
+  sessions: Number(r.sessions ?? 0), conversion: Number(r.conversion ?? 0), sources: r.sources ?? [], discount_codes: r.discount_codes ?? [], top_products: r.top_products ?? [], locations: r.locations ?? [], order_list: r.order_list ?? [] });
 
 /** Newest-first rows on or before `upTo` (default: everything). One query, ≤ limit rows. */
-const LIGHT = "date,net_sales,discounts,gross_sales,returns,shipping,taxes,total_sales,orders,units,currency,emailed_at";
+const LIGHT = "date,net_sales,discounts,gross_sales,returns,shipping,taxes,total_sales,orders,units,sessions,conversion,currency,emailed_at";
 
 /** Uncached read. Use this right after writing (cron, send now) so emails never use stale numbers. */
 export async function fetchRows(upTo?: string, limit = 60, light = false): Promise<Row[]> {
@@ -32,7 +36,7 @@ export async function fetchRows(upTo?: string, limit = 60, light = false): Promi
   return (data as unknown as Row[]).map(norm);
 }
 
-const RANGE = `${LIGHT},top_products,locations`;
+const RANGE = `${LIGHT},top_products,locations,sources,discount_codes`;
 
 // Stored days change once a day (cron) or on "Send now", both of which call revalidateTag("sales").
 // Cached reads make switching ranges and days near-instant.
