@@ -2,6 +2,7 @@
 import { redirect } from "next/navigation";
 import { requireAdmin } from "@/lib/auth";
 import { sendTest } from "@/lib/report";
+import { isHHMM } from "@/lib/schedule";
 import { activeRecipients, getSettings, isEmail, saveSettings, type Recipient } from "@/lib/settings";
 
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -23,7 +24,9 @@ export async function save(form: FormData) {
     seen.add(email);
     recipients.push({ name: String(x.name ?? "").trim().slice(0, 80), email, active: x.active !== false });
   }
-  await saveSettings({ recipients, emailEnabled: form.get("emailEnabled") === "on", attachExcel: form.get("attachExcel") === "on" });
+  const sendTime = String(form.get("sendTime") ?? "");
+  if (!isHHMM(sendTime)) return back("err", "Pick a valid send time.");
+  await saveSettings({ recipients, emailEnabled: form.get("emailEnabled") === "on", attachExcel: form.get("attachExcel") === "on", sendTime });
   back("ok", "Settings saved.");
 }
 
