@@ -18,6 +18,7 @@ Database: run `schema.sql` once on a new Supabase project (or the files in `migr
 - **Send email now** (admins): sends the day's report immediately, with the Excel attached, to the current recipients, or only to addresses you type in (people who aren't recipients). Sending to someone else does not mark the day as emailed.
 - **Email settings** (admins, the gear button): recipients (name, email, on/off), the daily send time (Bahrain time), and whether the daily email and the Excel attachment are on.
 - **Users** (admins): add people, set passwords, choose which modules they can open.
+- **System health** (admins, `/admin/health`): is the scheduler running (and how often), is yesterday's report stored, has the email gone out or is it overdue, are Shopify, email sending and secrets fine, plus a log of recent runs (14 days). "Run the check now" runs the same check the scheduler runs (and sends the email if it is due).
 
 ## How the daily email works
 A scheduler pings `/api/cron/daily-report` with the cron secret. It stores yesterday's report (fetched from Shopify in the store timezone, one row in `daily_sales`) at the first check after the day ends, so it appears in the portal right away. Once the admin's send time has passed, it re-fetches and emails the active recipients once (a manual **Send email now** to the recipients counts, so there are no duplicates).

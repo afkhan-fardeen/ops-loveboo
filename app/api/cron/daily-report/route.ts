@@ -4,8 +4,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { adminClient } from "@/lib/supabase";
 import { addDays, yesterdayIn } from "@/lib/format";
 import { run, sendFailure } from "@/lib/report";
-import { isDue, SEND_TZ } from "@/lib/schedule";
-import { activeRecipients, getSettings } from "@/lib/settings";
+import { logRun, sourceFrom } from "@/lib/jobs";
+import { runScheduled } from "@/lib/scheduled";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
@@ -21,6 +21,8 @@ function authorised(req: NextRequest) {
 export async function GET(req: NextRequest) {
   if (!authorised(req)) return new NextResponse("Unauthorised", { status: 401 });
 
+  const t0 = Date.now();
+  const source = sourceFrom(req.headers.get("user-agent"));
   const url = new URL(req.url);
   const tz = process.env.STORE_TIMEZONE ?? "Europe/London";
   const end = yesterdayIn(tz);
@@ -35,33 +37,20 @@ export async function GET(req: NextRequest) {
       const refunds = await fetchRefunds(dayRange(addDays(end, -backfill), tz).from);
       for (let i = backfill; i >= 0; i--) await run(addDays(end, -i), { email: false, refunds }).catch(() => null);
       revalidateTag("sales");
+      await logRun({ source, outcome: "manual", detail: `Loaded ${backfill + 1} days up to ${end} (no email).`, report_date: end, ms: Date.now() - t0 });
       return NextResponse.json({ backfilled: backfill + 1, through: end });
     }
     if (url.searchParams.has("date")) {
       const result = await run(url.searchParams.get("date")!, { resend: url.searchParams.has("resend") });
       revalidateTag("sales");
+      await logRun({ source, outcome: "manual", detail: `Ran ${url.searchParams.get("date")}${url.searchParams.has("resend") ? " and re-sent" : ""}.`, report_date: url.searchParams.get("date"), ms: Date.now() - t0 });
       return NextResponse.json(result);
     }
 
-    // Scheduled mode (called every ~15 minutes, or once a day by Vercel Cron).
-    // 1) The report data is stored as soon as yesterday exists, so it shows in the portal regardless of the email settings.
-    // 2) The email goes out once, after the admin's send time.
-    const { data } = await adminClient().from("daily_sales").select("emailed_at").eq("date", end).maybeSingle();
-    if (!data) {
-      await run(end, { email: false });
-      revalidateTag("sales");
-    }
-
-    const cfg = await getSettings();
-    if (!cfg.emailEnabled) return NextResponse.json({ loaded: !data, skipped: "daily email is switched off" });
-    if (!activeRecipients(cfg).length) return NextResponse.json({ loaded: !data, skipped: "no active recipients" });
-    if (!isDue(cfg.sendTime)) return NextResponse.json({ loaded: !data, skipped: "email not due yet", sendTime: cfg.sendTime, tz: SEND_TZ });
-    if (data?.emailed_at) return NextResponse.json({ skipped: "already sent", date: end });
-
-    // run() re-fetches Shopify first, so the email carries the latest numbers.
-    const result = await run(end);
-    revalidateTag("sales");
-    return NextResponse.json(result);
+    // Scheduled mode (every ~15 minutes, or once a day by Vercel Cron): see lib/scheduled.ts.
+    const r = await runScheduled();
+    await logRun({ source, outcome: r.outcome, detail: r.detail, report_date: r.date, ms: Date.now() - t0 });
+    return NextResponse.json(r);
   } catch (e) {
     // At most one failure alert per day, even though the scheduler retries every 15 minutes.
     const { data } = await adminClient().from("settings").select("value").eq("key", "last_alert").maybeSingle();
@@ -69,6 +58,7 @@ export async function GET(req: NextRequest) {
       await sendFailure(e).catch(() => null);
       await adminClient().from("settings").upsert({ key: "last_alert", value: { date: end } });
     }
+    await logRun({ source, outcome: "error", detail: e instanceof Error ? e.message : String(e), report_date: end, ms: Date.now() - t0 });
     return NextResponse.json({ error: String(e) }, { status: 500 });
   }
 }

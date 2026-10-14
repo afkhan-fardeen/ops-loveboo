@@ -42,3 +42,16 @@ create table settings (
   value jsonb not null
 );
 alter table settings enable row level security;
+
+-- Every call of the scheduled job, for the admin System health screen. Pruned to 14 days.
+create table job_runs (
+  id          bigserial primary key,
+  at          timestamptz not null default now(),
+  source      text not null,
+  outcome     text not null,
+  detail      text not null default '',
+  report_date text,
+  ms          int not null default 0
+);
+create index job_runs_at_idx on job_runs (at desc);
+alter table job_runs enable row level security;

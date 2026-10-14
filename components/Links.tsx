@@ -2,7 +2,7 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { ActionIcon, Anchor, Badge, Button, Group, Paper, Stack, Text, ThemeIcon, Title, Tooltip } from "@mantine/core";
-import { IconArrowRight, IconChartBar, IconSettings, IconUsers } from "@tabler/icons-react";
+import { IconArrowRight, IconChartBar, IconHeartbeat, IconSettings, IconUsers } from "@tabler/icons-react";
 
 export function LinkButton({ href, children, variant = "filled" }: { href: string; children: ReactNode; variant?: string }) {
   return <Button component={Link} href={href} variant={variant}>{children}</Button>;
@@ -16,7 +16,7 @@ export function TextLink({ href, children }: { href: string; children: ReactNode
   return <Anchor component={Link} href={href} fw={500}>{children}</Anchor>;
 }
 
-const ICONS = { reports: IconChartBar, users: IconUsers };
+const ICONS = { reports: IconChartBar, users: IconUsers, health: IconHeartbeat };
 
 export function ModuleCard({ href, title, text, icon, badge, stat }: { href: string; title: string; text: string; icon: keyof typeof ICONS; badge?: string; stat?: { label: string; value: string; delta?: string; up?: boolean } }) {
   const Icon = ICONS[icon];

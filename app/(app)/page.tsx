@@ -27,6 +27,7 @@ export default async function Home() {
         <SimpleGrid cols={{ base: 1, sm: 2, lg: 3 }}>
           {mine.map((m) => <ModuleCard key={m.id} href={m.href} title={m.name} text={m.description} icon="reports" />)}
           {user.role === "admin" && <ModuleCard href="/admin/users" title="Users" text="Add people, set passwords and choose which modules they can open." icon="users" badge="Admin" />}
+          {user.role === "admin" && <ModuleCard href="/admin/health" title="System health" text="Is the scheduler running? See recent runs, yesterday’s report and email status." icon="health" badge="Admin" />}
         </SimpleGrid>
       )}
     </Stack>

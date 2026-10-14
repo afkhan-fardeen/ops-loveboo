@@ -21,4 +21,4 @@ jobs:
             echo "APP_URL / CRON_SECRET secrets are not set yet; skipping."
             exit 0
           fi
-          curl -fsS --max-time 120 -H "Authorization: Bearer $CRON_SECRET" "$APP_URL/api/cron/daily-report"
+          curl -fsS --max-time 120 -A "github-actions-scheduler" -H "Authorization: Bearer $CRON_SECRET" "$APP_URL/api/cron/daily-report"
