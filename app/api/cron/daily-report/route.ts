@@ -43,15 +43,22 @@ export async function GET(req: NextRequest) {
       return NextResponse.json(result);
     }
 
-    // Scheduled mode (called every ~15 minutes, or once a day by Vercel Cron): send yesterday's report once the admin's send time has passed.
-    const cfg = await getSettings();
-    if (!cfg.emailEnabled) return NextResponse.json({ skipped: "daily email is switched off" });
-    if (!activeRecipients(cfg).length) return NextResponse.json({ skipped: "no active recipients" });
-    if (!isDue(cfg.sendTime)) return NextResponse.json({ skipped: "not due yet", sendTime: cfg.sendTime, tz: SEND_TZ });
-
+    // Scheduled mode (called every ~15 minutes, or once a day by Vercel Cron).
+    // 1) The report data is stored as soon as yesterday exists, so it shows in the portal regardless of the email settings.
+    // 2) The email goes out once, after the admin's send time.
     const { data } = await adminClient().from("daily_sales").select("emailed_at").eq("date", end).maybeSingle();
+    if (!data) {
+      await run(end, { email: false });
+      revalidateTag("sales");
+    }
+
+    const cfg = await getSettings();
+    if (!cfg.emailEnabled) return NextResponse.json({ loaded: !data, skipped: "daily email is switched off" });
+    if (!activeRecipients(cfg).length) return NextResponse.json({ loaded: !data, skipped: "no active recipients" });
+    if (!isDue(cfg.sendTime)) return NextResponse.json({ loaded: !data, skipped: "email not due yet", sendTime: cfg.sendTime, tz: SEND_TZ });
     if (data?.emailed_at) return NextResponse.json({ skipped: "already sent", date: end });
 
+    // run() re-fetches Shopify first, so the email carries the latest numbers.
     const result = await run(end);
     revalidateTag("sales");
     return NextResponse.json(result);

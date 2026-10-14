@@ -24,7 +24,7 @@ export default async function Settings() {
         <form action={save}>
           <Stack gap="md">
             <RecipientsManager initial={cfg.recipients} candidates={users} />
-            <TimeInput name="sendTime" label="Send time" required defaultValue={cfg.sendTime} maw={180} description="Bahrain time (GMT+3). The previous day’s report goes out at the first scheduler check after this time. Without the 15-minute GitHub scheduler, checks only happen once a day, around 08:00–09:00, so a later time won’t fire (see README)." />
+            <TimeInput name="sendTime" label="Send time" required defaultValue={cfg.sendTime} maw={180} description="Bahrain time (GMT+3). Yesterday’s report appears in the portal as soon as the day ends; the email goes out at the first scheduler check after this time. Without the 15-minute GitHub scheduler, checks happen once a day around 08:00–09:00, so a later time won’t send (see README)." />
             <Checkbox name="emailEnabled" label="Send the daily email" defaultChecked={cfg.emailEnabled} />
             <Checkbox name="attachExcel" label="Attach the Excel file" defaultChecked={cfg.attachExcel} />
             <div><SubmitButton>Save settings</SubmitButton></div>
