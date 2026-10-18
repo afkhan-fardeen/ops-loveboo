@@ -6,10 +6,13 @@ import SendEmailDialog from "@/components/SendEmailDialog";
 import { BodySkeleton } from "@/components/Skeletons";
 import { DataTable, EmptyState, PageHeader } from "@/components/ui";
 import { requireModule } from "@/lib/auth";
-import { dateBounds, dayRow, tz as storeTz } from "@/lib/data";
+import { dateBounds, dayRow } from "@/lib/data";
+import { getStoreTz } from "@/lib/timezone";
 import { dateLabel, int, money, num2, time12 } from "@/lib/format";
 import { activeRecipients, getSettings } from "@/lib/settings";
-import { sendDayEmail } from "./actions";
+import LoadMissing from "@/components/LoadMissing";
+import { missingDays } from "@/lib/missing";
+import { loadMissingDays, sendDayEmail } from "./actions";
 
 export const metadata = { title: "Daily Sales" };
 export const dynamic = "force-dynamic";
@@ -23,6 +26,7 @@ export default async function DailySales({ searchParams }: { searchParams: Promi
   if (!bounds) return <EmptyState title="No reports yet">The first report appears after the daily job has run.</EmptyState>;
 
   const shown = date ?? bounds.max;
+  const missing = await missingDays();
   const recipients = isAdmin ? activeRecipients(await getSettings()).map(({ name, email }) => ({ name, email })) : [];
 
   return (
@@ -32,6 +36,7 @@ export default async function DailySales({ searchParams }: { searchParams: Promi
         {isAdmin && <SendEmailDialog date={shown} label={dateLabel(shown, true)} recipients={recipients} action={sendDayEmail} />}
         {isAdmin && <SettingsLink href="/reports/daily-sales/settings" />}
       </PageHeader>
+      {missing.length > 0 && <LoadMissing action={loadMissingDays} />}
       {/* Keyed Suspense: switching days shows the skeleton at once while the numbers load. */}
       <Suspense key={shown} fallback={<BodySkeleton />}>
         <Day date={shown} min={bounds.min} max={bounds.max} />
@@ -43,7 +48,7 @@ export default async function DailySales({ searchParams }: { searchParams: Promi
 async function Day({ date, min, max }: { date: string; min: string; max: string }) {
   const row = await dayRow(date);
   if (!row) return <EmptyState title={`No report for ${dateLabel(date, true)}`}>Pick another day. Reports exist from {dateLabel(min)} to {dateLabel(max)}.</EmptyState>;
-  const cur = row.currency, tz = storeTz();
+  const cur = row.currency, tz = await getStoreTz();
   const lines: [string, string, boolean?][] = [
     ["Orders", int(row.orders)],
     ["Units sold", int(row.units)],

@@ -2,13 +2,13 @@ import { SimpleGrid, Stack, Text, Title } from "@mantine/core";
 import { ModuleCard } from "@/components/Links";
 import { EmptyState } from "@/components/ui";
 import { requireUser } from "@/lib/auth";
-import { tz } from "@/lib/data";
+import { getStoreTz } from "@/lib/timezone";
 import { MODULES } from "@/lib/modules";
 
 export const metadata = { title: "Home" };
 
-const greeting = () => {
-  const h = Number(new Date().toLocaleString("en-GB", { hour: "numeric", hour12: false, timeZone: tz() })) % 24;
+const greeting = async () => {
+  const h = Number(new Date().toLocaleString("en-GB", { hour: "numeric", hour12: false, timeZone: await getStoreTz() })) % 24;
   return h < 12 ? "Good morning" : h < 18 ? "Good afternoon" : "Good evening";
 };
 
@@ -18,7 +18,7 @@ export default async function Home() {
   return (
     <Stack gap="xl">
       <div className="page-in">
-        <Text c="dimmed">{greeting()}</Text>
+        <Text c="dimmed">{await greeting()}</Text>
         <Title order={1}>{user.name?.split(" ")[0] || user.email}</Title>
       </div>
       {mine.length === 0 && user.role !== "admin" ? (

@@ -6,6 +6,7 @@ import { addDays, yesterdayIn } from "@/lib/format";
 import { run, sendFailure } from "@/lib/report";
 import { logRun, sourceFrom } from "@/lib/jobs";
 import { runScheduled } from "@/lib/scheduled";
+import { getStoreTz } from "@/lib/timezone";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
@@ -24,7 +25,7 @@ export async function GET(req: NextRequest) {
   const t0 = Date.now();
   const source = sourceFrom(req.headers.get("user-agent"));
   const url = new URL(req.url);
-  const tz = process.env.STORE_TIMEZONE ?? "Europe/London";
+  const tz = await getStoreTz();
   const end = yesterdayIn(tz);
 
   try {

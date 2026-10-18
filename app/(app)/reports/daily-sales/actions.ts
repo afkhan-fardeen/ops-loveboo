@@ -2,6 +2,10 @@
 import { revalidateTag } from "next/cache";
 import { requireAdmin } from "@/lib/auth";
 import { sendDay } from "@/lib/report";
+import { logRun } from "@/lib/jobs";
+import { missingDays } from "@/lib/missing";
+import { run } from "@/lib/report";
+import { requireModule } from "@/lib/auth";
 import { isEmail } from "@/lib/settings";
 
 export type Result = { ok: boolean; message: string };
@@ -32,4 +36,30 @@ export async function sendDayEmail(form: FormData): Promise<Result> {
   if (!r.failed.length) return { ok: true, message: `Sent to ${r.sent.join(", ")}.` };
   const why = r.failed.map((f) => `${f.address}: ${f.error}`).join(" · ");
   return fail(`${r.sent.length ? `Sent to ${r.sent.join(", ")}. ` : ""}Failed: ${why}`);
+}
+
+let loading: Promise<Result> | null = null;
+
+/**
+ * Stores any days since the last report (up to 7) when someone opens Daily Sales, so yesterday's report is
+ * ready whenever it is looked at, without waiting for a scheduler. Loads data only; it never sends email.
+ */
+export async function loadMissingDays(): Promise<Result> {
+  await requireModule("reports");
+  // Several people opening the page at once share one load.
+  loading ??= (async (): Promise<Result> => {
+    const t0 = Date.now();
+    try {
+      const days = await missingDays();
+      for (const d of days) await run(d, { email: false });
+      if (days.length) {
+        revalidateTag("sales");
+        await logRun({ source: "manual", outcome: "loaded", detail: `Opened the page and loaded ${days.length} missing day(s): ${days.join(", ")}.`, report_date: days[days.length - 1], ms: Date.now() - t0 });
+      }
+      return { ok: true, message: days.length ? `Loaded ${days.length} day(s).` : "Already up to date." };
+    } catch (e) {
+      return { ok: false, message: e instanceof Error ? e.message : "Couldn’t load the report." };
+    }
+  })().finally(() => { loading = null; });
+  return loading;
 }

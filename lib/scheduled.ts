@@ -1,4 +1,5 @@
 import { revalidateTag } from "next/cache";
+import { getStoreTz } from "./timezone";
 import { adminClient } from "./supabase";
 import { yesterdayIn } from "./format";
 import { run } from "./report";
@@ -13,8 +14,7 @@ export type ScheduledResult = { outcome: "loaded" | "emailed" | "skipped"; detai
  * 2) Emails it once, after the admin's send time.
  */
 export async function runScheduled(): Promise<ScheduledResult> {
-  const tz = process.env.STORE_TIMEZONE ?? "Europe/London";
-  const date = yesterdayIn(tz);
+  const date = yesterdayIn(await getStoreTz());
 
   const { data } = await adminClient().from("daily_sales").select("emailed_at").eq("date", date).maybeSingle();
   let loaded = false;

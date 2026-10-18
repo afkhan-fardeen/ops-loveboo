@@ -1,4 +1,5 @@
 import { dayRange } from "./format";
+import { getStoreTz } from "./timezone";
 import type { Location, Order } from "./data";
 import { lineAmounts, refundAmounts } from "./lines";
 
@@ -110,7 +111,7 @@ export async function fetchRefunds(sinceIso: string): Promise<RefundEvent[]> {
  * Draft orders are skipped. The day total, locations and the order list are all built from the same lines.
  */
 export async function fetchDay(date: string, opts: { refunds?: RefundEvent[] } = {}) {
-  const tz = process.env.STORE_TIMEZONE ?? "Europe/London";
+  const tz = await getStoreTz();
   const { from, to } = dayRange(date, tz);
   const orders = await paginate<ShopifyOrder>(ORDERS, `processed_at:>='${from}' processed_at:<'${to}' -status:cancelled -test:true`);
   const refunds = (opts.refunds ?? (await fetchRefunds(from))).filter((e) => e.at >= from && e.at < to);

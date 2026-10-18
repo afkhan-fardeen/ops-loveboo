@@ -8,8 +8,6 @@ export type Row = {
   currency: string; emailed_at: string | null; locations: Location[]; order_list: Order[];
 };
 
-export const tz = () => process.env.STORE_TIMEZONE ?? "Europe/London";
-
 const COLUMNS = "date,orders,units,net_sales,discounts,shipping,taxes,total_sales,currency,emailed_at,locations,order_list";
 
 /** Fills in defaults and converts numeric columns (Postgres returns numerics as strings). */
@@ -25,6 +23,12 @@ export async function fetchRow(date?: string): Promise<Row | null> {
   const { data, error } = await q.maybeSingle();
   if (error) throw error;
   return data ? norm(data as unknown as Row) : null;
+}
+
+/** The newest stored date. Uncached, so the page can notice a missing day immediately. */
+export async function latestDate(): Promise<string | null> {
+  const { data } = await adminClient().from("daily_sales").select("date").order("date", { ascending: false }).limit(1).maybeSingle();
+  return data?.date ?? null;
 }
 
 // Stored days change once a day (cron) or on "Send email now", both of which call revalidateTag("sales").
