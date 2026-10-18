@@ -1,7 +1,7 @@
 import ExcelJS from "exceljs";
 import type { Row } from "./data";
 import { time12 } from "./format";
-import { getStoreTz } from "./timezone";
+import { TZ } from "./timezone";
 
 export const STORE_NAME = "Love Boo Store";
 const TEAL = "FF006D68", MEADOW = "FFE6F4F3";
@@ -43,7 +43,7 @@ function summary(ws: ExcelJS.Worksheet, headers: (string | number)[], rows: (str
 
 /** The daily report workbook: "Daily Report" (summary + orders) and "Location Sales" (cities, with a by-country summary). */
 export async function buildWorkbook(row: Row) {
-  const tz = await getStoreTz();
+  const tz = TZ;
   const money = `[$${row.currency === "GBP" ? "£" : row.currency + " "}]#,##0.00`;
   const wb = new ExcelJS.Workbook();
 

@@ -21,13 +21,13 @@ Database: run `schema.sql` once on a new Supabase project (or the files in `migr
 - **System health** (admins, `/admin/health`): is the scheduler running (and how often), is yesterday's report stored, has the email gone out or is it overdue, are Shopify, email sending and secrets fine, plus a log of recent runs (14 days). "Run the check now" runs the same check the scheduler runs (and sends the email if it is due).
 
 ## How the daily email works
-A scheduler pings `/api/cron/daily-report` with the cron secret. It stores yesterday's report (fetched from Shopify in the store timezone, one row in `daily_sales`) at the first check after the day ends, so it appears in the portal right away. Once the admin's send time has passed, it re-fetches and emails the active recipients once (a manual **Send email now** to the recipients counts, so there are no duplicates).
+A scheduler pings `/api/cron/daily-report` with the cron secret. It stores yesterday's report (fetched from Shopify, one row in `daily_sales`) at the first check after the day ends, so it appears in the portal right away. Once the admin's send time has passed, it re-fetches and emails the active recipients once (a manual **Send email now** to the recipients counts, so there are no duplicates).
 - **Exact times:** `.github/workflows/daily-report.yml` pings every 15 minutes, free. In GitHub → Settings → Secrets and variables → Actions add `APP_URL` (e.g. `https://ops.loveboo.com`) and `CRON_SECRET` (same value as in Vercel).
 - **Fallback:** `vercel.json` also pings once a day at 05:00 UTC (Vercel Hobby allows daily crons only).
 - Backfill: `GET /api/cron/daily-report?backfill=60` with the cron secret loads past days, never sends email. Re-run a day: `?date=YYYY-MM-DD&resend=1`.
 
 ## Numbers
-Booked the way Shopify's Sales report books them, and checked against it: an order counts on the day it was processed (items after every discount, excluding VAT and shipping); each refund or return counts as a negative line on the day it happens, even for older orders. Draft orders are excluded. **Total sales** = what customers paid = net sales + shipping + VAT.
+Everything follows **Bahrain time (GMT+3, no daylight saving)**: where a day starts and ends, the daily send time, and every time shown in the portal, emails and Excel. Booked the way Shopify's Sales report books them, and checked against it: an order counts on the day it was processed (items after every discount, excluding VAT and shipping); each refund or return counts as a negative line on the day it happens, even for older orders. Draft orders are excluded. **Total sales** = what customers paid = net sales + shipping + VAT.
 
 ## Security model
 - Auth: Supabase email + password. Access exists only if an admin created a `profiles` row (role, modules, active). **Disable "Allow new users to sign up"** in Supabase → Authentication → Providers → Email.

@@ -2,13 +2,13 @@ import { SimpleGrid, Stack, Text, Title } from "@mantine/core";
 import { ModuleCard } from "@/components/Links";
 import { EmptyState } from "@/components/ui";
 import { requireUser } from "@/lib/auth";
-import { getStoreTz } from "@/lib/timezone";
+import { TZ } from "@/lib/timezone";
 import { MODULES } from "@/lib/modules";
 
 export const metadata = { title: "Home" };
 
 const greeting = async () => {
-  const h = Number(new Date().toLocaleString("en-GB", { hour: "numeric", hour12: false, timeZone: await getStoreTz() })) % 24;
+  const h = Number(new Date().toLocaleString("en-GB", { hour: "numeric", hour12: false, timeZone: TZ })) % 24;
   return h < 12 ? "Good morning" : h < 18 ? "Good afternoon" : "Good evening";
 };
 

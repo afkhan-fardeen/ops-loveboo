@@ -11,12 +11,16 @@ test("addDays crosses month and year boundaries", () => {
   assert.equal(addDays("2026-12-31", 1), "2027-01-01");
 });
 
-test("dayRange follows the store timezone, including DST", () => {
-  assert.deepEqual(dayRange("2026-10-10", "Asia/Kuwait"), { from: "2026-10-09T21:00:00.000Z", to: "2026-10-10T21:00:00.000Z" });
-  assert.equal(dayRange("2026-07-01", "Europe/London").from, "2026-06-30T23:00:00.000Z"); // BST
-  assert.equal(dayRange("2026-01-15", "Europe/London").from, "2026-01-15T00:00:00.000Z"); // GMT
-  const d = dayRange("2026-10-25", "Europe/London"); // clocks go back: a 25-hour day
-  assert.equal((Date.parse(d.to) - Date.parse(d.from)) / 3.6e6, 25);
+test("dayRange uses Bahrain time (GMT+3, no daylight saving)", () => {
+  assert.deepEqual(dayRange("2026-10-10", "Asia/Bahrain"), { from: "2026-10-09T21:00:00.000Z", to: "2026-10-10T21:00:00.000Z" });
+  // A Bahrain day is 24 hours all year, including the days other regions change their clocks.
+  for (const day of ["2026-03-29", "2026-10-25", "2026-07-01"]) {
+    const d = dayRange(day, "Asia/Bahrain");
+    assert.equal((Date.parse(d.to) - Date.parse(d.from)) / 3.6e6, 24);
+  }
+  // An order processed 00:03 Bahrain time belongs to the new day, not the one before.
+  const nextDay = dayRange("2026-10-13", "Asia/Bahrain");
+  assert.ok("2026-10-12T21:03:00.000Z" >= nextDay.from && "2026-10-12T21:03:00.000Z" < nextDay.to);
 });
 
 test("lineAmounts: discount, VAT and returns", () => {

@@ -1,5 +1,7 @@
-/** Timezone the admin's send time is expressed in. */
-export const SEND_TZ = "Asia/Bahrain";
+import { TZ } from "./timezone";
+
+/** Timezone the admin's send time is expressed in (the portal-wide timezone). */
+export const SEND_TZ = TZ;
 export const DEFAULT_SEND_TIME = "08:00";
 
 const HHMM = /^([01]\d|2[0-3]):([0-5]\d)$/;

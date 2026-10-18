@@ -1,5 +1,5 @@
 import { fetchRow } from "./data";
-import { getStoreTz } from "./timezone";
+import { TZ } from "./timezone";
 import { yesterdayIn } from "./format";
 import { recentRuns, type JobRun } from "./jobs";
 import { SEND_TZ, toMinutes, minutesNow } from "./schedule";
@@ -41,8 +41,7 @@ async function shopifyCheck(): Promise<Check> {
 /** Everything the health screen shows, computed from live state. */
 export async function healthChecks(now = new Date()): Promise<{ checks: Check[]; runs: JobRun[]; reportDate: string }> {
   const cfg = await getSettings();
-  const storeTz = await getStoreTz();
-  const reportDate = yesterdayIn(storeTz);
+  const reportDate = yesterdayIn(TZ);
   const [runs, row, shopify] = await Promise.all([recentRuns(200), fetchRow(reportDate), shopifyCheck()]);
   const people = activeRecipients(cfg);
   const checks: Check[] = [];
@@ -76,8 +75,7 @@ export async function healthChecks(now = new Date()): Promise<{ checks: Check[];
   checks.push(email);
 
   // 4-7. Recipients, Shopify, email sending, secrets.
-  const envTz = process.env.STORE_TIMEZONE;
-  checks.push({ label: "Store timezone", status: "ok", detail: `Days are cut at midnight ${storeTz}, read from Shopify${envTz && envTz !== storeTz ? ` (the STORE_TIMEZONE setting says ${envTz}, which is ignored)` : ""}.` });
+  checks.push({ label: "Timezone", status: "ok", detail: "Everything follows Bahrain time (GMT+3): where a day starts and ends, the send time, and times in the portal, email and Excel." });
   checks.push({ label: "Recipients", status: people.length ? "ok" : "bad", detail: `${people.length} active of ${cfg.recipients.length}.` });
   checks.push(shopify);
   const sender = process.env.REPORT_FROM ?? "";

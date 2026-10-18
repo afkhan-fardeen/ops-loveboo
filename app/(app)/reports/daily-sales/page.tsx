@@ -7,7 +7,7 @@ import { BodySkeleton } from "@/components/Skeletons";
 import { DataTable, EmptyState, PageHeader } from "@/components/ui";
 import { requireModule } from "@/lib/auth";
 import { dateBounds, dayRow } from "@/lib/data";
-import { getStoreTz } from "@/lib/timezone";
+import { TZ } from "@/lib/timezone";
 import { dateLabel, int, money, num2, time12 } from "@/lib/format";
 import { activeRecipients, getSettings } from "@/lib/settings";
 import LoadMissing from "@/components/LoadMissing";
@@ -48,7 +48,7 @@ export default async function DailySales({ searchParams }: { searchParams: Promi
 async function Day({ date, min, max }: { date: string; min: string; max: string }) {
   const row = await dayRow(date);
   if (!row) return <EmptyState title={`No report for ${dateLabel(date, true)}`}>Pick another day. Reports exist from {dateLabel(min)} to {dateLabel(max)}.</EmptyState>;
-  const cur = row.currency, tz = await getStoreTz();
+  const cur = row.currency, tz = TZ;
   const lines: [string, string, boolean?][] = [
     ["Orders", int(row.orders)],
     ["Units sold", int(row.units)],
