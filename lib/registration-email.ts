@@ -9,7 +9,7 @@ const font = "'Helvetica Neue',Helvetica,Arial,sans-serif";
 export const REPLY_TO = process.env.REGISTRATION_REPLY_TO || "hello@loveboo.com";
 const FROM = () => process.env.REGISTRATION_FROM || "Love Boo <registration@mail.loveboo.com>";
 const MAX_ATTEMPTS = 5;
-const LOGO = "https://loveboo.com/cdn/shop/files/Group_240724.png?v=1757584837&width=320";
+const LOGO = "https://ops.loveboo.com/logo.png";
 const SITE = "https://loveboo.com";
 
 export type Guest = { first_name: string; email: string; prize: string | null; prize_image_url?: string | null };
