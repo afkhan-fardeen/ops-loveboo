@@ -14,6 +14,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     <AppFrame
       isAdmin={user.role === "admin"}
       showReports={user.modules.includes("reports")}
+      showEvents={user.modules.includes("events")}
       who={user.name || user.email}
       email={user.email}
       initialCollapsed={collapsed}

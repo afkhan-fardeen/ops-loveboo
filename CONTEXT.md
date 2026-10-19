@@ -26,7 +26,7 @@ Internal portal for **loveboo.com** at **ops.loveboo.com**. One module today: **
 | Scheduler | **Partly working.** Vercel Cron pings once a day (~08:53 Bahrain). The 15-minute GitHub scheduler is **not set up yet** (secrets missing), so a send time later than ~09:00 cannot fire. |
 | Automatic daily email | **Not reliable until the scheduler is fixed** (send time is 09:30 in the DB). Emails have mostly gone out via Send email now. |
 | Inventory module | Plan only (`docs/INVENTORY-MODULE-PLAN.md`). Not built. |
-| Registration (Expo) guest email | **Code written, not live.** Webhook endpoint `/api/webhooks/registration` + `lib/registration-email.ts` + `migrations/009_events.sql` (run by hand). Needs the SQL run, env vars `REGISTRATION_WEBHOOK_SECRET` (+ optional `REGISTRATION_FROM`, `REGISTRATION_REPLY_TO`), and the Supabase webhook on the registration project. Events UI module not built yet. |
+| Registration (Expo) guest email | **Code written, not live.** Webhook endpoint `/api/webhooks/registration` + `lib/registration-email.ts` + `migrations/009_events.sql` (run by hand). Needs the SQL run, env vars `REGISTRATION_WEBHOOK_SECRET` (+ optional `REGISTRATION_FROM`, `REGISTRATION_REPLY_TO`), and the Supabase webhook on the registration project. Events module (`/events`: KPIs, registrations with email status, event settings, test/retry buttons) is built; module id `events`. |
 
 ## 3. Files
 | Path | Purpose |
