@@ -6,7 +6,7 @@ const event = { name: "Dubai Baby Expo 2026", collection_text: "Booth 12, Hall 3
 
 test("winner: names the prize and how to collect", () => {
   const m = buildRegistrationEmail({ first_name: "Sara", email: "sara@example.com", prize: "Baby Bundle", prize_image_url: "https://example.com/p.png" }, event);
-  assert.match(m.subject, /won Baby Bundle/);
+  assert.match(m.subject, /you won Baby Bundle/);
   assert.match(m.html, /Congratulations, Sara!/);
   assert.match(m.html, /Booth 12, Hall 3\./);
   assert.match(m.text, /How to collect/);
@@ -15,7 +15,7 @@ test("winner: names the prize and how to collect", () => {
 
 test("no prize: thanks for playing, no collection block", () => {
   const m = buildRegistrationEmail({ first_name: "Sara", email: "sara@example.com", prize: null }, event);
-  assert.match(m.subject, /Thanks for visiting/);
+  assert.match(m.subject, /Thanks for stopping by/);
   assert.doesNotMatch(m.html, /How to collect/);
 });
 

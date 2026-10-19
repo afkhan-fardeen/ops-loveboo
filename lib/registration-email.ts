@@ -16,11 +16,12 @@ export type Guest = { first_name: string; email: string; prize: string | null; p
 export type EventInfo = { name: string; collection_text: string } | null;
 
 const button = (href: string, label: string) =>
-  `<table role="presentation" cellpadding="0" cellspacing="0" border="0" align="center"><tr><td align="center" bgcolor="${C.teal}" style="border-radius:999px"><a href="${esc(href)}" style="display:inline-block;padding:14px 30px;font:700 16px ${font};color:#ffffff;text-decoration:none;border-radius:999px">${esc(label)}</a></td></tr></table>`;
+  `<table role="presentation" cellpadding="0" cellspacing="0" border="0" align="center"><tr><td align="center" bgcolor="${C.teal}" style="border-radius:999px"><a href="${esc(href)}" style="display:inline-block;padding:12px 26px;font:700 14px ${font};color:#ffffff;text-decoration:none;border-radius:999px">${esc(label)}</a></td></tr></table>`;
 
 /**
  * "Thanks for registering" plus what they won (with its picture), or "thanks for playing" when there was no prize.
- * Single column, fluid up to 600px, tables only and inline styles, so it holds up in phone mail apps.
+ * Single column, fluid up to 600px, tables only and inline styles, explicit image sizes and styled alt text,
+ * so it holds up in phone apps, desktop clients and when remote images are blocked.
  */
 export function buildRegistrationEmail(guest: Guest, event: EventInfo) {
   const name = firstName(guest.email, guest.first_name);
@@ -28,60 +29,59 @@ export function buildRegistrationEmail(guest: Guest, event: EventInfo) {
   const won = guest.prize?.trim() || null;
   const image = won && guest.prize_image_url?.startsWith("https://") ? guest.prize_image_url : null;
   const collect = event?.collection_text?.trim() || "Show this email at the Love Boo booth to collect your gift.";
-  const year = new Date().getFullYear();
 
-  const subject = won ? `You won ${won} at Love Boo!` : "Thanks for visiting Love Boo!";
-  const preheader = won ? `Congratulations ${name}! Here’s how to collect your gift.` : `It was lovely meeting you at ${where}.`;
+  const subject = won ? `🎁 ${name}, you won ${won}!` : `Thanks for stopping by, ${name} 💛`;
+  const preheader = won ? `Here’s how to collect your gift from ${where}.` : `It was lovely meeting you at ${where}.`;
   const heading = won ? `Congratulations, ${name}!` : `Thanks for playing, ${name}!`;
   const intro = won
-    ? `Thank you for registering with Love Boo at ${where}. You spun the wheel and won:`
-    : `Thank you for registering with Love Boo at ${where}. No prize this time, but we loved meeting you.`;
+    ? `Thank you for registering at ${where}. You spun the wheel and won:`
+    : `Thank you for registering at ${where}. No prize this time, but we loved meeting you.`;
+  const altStyle = `font:700 15px ${font};color:${C.deep}`;
 
   const prizeBlock = won ? `
-  <tr><td align="center" style="padding:6px 24px 0">
-    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:${C.cream};border-radius:20px"><tr><td align="center" style="padding:24px 16px">
-      ${image ? `<img src="${esc(image)}" alt="${esc(won)}" width="240" style="display:block;width:240px;max-width:100%;height:auto;border:0;margin:0 auto 14px">` : ""}
-      <div style="font:700 22px/1.25 ${font};color:${C.deep}">${esc(won)}</div>
+  <tr><td align="center" style="padding:6px 20px 0">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="${C.cream}" style="background:${C.cream};border-radius:18px"><tr><td align="center" style="padding:22px 16px">
+      ${image ? `<img src="${esc(image)}" alt="${esc(won)}" width="200" style="display:block;width:200px;max-width:100%;height:auto;border:0;margin:0 auto 12px;${altStyle}">` : ""}
+      <div style="font:700 17px/1.3 ${font};color:${C.deep}">${esc(won)}</div>
     </td></tr></table>
   </td></tr>
-  <tr><td style="padding:20px 24px 0">
-    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border:1px solid ${C.line};border-radius:16px"><tr><td style="padding:18px 20px">
-      <div style="font:700 13px ${font};letter-spacing:.08em;text-transform:uppercase;color:${C.teal}">How to collect</div>
-      <div style="margin-top:6px;font:400 16px/1.55 ${font};color:${C.ink}">${esc(collect).replace(/\n/g, "<br>")}</div>
+  <tr><td style="padding:16px 20px 0">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border:1px solid ${C.line};border-radius:14px"><tr><td style="padding:16px 18px">
+      <div style="font:700 11px ${font};letter-spacing:.09em;text-transform:uppercase;color:${C.teal}">How to collect</div>
+      <div style="margin-top:6px;font:400 14px/1.55 ${font};color:${C.ink}">${esc(collect).replace(/\n/g, "<br>")}</div>
     </td></tr></table>
   </td></tr>` : "";
 
   const html = `<!doctype html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light"><title>${esc(subject)}</title></head>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light"><meta name="supported-color-schemes" content="light"><title>${esc(subject)}</title></head>
 <body style="margin:0;padding:0;background:${C.cream};-webkit-text-size-adjust:100%">
-<div style="display:none;max-height:0;overflow:hidden;opacity:0;color:transparent">${esc(preheader)}&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;</div>
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="${C.cream}"><tr><td align="center">
+<div style="display:none;max-height:0;overflow:hidden;opacity:0;color:transparent;font-size:1px;line-height:1px">${esc(preheader)}${"&nbsp;&zwnj;".repeat(40)}</div>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="${C.cream}" style="background:${C.cream}"><tr><td align="center">
 <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" style="width:100%;max-width:600px">
 
-  <tr><td align="center" bgcolor="${C.cream}" style="padding:28px 24px 22px">
-    <a href="${SITE}"><img src="${LOGO}" alt="Love Boo" width="132" style="display:block;width:132px;height:auto;border:0"></a>
+  <tr><td align="center" bgcolor="${C.cream}" style="padding:24px 20px 20px">
+    <a href="${SITE}" style="text-decoration:none"><img src="${LOGO}" alt="Love Boo" width="120" height="38" style="display:block;width:120px;height:auto;border:0;font:700 20px ${font};color:${C.teal}"></a>
   </td></tr>
 
-  <tr><td bgcolor="#ffffff"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
-    <tr><td align="center" style="padding:32px 24px 8px">
-      ${won ? `<span style="display:inline-block;background:${C.yellow};color:${C.deep};font:700 12px ${font};letter-spacing:.1em;text-transform:uppercase;padding:6px 14px;border-radius:999px">You won</span>` : ""}
-      <div style="margin-top:${won ? 14 : 0}px;font:700 28px/1.2 ${font};color:${C.deep}">${esc(heading)}</div>
-      <div style="margin-top:12px;font:400 16px/1.55 ${font};color:${C.mute}">${esc(intro)}</div>
+  <tr><td bgcolor="#ffffff" style="background:#ffffff"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr><td align="center" style="padding:28px 20px 8px">
+      ${won ? `<span style="display:inline-block;background:${C.yellow};color:${C.deep};font:700 11px ${font};letter-spacing:.1em;text-transform:uppercase;padding:5px 12px;border-radius:999px">You won</span>` : ""}
+      <div style="margin-top:${won ? 12 : 0}px;font:700 22px/1.25 ${font};color:${C.deep}">${esc(heading)}</div>
+      <div style="margin-top:10px;font:400 14px/1.55 ${font};color:${C.mute}">${esc(intro)}</div>
     </td></tr>
     ${prizeBlock}
-    <tr><td align="center" style="padding:28px 24px 36px">${button(SITE, "Visit loveboo.com")}</td></tr>
+    <tr><td align="center" style="padding:24px 20px 32px">${button(SITE, "Visit loveboo.com")}</td></tr>
   </table></td></tr>
 
-  <tr><td bgcolor="${C.deep}" align="center" style="padding:28px 24px 32px">
-    <div style="font:700 18px ${font};color:#ffffff">Love Boo</div>
-    <div style="margin-top:10px;font:400 14px/1.6 ${font};color:#ffffff">Questions? Write to <a href="mailto:${REPLY_TO}" style="color:#ffffff;font-weight:700">${REPLY_TO}</a></div>
-    <div style="margin-top:14px;font:400 12px/1.6 ${font};color:#ffffff;opacity:.85">You’re receiving this because you registered with Love Boo at ${esc(where)}.<br>This is an automated message.<br>© ${year} Love Boo · <a href="${SITE}" style="color:#ffffff">loveboo.com</a></div>
+  <tr><td bgcolor="${C.deep}" align="center" style="background:${C.deep};padding:22px 20px 26px">
+    <div style="font:400 12px/1.6 ${font};color:#ffffff">Questions? Write to <a href="mailto:${REPLY_TO}" style="color:#ffffff;font-weight:700">${REPLY_TO}</a></div>
+    <div style="margin-top:10px;font:400 11px/1.6 ${font};color:#ffffff">You’re receiving this because you registered at ${esc(where)}.<br>This is an automated message.<br><a href="${SITE}" style="color:#ffffff">loveboo.com</a></div>
   </td></tr>
 
 </table></td></tr></table>
 </body></html>`;
 
-  const text = [`Hello ${name},`, "", intro, ...(won ? [`  ${won}`, "", "How to collect:", collect] : []), "", `Visit us: ${SITE}`, "", `Questions? Write to ${REPLY_TO}.`, `You're receiving this because you registered with Love Boo at ${where}. This is an automated message.`].join("\n");
+  const text = [`${heading}`, "", intro, ...(won ? [`  ${won}`, "", "How to collect:", collect] : []), "", `Visit us: ${SITE}`, "", `Questions? Write to ${REPLY_TO}.`, `You're receiving this because you registered at ${where}. This is an automated message.`].join("\n");
   return { subject, html, text };
 }
 
