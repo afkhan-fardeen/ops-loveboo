@@ -6,6 +6,7 @@ import { addDays, yesterdayIn } from "@/lib/format";
 import { run, sendFailure } from "@/lib/report";
 import { logRun, sourceFrom } from "@/lib/jobs";
 import { runScheduled } from "@/lib/scheduled";
+import { retryPendingRegistrationEmails } from "@/lib/registration-email";
 import { TZ } from "@/lib/timezone";
 
 export const dynamic = "force-dynamic";
@@ -50,7 +51,9 @@ export async function GET(req: NextRequest) {
 
     // Scheduled mode (every ~15 minutes, or once a day by Vercel Cron): see lib/scheduled.ts.
     const r = await runScheduled();
-    await logRun({ source, outcome: r.outcome, detail: r.detail, report_date: r.date, ms: Date.now() - t0 });
+    const guests = await retryPendingRegistrationEmails().catch(() => null); // guest emails the webhook missed or that failed
+    const retried = guests?.tried ? ` Retried ${guests.tried} guest email(s), ${guests.sent} sent.` : "";
+    await logRun({ source, outcome: r.outcome, detail: r.detail + retried, report_date: r.date, ms: Date.now() - t0 });
     return NextResponse.json(r);
   } catch (e) {
     // At most one failure alert per day, even though the scheduler retries every 15 minutes.
