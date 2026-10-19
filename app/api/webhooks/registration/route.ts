@@ -15,7 +15,7 @@ function authorised(req: NextRequest) {
 }
 
 type Row = { id?: string | number; client_id?: string | null; first_name?: string; last_name?: string | null; email?: string; phone?: string | null;
-  is_parent?: string | boolean | null; source?: string | null; prize?: string | null; utm_source?: string | null; utm_medium?: string | null; utm_campaign?: string | null; created_at?: string };
+  is_parent?: string | boolean | null; source?: string | null; prize?: string | null; prize_image_url?: string | null; utm_source?: string | null; utm_medium?: string | null; utm_campaign?: string | null; created_at?: string };
 
 /** The event a registration belongs to: the one whose dates include the day it was made, else the most recent one that has started. */
 async function eventFor(registeredAt: string) {
@@ -43,7 +43,7 @@ export async function POST(req: NextRequest) {
   const { data, error } = await db.from("event_registrations").upsert({
     registration_id: String(r.id), client_id: r.client_id ?? null, event_id: await eventFor(registeredAt),
     first_name: r.first_name ?? "", last_name: r.last_name ?? null, email: r.email.trim().toLowerCase(), phone: r.phone ?? null,
-    is_parent: r.is_parent == null ? null : String(r.is_parent), source: r.source ?? null, prize: r.prize?.trim() || null,
+    is_parent: r.is_parent == null ? null : String(r.is_parent), source: r.source ?? null, prize: r.prize?.trim() || null, prize_image_url: r.prize_image_url || null,
     utm_source: r.utm_source ?? null, utm_medium: r.utm_medium ?? null, utm_campaign: r.utm_campaign ?? null, registered_at: registeredAt,
   }, { onConflict: "registration_id", ignoreDuplicates: true }).select("id").maybeSingle();
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });

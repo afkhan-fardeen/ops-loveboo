@@ -6,6 +6,7 @@ import { adminClient } from "@/lib/supabase";
 
 export type Result = { ok: boolean; message: string };
 
+const SAMPLE_IMAGE = "https://esydiawzpmtgnugpaodn.supabase.co/storage/v1/object/public/prize-images/1792305830623-pk4dw1.png";
 const isDate = (v: string) => /^\d{4}-\d{2}-\d{2}$/.test(v);
 
 export async function saveEvent(form: FormData) {
@@ -28,7 +29,7 @@ export async function sendTestEmail(): Promise<Result> {
   const me = await requireAdmin();
   try {
     const { data } = await adminClient().from("events").select("name,collection_text").order("created_at", { ascending: false }).limit(1).maybeSingle();
-    await sendRegistrationEmail(me.email, { first_name: me.name?.split(" ")[0] ?? "", email: me.email, prize: "Sample Gift (test)" }, data);
+    await sendRegistrationEmail(me.email, { first_name: me.name?.split(" ")[0] ?? "", email: me.email, prize: "Mystery Gift (test)", prize_image_url: SAMPLE_IMAGE }, data);
     return { ok: true, message: `Test email sent to ${me.email}.` };
   } catch (e) {
     return { ok: false, message: e instanceof Error ? e.message : "Couldn’t send the test." };
