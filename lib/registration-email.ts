@@ -5,6 +5,7 @@ import { firstName } from "./names";
 const C = { cream: "#FBF9F1", teal: "#006D68", deep: "#005151", ink: "#23312F", mute: "#5F6B69", yellow: "#FBD872", line: "#EAE5D6" };
 const esc = (v: string) => v.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 const font = "'Helvetica Neue',Helvetica,Arial,sans-serif";
+const serif = "Georgia,'Times New Roman',serif";
 
 export const REPLY_TO = process.env.REGISTRATION_REPLY_TO || "hello@loveboo.com";
 const FROM = () => process.env.REGISTRATION_FROM || "Love Boo <registration@mail.loveboo.com>";
@@ -30,7 +31,7 @@ export function buildRegistrationEmail(guest: Guest, event: EventInfo) {
   const image = won && guest.prize_image_url?.startsWith("https://") ? guest.prize_image_url : null;
   const collect = event?.collection_text?.trim() || "Show this email at the Love Boo booth to collect your gift.";
 
-  const subject = won ? `🎁 ${name}, you won ${won}!` : `Thanks for stopping by, ${name} 💛`;
+  const subject = won ? `${name}, you won ${won}` : `Thanks for stopping by, ${name}`;
   const preheader = won ? `Here’s how to collect your gift from ${where}.` : `It was lovely meeting you at ${where}.`;
   const heading = won ? `Congratulations, ${name}!` : `Thanks for playing, ${name}!`;
   const intro = won
@@ -42,7 +43,7 @@ export function buildRegistrationEmail(guest: Guest, event: EventInfo) {
   <tr><td align="center" style="padding:6px 20px 0">
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="${C.cream}" style="background:${C.cream};border-radius:18px"><tr><td align="center" style="padding:22px 16px">
       ${image ? `<img src="${esc(image)}" alt="${esc(won)}" width="200" style="display:block;width:200px;max-width:100%;height:auto;border:0;margin:0 auto 12px;${altStyle}">` : ""}
-      <div style="font:700 17px/1.3 ${font};color:${C.deep}">${esc(won)}</div>
+      <div style="font:400 18px/1.3 ${serif};color:${C.deep}">${esc(won)}</div>
     </td></tr></table>
   </td></tr>
   <tr><td style="padding:16px 20px 0">
@@ -59,14 +60,14 @@ export function buildRegistrationEmail(guest: Guest, event: EventInfo) {
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="${C.cream}" style="background:${C.cream}"><tr><td align="center">
 <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" style="width:100%;max-width:600px">
 
-  <tr><td align="center" bgcolor="${C.cream}" style="padding:24px 20px 20px">
-    <a href="${SITE}" style="text-decoration:none"><img src="${LOGO}" alt="Love Boo" width="120" height="38" style="display:block;width:120px;height:auto;border:0;font:700 20px ${font};color:${C.teal}"></a>
+  <tr><td align="center" bgcolor="${C.cream}" style="padding:22px 20px 18px">
+    <a href="${SITE}" style="text-decoration:none"><img src="${LOGO}" alt="Love Boo" width="92" height="29" style="display:block;margin:0 auto;width:92px;height:auto;border:0;font:700 20px ${font};color:${C.teal}"></a>
   </td></tr>
 
   <tr><td bgcolor="#ffffff" style="background:#ffffff"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
     <tr><td align="center" style="padding:28px 20px 8px">
       ${won ? `<span style="display:inline-block;background:${C.yellow};color:${C.deep};font:700 11px ${font};letter-spacing:.1em;text-transform:uppercase;padding:5px 12px;border-radius:999px">You won</span>` : ""}
-      <div style="margin-top:${won ? 12 : 0}px;font:700 22px/1.25 ${font};color:${C.deep}">${esc(heading)}</div>
+      <div style="margin-top:${won ? 12 : 0}px;font:400 24px/1.25 ${serif};color:${C.deep};letter-spacing:.2px">${esc(heading)}</div>
       <div style="margin-top:10px;font:400 14px/1.55 ${font};color:${C.mute}">${esc(intro)}</div>
     </td></tr>
     ${prizeBlock}
