@@ -49,7 +49,7 @@ export async function POST(req: NextRequest) {
   const save = (extra: object) => db.from("event_registrations").upsert({ ...row, ...extra }, { onConflict: "registration_id", ignoreDuplicates: true }).select("id").maybeSingle();
   let { data, error } = await save({ prize_image_url: r.prize_image_url || null });
   // 010_prize_image.sql not run yet: store without the picture rather than losing the guest (their first email still gets it).
-  if (error?.code === "42703") ({ data, error } = await save({}));
+  if (error && /PGRST204|42703/.test(`${error.code} ${error.message}`)) ({ data, error } = await save({}));
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
   // ignoreDuplicates returns no row when it already existed (a webhook retry): nothing more to do.
