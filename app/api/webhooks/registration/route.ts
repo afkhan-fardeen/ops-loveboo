@@ -40,15 +40,19 @@ export async function POST(req: NextRequest) {
 
   const registeredAt = r.created_at ?? new Date().toISOString();
   const db = adminClient();
-  const { data, error } = await db.from("event_registrations").upsert({
+  const row = {
     registration_id: String(r.id), client_id: r.client_id ?? null, event_id: await eventFor(registeredAt),
     first_name: r.first_name ?? "", last_name: r.last_name ?? null, email: r.email.trim().toLowerCase(), phone: r.phone ?? null,
-    is_parent: r.is_parent == null ? null : String(r.is_parent), source: r.source ?? null, prize: r.prize?.trim() || null, prize_image_url: r.prize_image_url || null,
+    is_parent: r.is_parent == null ? null : String(r.is_parent), source: r.source ?? null, prize: r.prize?.trim() || null,
     utm_source: r.utm_source ?? null, utm_medium: r.utm_medium ?? null, utm_campaign: r.utm_campaign ?? null, registered_at: registeredAt,
-  }, { onConflict: "registration_id", ignoreDuplicates: true }).select("id").maybeSingle();
+  };
+  const save = (extra: object) => db.from("event_registrations").upsert({ ...row, ...extra }, { onConflict: "registration_id", ignoreDuplicates: true }).select("id").maybeSingle();
+  let { data, error } = await save({ prize_image_url: r.prize_image_url || null });
+  // 010_prize_image.sql not run yet: store without the picture rather than losing the guest (their first email still gets it).
+  if (error?.code === "42703") ({ data, error } = await save({}));
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
   // ignoreDuplicates returns no row when it already existed (a webhook retry): nothing more to do.
   if (!data) return NextResponse.json({ duplicate: true });
-  return NextResponse.json({ stored: true, email: await emailRegistration(data.id) });
+  return NextResponse.json({ stored: true, email: await emailRegistration(data.id, r.prize_image_url) });
 }

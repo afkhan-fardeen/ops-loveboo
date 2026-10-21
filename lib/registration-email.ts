@@ -98,7 +98,7 @@ export async function sendRegistrationEmail(to: string, guest: Guest, event: Eve
  * Emails one stored registration. Safe to call from the webhook and the retry sweep at the same time:
  * the row is claimed first, so only one caller sends. Never throws; the outcome is saved on the row.
  */
-export async function emailRegistration(id: number) {
+export async function emailRegistration(id: number, imageUrl?: string | null) {
   const db = adminClient();
   const stale = new Date(Date.now() - 5 * 60e3).toISOString();
   const { data: claimed } = await db.from("event_registrations")
@@ -113,7 +113,7 @@ export async function emailRegistration(id: number) {
 
   if (event && !event.email_enabled) { await done({ email_status: "skipped" }); return "skipped"; }
   try {
-    const resendId = await sendRegistrationEmail(claimed.email, claimed, event);
+    const resendId = await sendRegistrationEmail(claimed.email, { ...claimed, prize_image_url: claimed.prize_image_url ?? imageUrl ?? null }, event);
     await done({ email_status: "sent", emailed_at: new Date().toISOString(), resend_id: resendId, email_error: null, email_attempts: claimed.email_attempts + 1 });
     return "sent";
   } catch (e) {
