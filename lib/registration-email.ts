@@ -105,9 +105,9 @@ export function buildDiscountEmail(guest: Guest, event: EventInfo) {
   const where = event?.name ?? "Baby & Kids Expo Dubai";
   const name = firstName(guest.email, guest.first_name);
   const subject = `Your 25% off Love Boo code: ${DISCOUNT_CODE}`;
-  const preheader = "Thank you for signing up! Enjoy 25% off at loveboo.com for the next 3 days.";
+  const preheader = "Thank you for signing up! Enjoy 25% off at loveboo.com. Your code expires in 30 days.";
   const intro = `Lovely to meet you${name === "there" ? "" : `, ${name}`}! As a thank-you from all of us at Love Boo, here’s 25% off your order at loveboo.com.`;
-  const note = "Enter the code at checkout within the next 3 days.";
+  const note = "Enter the code at checkout. It expires in 30 days.";
 
   const body = `    <tr><td align="center" style="padding:28px 20px 8px">
       <div style="font:400 24px/1.25 ${serif};color:${C.deep};letter-spacing:.2px">Thank you for signing up!</div>
