@@ -40,8 +40,8 @@ test("discount email: thank-you, the code and one button", () => {
   const m = buildDiscountEmail({ first_name: "Sara", email: "sara@example.com", prize: null, source: "baby_expo_2026_qr" }, { name: "Dubai Baby Expo 2026", collection_text: "" });
   assert.equal(m.subject, "Your Love Boo discount code");
   assert.match(m.html, /Thank you for signing up!/);
-  assert.match(m.html, /HELLO20/);
+  assert.match(m.html, /EXPO25/);
   assert.match(m.html, /Shop now/);
-  assert.match(m.text, /Your discount code: HELLO20/);
+  assert.match(m.text, /Your discount code: EXPO25/);
   assert.doesNotMatch(m.html, /How to collect/);
 });

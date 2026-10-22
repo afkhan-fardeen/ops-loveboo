@@ -94,7 +94,7 @@ export function buildRegistrationEmail(guest: Guest, event: EventInfo) {
 }
 
 
-export const DISCOUNT_CODE = process.env.REGISTRATION_DISCOUNT_CODE || "HELLO20";
+export const DISCOUNT_CODE = process.env.REGISTRATION_DISCOUNT_CODE || "EXPO25";
 const EXPO_LOGO = "https://ops.loveboo.com/expo-lockup.png";
 
 /** Guests who signed up through the QR code page (their source ends in "_qr") get a discount code, not a prize. */
