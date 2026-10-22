@@ -94,7 +94,7 @@ export function buildRegistrationEmail(guest: Guest, event: EventInfo) {
 }
 
 
-export const DISCOUNT_CODE = "EXPO25";
+export const DISCOUNT_CODE = "EXPO2026";
 const EXPO_LOGO = "https://ops.loveboo.com/expo-lockup.png";
 
 /** Guests who signed up through the QR code page (their source ends in "_qr") get a discount code, not a prize. */
@@ -112,8 +112,8 @@ export function buildDiscountEmail(guest: Guest, event: EventInfo) {
       <div style="margin-top:10px;font:400 14px/1.55 ${font};color:${C.mute}">${esc(intro)}</div>
     </td></tr>
     <tr><td align="center" style="padding:20px 20px 0">
-      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="${C.cream}" style="background:${C.cream};border:2px dashed ${C.teal};border-radius:18px"><tr><td align="center" style="padding:24px 16px">
-        <div style="font:700 34px/1.2 ${font};letter-spacing:.14em;color:${C.teal}">${esc(DISCOUNT_CODE)}</div>
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="${C.cream}" style="background:${C.cream};border:2px dashed ${C.teal};border-radius:18px"><tr><td align="center" style="padding:18px 16px">
+        <div style="font:700 22px/1.2 ${font};letter-spacing:.1em;color:${C.teal}">${esc(DISCOUNT_CODE)}</div>
       </td></tr></table>
     </td></tr>
     <tr><td align="center" style="padding:24px 20px 32px">${button(SITE, "Shop now")}</td></tr>`;
