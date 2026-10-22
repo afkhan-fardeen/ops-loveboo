@@ -12,7 +12,7 @@ import { retryFailed, saveEvent, sendTestEmail } from "./actions";
 export const metadata = { title: "Events" };
 export const dynamic = "force-dynamic";
 
-type Reg = { id: number; first_name: string; last_name: string | null; email: string; phone: string | null; prize: string | null; registered_at: string; email_status: string; email_error: string | null; email_attempts: number };
+type Reg = { id: number; first_name: string; last_name: string | null; email: string; phone: string | null; prize: string | null; registered_at: string; source: string | null; email_status: string; email_error: string | null; email_attempts: number };
 
 const STATUS: Record<string, { label: string; color: string }> = {
   sent: { label: "Sent", color: "teal" }, pending: { label: "Waiting", color: "yellow" }, sending: { label: "Sending", color: "blue" },
@@ -32,7 +32,7 @@ export default async function Events() {
     base().not("prize", "is", null).then((r) => r.count ?? 0),
     base().eq("email_status", "sent").then((r) => r.count ?? 0),
     base().in("email_status", ["failed", "pending", "sending"]).then((r) => r.count ?? 0),
-    db.from("event_registrations").select("id,first_name,last_name,email,phone,prize,registered_at,email_status,email_error,email_attempts")
+    db.from("event_registrations").select("id,first_name,last_name,email,phone,prize,source,registered_at,email_status,email_error,email_attempts")
       .eq("event_id", event.id).order("registered_at", { ascending: false }).limit(300).then((r) => (r.data ?? []) as Reg[]),
   ]);
   const latest = regs[0]?.registered_at;
@@ -67,7 +67,7 @@ export default async function Events() {
         {regs.length === 0 ? <Text c="dimmed" p="md">Nothing here yet.</Text> : (
           <DataTable minWidth={680} rows={regs} rowKey={(r) => String(r.id)} cols={[
             { label: "Guest", render: (r) => <div><Text size="sm" fw={600}>{[r.first_name, r.last_name].filter(Boolean).join(" ") || "—"}</Text><Text size="xs" c="dimmed">{r.email}</Text></div> },
-            { label: "Prize", render: (r) => r.prize ? <Badge variant="light">{r.prize}</Badge> : <Text size="sm" c="dimmed">None</Text> },
+            { label: "Prize", render: (r) => /_qr$/.test(r.source ?? "") ? <Badge variant="light" color="grape">QR code</Badge> : r.prize ? <Badge variant="light">{r.prize}</Badge> : <Text size="sm" c="dimmed">None</Text> },
             { label: "Registered", hideBelow: "sm", render: (r) => <Text size="sm">{clock(r.registered_at)}</Text> },
             { label: "Email", render: (r) => {
               const s = STATUS[r.email_status] ?? { label: r.email_status, color: "gray" };

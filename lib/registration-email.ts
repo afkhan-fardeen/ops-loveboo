@@ -13,11 +13,38 @@ const MAX_ATTEMPTS = 5;
 const LOGO = "https://ops.loveboo.com/logo.png";
 const SITE = "https://loveboo.com";
 
-export type Guest = { first_name: string; email: string; prize: string | null; prize_image_url?: string | null };
+export type Guest = { first_name: string; email: string; prize: string | null; prize_image_url?: string | null; source?: string | null; registered_at?: string | null };
 export type EventInfo = { name: string; collection_text: string } | null;
 
 const button = (href: string, label: string) =>
   `<table role="presentation" cellpadding="0" cellspacing="0" border="0" align="center"><tr><td align="center" bgcolor="${C.teal}" style="border-radius:999px"><a href="${esc(href)}" style="display:inline-block;padding:12px 26px;font:700 14px ${font};color:#ffffff;text-decoration:none;border-radius:999px">${esc(label)}</a></td></tr></table>`;
+
+
+/** The email shell shared by every guest email: cream header with the logo, white body, dark-teal footer. */
+function frame(o: { subject: string; preheader: string; where: string; logo: { src: string; alt: string; width: number; height: number }; body: string }) {
+  return `<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light"><meta name="supported-color-schemes" content="light"><title>${esc(o.subject)}</title></head>
+<body style="margin:0;padding:0;background:${C.cream};-webkit-text-size-adjust:100%">
+<div style="display:none;max-height:0;overflow:hidden;opacity:0;color:transparent;font-size:1px;line-height:1px">${esc(o.preheader)}${"&nbsp;&zwnj;".repeat(40)}</div>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="${C.cream}" style="background:${C.cream}"><tr><td align="center">
+<table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" style="width:100%;max-width:600px">
+
+  <tr><td align="center" bgcolor="${C.cream}" style="padding:22px 20px 18px">
+    <a href="${SITE}" style="text-decoration:none"><img src="${o.logo.src}" alt="${esc(o.logo.alt)}" width="${o.logo.width}" height="${o.logo.height}" style="display:block;margin:0 auto;width:${o.logo.width}px;height:auto;border:0;font:700 20px ${font};color:${C.teal}"></a>
+  </td></tr>
+
+  <tr><td bgcolor="#ffffff" style="background:#ffffff"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+${o.body}
+  </table></td></tr>
+
+  <tr><td bgcolor="${C.deep}" align="center" style="background:${C.deep};padding:22px 20px 26px">
+    <div style="font:400 12px/1.6 ${font};color:#ffffff">Questions? Write to <a href="mailto:${REPLY_TO}" style="color:#ffffff;font-weight:700">${REPLY_TO}</a></div>
+    <div style="margin-top:10px;font:400 11px/1.6 ${font};color:#ffffff">You’re receiving this because you registered at ${esc(o.where)}.<br>This is an automated message.<br><a href="${SITE}" style="color:#ffffff">loveboo.com</a></div>
+  </td></tr>
+
+</table></td></tr></table>
+</body></html>`;
+}
 
 /**
  * "Thanks for registering" plus what they won (with its picture), or "thanks for playing" when there was no prize.
@@ -53,42 +80,58 @@ export function buildRegistrationEmail(guest: Guest, event: EventInfo) {
     </td></tr></table>
   </td></tr>` : "";
 
-  const html = `<!doctype html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light"><meta name="supported-color-schemes" content="light"><title>${esc(subject)}</title></head>
-<body style="margin:0;padding:0;background:${C.cream};-webkit-text-size-adjust:100%">
-<div style="display:none;max-height:0;overflow:hidden;opacity:0;color:transparent;font-size:1px;line-height:1px">${esc(preheader)}${"&nbsp;&zwnj;".repeat(40)}</div>
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="${C.cream}" style="background:${C.cream}"><tr><td align="center">
-<table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" style="width:100%;max-width:600px">
-
-  <tr><td align="center" bgcolor="${C.cream}" style="padding:22px 20px 18px">
-    <a href="${SITE}" style="text-decoration:none"><img src="${LOGO}" alt="Love Boo" width="92" height="29" style="display:block;margin:0 auto;width:92px;height:auto;border:0;font:700 20px ${font};color:${C.teal}"></a>
-  </td></tr>
-
-  <tr><td bgcolor="#ffffff" style="background:#ffffff"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
-    <tr><td align="center" style="padding:28px 20px 8px">
+  const body = `    <tr><td align="center" style="padding:28px 20px 8px">
       ${won ? `<span style="display:inline-block;background:${C.yellow};color:${C.deep};font:700 11px ${font};letter-spacing:.1em;text-transform:uppercase;padding:5px 12px;border-radius:999px">You won</span>` : ""}
       <div style="margin-top:${won ? 12 : 0}px;font:400 24px/1.25 ${serif};color:${C.deep};letter-spacing:.2px">${esc(heading)}</div>
       <div style="margin-top:10px;font:400 14px/1.55 ${font};color:${C.mute}">${esc(intro)}</div>
     </td></tr>
     ${prizeBlock}
-    <tr><td align="center" style="padding:24px 20px 32px">${button(SITE, "Visit loveboo.com")}</td></tr>
-  </table></td></tr>
-
-  <tr><td bgcolor="${C.deep}" align="center" style="background:${C.deep};padding:22px 20px 26px">
-    <div style="font:400 12px/1.6 ${font};color:#ffffff">Questions? Write to <a href="mailto:${REPLY_TO}" style="color:#ffffff;font-weight:700">${REPLY_TO}</a></div>
-    <div style="margin-top:10px;font:400 11px/1.6 ${font};color:#ffffff">You’re receiving this because you registered at ${esc(where)}.<br>This is an automated message.<br><a href="${SITE}" style="color:#ffffff">loveboo.com</a></div>
-  </td></tr>
-
-</table></td></tr></table>
-</body></html>`;
+    <tr><td align="center" style="padding:24px 20px 32px">${button(SITE, "Visit loveboo.com")}</td></tr>`;
+  const html = frame({ subject, preheader, where, logo: { src: LOGO, alt: "Love Boo", width: 92, height: 29 }, body });
 
   const text = [`${heading}`, "", intro, ...(won ? [`  ${won}`, "", "How to collect:", collect] : []), "", `Visit us: ${SITE}`, "", `Questions? Write to ${REPLY_TO}.`, `You're receiving this because you registered at ${where}. This is an automated message.`].join("\n");
   return { subject, html, text };
 }
 
+
+export const DISCOUNT_CODE = process.env.REGISTRATION_DISCOUNT_CODE || "HELLO20";
+const DISCOUNT_DAYS = Number(process.env.REGISTRATION_DISCOUNT_DAYS) || 14;
+const EXPO_LOGO = "https://ops.loveboo.com/expo-lockup.png";
+
+/** Guests who signed up through the QR code page (their source ends in "_qr") get a discount code, not a prize. */
+export const isQrSignup = (source?: string | null) => /_qr$/.test(source ?? "");
+
+/** "Here's your code" email for QR sign-ups: the code in a box, valid for two weeks from sign-up. */
+export function buildDiscountEmail(guest: Guest, event: EventInfo) {
+  const name = firstName(guest.email, guest.first_name);
+  const where = event?.name ?? "Baby & Kids Expo Dubai";
+  const until = new Date(new Date(guest.registered_at ?? Date.now()).getTime() + DISCOUNT_DAYS * 864e5)
+    .toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric", timeZone: "Asia/Dubai" });
+  const subject = `${name}, your Love Boo code is ${DISCOUNT_CODE}`;
+  const preheader = `Valid for 2 weeks, until ${until}. Use it at checkout on loveboo.com.`;
+  const intro = `Thank you for signing up at ${where}. Here’s a little welcome gift from us:`;
+
+  const body = `    <tr><td align="center" style="padding:28px 20px 8px">
+      <div style="font:400 24px/1.25 ${serif};color:${C.deep};letter-spacing:.2px">Welcome to Love Boo, ${esc(name)}!</div>
+      <div style="margin-top:10px;font:400 14px/1.55 ${font};color:${C.mute}">${esc(intro)}</div>
+    </td></tr>
+    <tr><td align="center" style="padding:20px 20px 0">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="${C.cream}" style="background:${C.cream};border:2px dashed ${C.teal};border-radius:18px"><tr><td align="center" style="padding:22px 16px">
+        <div style="font:700 11px ${font};letter-spacing:.14em;text-transform:uppercase;color:${C.mute}">Your discount code</div>
+        <div style="margin-top:6px;font:700 34px/1.2 ${font};letter-spacing:.14em;color:${C.teal}">${esc(DISCOUNT_CODE)}</div>
+        <div style="margin-top:10px;font:400 13px/1.5 ${font};color:${C.ink}">Valid for 2 weeks, until ${esc(until)}</div>
+      </td></tr></table>
+    </td></tr>
+    <tr><td align="center" style="padding:16px 28px 0;font:400 14px/1.55 ${font};color:${C.mute}">Enter the code at checkout on loveboo.com.</td></tr>
+    <tr><td align="center" style="padding:22px 20px 32px">${button(SITE, "Shop now")}</td></tr>`;
+  const html = frame({ subject, preheader, where, logo: { src: EXPO_LOGO, alt: "Love Boo x Baby & Kids Expo Dubai", width: 240, height: 37 }, body });
+  const text = [`Welcome to Love Boo, ${name}!`, "", intro, "", `Your discount code: ${DISCOUNT_CODE}`, `Valid for 2 weeks, until ${until}.`, "Enter it at checkout on loveboo.com.", "", `Shop now: ${SITE}`, "", `Questions? Write to ${REPLY_TO}.`, `You're receiving this because you registered at ${where}. This is an automated message.`].join("\n");
+  return { subject, html, text };
+}
+
 /** Sends the email through Resend. Returns the Resend id. */
 export async function sendRegistrationEmail(to: string, guest: Guest, event: EventInfo) {
-  const { subject, html, text } = buildRegistrationEmail(guest, event);
+  const { subject, html, text } = isQrSignup(guest.source) ? buildDiscountEmail(guest, event) : buildRegistrationEmail(guest, event);
   const { data, error } = await new Resend(process.env.RESEND_API_KEY).emails.send({ from: FROM(), to, replyTo: REPLY_TO, subject, html, text });
   if (error) throw new Error(error.message);
   return data?.id ?? null;
@@ -112,6 +155,12 @@ export async function emailRegistration(id: number, imageUrl?: string | null) {
     db.from("event_registrations").update({ ...patch, updated_at: new Date().toISOString() }).eq("id", id);
 
   if (event && !event.email_enabled) { await done({ email_status: "skipped" }); return "skipped"; }
+  if (isQrSignup(claimed.source)) {
+    // One code email per address: a repeat sign-up is stored but not emailed again.
+    const { count } = await db.from("event_registrations").select("id", { count: "exact", head: true })
+      .eq("email", claimed.email).eq("email_status", "sent").like("source", "%\\_qr").neq("id", id);
+    if (count) { await done({ email_status: "skipped", email_error: "Code already sent to this address" }); return "skipped"; }
+  }
   try {
     const resendId = await sendRegistrationEmail(claimed.email, { ...claimed, prize_image_url: claimed.prize_image_url ?? imageUrl ?? null }, event);
     await done({ email_status: "sent", emailed_at: new Date().toISOString(), resend_id: resendId, email_error: null, email_attempts: claimed.email_attempts + 1 });
