@@ -100,25 +100,29 @@ const EXPO_LOGO = "https://ops.loveboo.com/expo-lockup.png";
 /** Guests who signed up through the QR code page (their source ends in "_qr") get a discount code, not a prize. */
 export const isQrSignup = (source?: string | null) => /_qr$/.test(source ?? "");
 
-/** "Here's your code" email for QR sign-ups: a thank-you, the code in a box, one button. */
+/** "Here's your code" email for QR sign-ups: a thank-you, 25% off, the code in a box, one button. */
 export function buildDiscountEmail(guest: Guest, event: EventInfo) {
   const where = event?.name ?? "Baby & Kids Expo Dubai";
-  const subject = `Your Love Boo code: ${DISCOUNT_CODE}`;
-  const preheader = "Thank you for signing up! Use it at checkout on loveboo.com within 2 weeks.";
-  const intro = "Here’s your discount code. Use it at checkout on loveboo.com within 2 weeks.";
+  const name = firstName(guest.email, guest.first_name);
+  const subject = `Your 25% off Love Boo code: ${DISCOUNT_CODE}`;
+  const preheader = "Thank you for signing up! Enjoy 25% off at loveboo.com for the next 3 days.";
+  const intro = `Lovely to meet you${name === "there" ? "" : `, ${name}`}! As a thank-you from all of us at Love Boo, here’s 25% off your order at loveboo.com.`;
+  const note = "Enter the code at checkout within the next 3 days.";
 
   const body = `    <tr><td align="center" style="padding:28px 20px 8px">
       <div style="font:400 24px/1.25 ${serif};color:${C.deep};letter-spacing:.2px">Thank you for signing up!</div>
-      <div style="margin-top:10px;font:400 14px/1.55 ${font};color:${C.mute}">${esc(intro)}</div>
+      <div style="margin-top:10px;font:400 14px/1.6 ${font};color:${C.mute}">${esc(intro)}</div>
     </td></tr>
     <tr><td align="center" style="padding:20px 20px 0">
       <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="${C.cream}" style="background:${C.cream};border:2px dashed ${C.teal};border-radius:18px"><tr><td align="center" style="padding:18px 16px">
-        <div style="font:700 22px/1.2 ${font};letter-spacing:.1em;color:${C.teal}">${esc(DISCOUNT_CODE)}</div>
+        <div style="font:700 11px ${font};letter-spacing:.12em;text-transform:uppercase;color:${C.mute}">25% off · your code</div>
+        <div style="margin-top:6px;font:700 22px/1.2 ${font};letter-spacing:.1em;color:${C.teal}">${esc(DISCOUNT_CODE)}</div>
       </td></tr></table>
     </td></tr>
-    <tr><td align="center" style="padding:24px 20px 32px">${button(SITE, "Shop now")}</td></tr>`;
+    <tr><td align="center" style="padding:14px 28px 0;font:400 13px/1.5 ${font};color:${C.mute}">${esc(note)}</td></tr>
+    <tr><td align="center" style="padding:22px 20px 32px">${button(SITE, "Shop now")}</td></tr>`;
   const html = frame({ subject, preheader, where, logo: { src: EXPO_LOGO, alt: "Love Boo x Baby & Kids Expo Dubai", width: 240, height: 37 }, body });
-  const text = ["Thank you for signing up!", "", intro, "", `Your discount code: ${DISCOUNT_CODE}`, "", `Shop now: ${SITE}`, "", `Questions? Write to ${REPLY_TO}.`, `You're receiving this because you registered at ${where}. This is an automated message.`].join("\n");
+  const text = ["Thank you for signing up!", "", intro, "", `Your 25% off code: ${DISCOUNT_CODE}`, note, "", `Shop now: ${SITE}`, "", `Questions? Write to ${REPLY_TO}.`, `You're receiving this because you registered at ${where}. This is an automated message.`].join("\n");
   return { subject, html, text };
 }
 
