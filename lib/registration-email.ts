@@ -25,7 +25,7 @@ function frame(o: { subject: string; preheader: string; where: string; logo: { s
   return `<!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light"><meta name="supported-color-schemes" content="light"><title>${esc(o.subject)}</title></head>
 <body style="margin:0;padding:0;background:${C.cream};-webkit-text-size-adjust:100%">
-<div style="display:none;max-height:0;overflow:hidden;opacity:0;color:transparent;font-size:1px;line-height:1px">${esc(o.preheader)}${"&nbsp;&zwnj;".repeat(40)}</div>
+<div style="display:none;visibility:hidden;mso-hide:all;max-height:0;max-width:0;overflow:hidden;opacity:0;color:${C.cream};font-size:1px;line-height:1px">${esc(o.preheader)}${"&#847;&zwnj;&nbsp;".repeat(30)}</div>
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="${C.cream}" style="background:${C.cream}"><tr><td align="center">
 <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" style="width:100%;max-width:600px">
 
@@ -59,7 +59,7 @@ export function buildRegistrationEmail(guest: Guest, event: EventInfo) {
   const collect = event?.collection_text?.trim() || "Show this email at the Love Boo booth to collect your gift.";
 
   const subject = won ? `${name}, you won ${won}` : `Thanks for stopping by, ${name}`;
-  const preheader = won ? `Here’s how to collect your gift from ${where}.` : `It was lovely meeting you at ${where}.`;
+  const preheader = won ? (event?.collection_text?.trim() ? collect.replace(/\s+/g, " ").slice(0, 100) : "Show this email at the Love Boo booth to collect your gift.") : `It was lovely meeting you at ${where}. Come say hello at loveboo.com.`;
   const heading = won ? `Congratulations, ${name}!` : `Thanks for playing, ${name}!`;
   const intro = won
     ? `Thank you for registering at ${where}. You spun the wheel and won:`
@@ -103,8 +103,8 @@ export const isQrSignup = (source?: string | null) => /_qr$/.test(source ?? "");
 /** "Here's your code" email for QR sign-ups: a thank-you, the code in a box, one button. */
 export function buildDiscountEmail(guest: Guest, event: EventInfo) {
   const where = event?.name ?? "Baby & Kids Expo Dubai";
-  const subject = "Your Love Boo discount code";
-  const preheader = "Use it at checkout on loveboo.com within 2 weeks.";
+  const subject = `Your Love Boo code: ${DISCOUNT_CODE}`;
+  const preheader = "Thank you for signing up! Use it at checkout on loveboo.com within 2 weeks.";
   const intro = "Here’s your discount code. Use it at checkout on loveboo.com within 2 weeks.";
 
   const body = `    <tr><td align="center" style="padding:28px 20px 8px">

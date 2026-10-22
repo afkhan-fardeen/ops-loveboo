@@ -38,7 +38,8 @@ test("QR sign-ups are recognised by their source", () => {
 
 test("discount email: thank-you, the code and one button", () => {
   const m = buildDiscountEmail({ first_name: "Sara", email: "sara@example.com", prize: null, source: "baby_expo_2026_qr" }, { name: "Dubai Baby Expo 2026", collection_text: "" });
-  assert.equal(m.subject, "Your Love Boo discount code");
+  assert.equal(m.subject, "Your Love Boo code: EXPO2026");
+  assert.match(m.html, /Thank you for signing up! Use it at checkout/);
   assert.match(m.html, /Thank you for signing up!/);
   assert.match(m.html, /EXPO2026/);
   assert.match(m.html, /Shop now/);
