@@ -95,37 +95,30 @@ export function buildRegistrationEmail(guest: Guest, event: EventInfo) {
 
 
 export const DISCOUNT_CODE = process.env.REGISTRATION_DISCOUNT_CODE || "HELLO20";
-const DISCOUNT_DAYS = Number(process.env.REGISTRATION_DISCOUNT_DAYS) || 14;
 const EXPO_LOGO = "https://ops.loveboo.com/expo-lockup.png";
 
 /** Guests who signed up through the QR code page (their source ends in "_qr") get a discount code, not a prize. */
 export const isQrSignup = (source?: string | null) => /_qr$/.test(source ?? "");
 
-/** "Here's your code" email for QR sign-ups: the code in a box, valid for two weeks from sign-up. */
+/** "Here's your code" email for QR sign-ups: a thank-you, the code in a box, one button. */
 export function buildDiscountEmail(guest: Guest, event: EventInfo) {
-  const name = firstName(guest.email, guest.first_name);
   const where = event?.name ?? "Baby & Kids Expo Dubai";
-  const until = new Date(new Date(guest.registered_at ?? Date.now()).getTime() + DISCOUNT_DAYS * 864e5)
-    .toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric", timeZone: "Asia/Dubai" });
-  const subject = `${name}, your Love Boo code is ${DISCOUNT_CODE}`;
-  const preheader = `Valid for 2 weeks, until ${until}. Use it at checkout on loveboo.com.`;
-  const intro = `Thank you for signing up at ${where}. Here’s a little welcome gift from us:`;
+  const subject = "Your Love Boo discount code";
+  const preheader = "Use it at checkout on loveboo.com within 2 weeks.";
+  const intro = "Here’s your discount code. Use it at checkout on loveboo.com within 2 weeks.";
 
   const body = `    <tr><td align="center" style="padding:28px 20px 8px">
-      <div style="font:400 24px/1.25 ${serif};color:${C.deep};letter-spacing:.2px">Welcome to Love Boo, ${esc(name)}!</div>
+      <div style="font:400 24px/1.25 ${serif};color:${C.deep};letter-spacing:.2px">Thank you for signing up!</div>
       <div style="margin-top:10px;font:400 14px/1.55 ${font};color:${C.mute}">${esc(intro)}</div>
     </td></tr>
     <tr><td align="center" style="padding:20px 20px 0">
-      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="${C.cream}" style="background:${C.cream};border:2px dashed ${C.teal};border-radius:18px"><tr><td align="center" style="padding:22px 16px">
-        <div style="font:700 11px ${font};letter-spacing:.14em;text-transform:uppercase;color:${C.mute}">Your discount code</div>
-        <div style="margin-top:6px;font:700 34px/1.2 ${font};letter-spacing:.14em;color:${C.teal}">${esc(DISCOUNT_CODE)}</div>
-        <div style="margin-top:10px;font:400 13px/1.5 ${font};color:${C.ink}">Valid for 2 weeks, until ${esc(until)}</div>
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="${C.cream}" style="background:${C.cream};border:2px dashed ${C.teal};border-radius:18px"><tr><td align="center" style="padding:24px 16px">
+        <div style="font:700 34px/1.2 ${font};letter-spacing:.14em;color:${C.teal}">${esc(DISCOUNT_CODE)}</div>
       </td></tr></table>
     </td></tr>
-    <tr><td align="center" style="padding:16px 28px 0;font:400 14px/1.55 ${font};color:${C.mute}">Enter the code at checkout on loveboo.com.</td></tr>
-    <tr><td align="center" style="padding:22px 20px 32px">${button(SITE, "Shop now")}</td></tr>`;
+    <tr><td align="center" style="padding:24px 20px 32px">${button(SITE, "Shop now")}</td></tr>`;
   const html = frame({ subject, preheader, where, logo: { src: EXPO_LOGO, alt: "Love Boo x Baby & Kids Expo Dubai", width: 240, height: 37 }, body });
-  const text = [`Welcome to Love Boo, ${name}!`, "", intro, "", `Your discount code: ${DISCOUNT_CODE}`, `Valid for 2 weeks, until ${until}.`, "Enter it at checkout on loveboo.com.", "", `Shop now: ${SITE}`, "", `Questions? Write to ${REPLY_TO}.`, `You're receiving this because you registered at ${where}. This is an automated message.`].join("\n");
+  const text = ["Thank you for signing up!", "", intro, "", `Your discount code: ${DISCOUNT_CODE}`, "", `Shop now: ${SITE}`, "", `Questions? Write to ${REPLY_TO}.`, `You're receiving this because you registered at ${where}. This is an automated message.`].join("\n");
   return { subject, html, text };
 }
 
