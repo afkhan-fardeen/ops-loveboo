@@ -1,5 +1,5 @@
 /** What a guest got, read from how they signed up. Shared by the Events screen and the emails. */
-export const DISCOUNT_CODE = "EXPO2026";
+export const DISCOUNT_CODE = "EXPO-10OFF";
 
 /** Guests who signed up through the QR code page (their source ends in "_qr") get a discount code, not a prize. */
 export const isQrSignup = (source?: string | null) => /_qr$/.test(source ?? "");
