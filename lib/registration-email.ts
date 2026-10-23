@@ -1,6 +1,9 @@
 import { Resend } from "resend";
 import { adminClient } from "./supabase";
 import { firstName } from "./names";
+import { DISCOUNT_CODE, isQrSignup } from "./outcome";
+
+export { DISCOUNT_CODE, isQrSignup };
 
 const C = { cream: "#FBF9F1", teal: "#006D68", deep: "#005151", ink: "#23312F", mute: "#5F6B69", yellow: "#FBD872", line: "#EAE5D6" };
 const esc = (v: string) => v.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
@@ -94,11 +97,8 @@ export function buildRegistrationEmail(guest: Guest, event: EventInfo) {
 }
 
 
-export const DISCOUNT_CODE = "EXPO2026";
 const EXPO_LOGO = "https://ops.loveboo.com/expo-lockup.png";
 
-/** Guests who signed up through the QR code page (their source ends in "_qr") get a discount code, not a prize. */
-export const isQrSignup = (source?: string | null) => /_qr$/.test(source ?? "");
 
 /** Anyone who got no gift (or signed up through the QR code) is emailed the discount code instead. */
 export const getsDiscountCode = (guest: Pick<Guest, "source" | "prize">) => isQrSignup(guest.source) || !guest.prize?.trim();

@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
+import { outcomeOf } from "../lib/outcome";
 import { buildDiscountEmail, buildRegistrationEmail, getsDiscountCode, isQrSignup } from "../lib/registration-email";
 
 const event = { name: "Dubai Baby Expo 2026", collection_text: "Booth 12, Hall 3." };
@@ -56,4 +57,10 @@ test("no-gift spin guests get the code too, with a thanks-for-playing intro", ()
   assert.match(m.html, /Thanks for playing!/);
   assert.match(m.html, /No gift this time/);
   assert.match(m.html, /EXPO2026/);
+});
+
+test("outcomeOf: QR = discount code, spin = gift or no gift", () => {
+  assert.deepEqual(outcomeOf({ source: "baby_expo_2026_qr", prize: null }), { type: "qr", typeLabel: "QR code", kind: "code", label: "EXPO2026 discount" });
+  assert.deepEqual(outcomeOf({ source: "baby_expo_2026", prize: "Mama Set" }), { type: "spin", typeLabel: "Spin & win", kind: "gift", label: "Mama Set" });
+  assert.deepEqual(outcomeOf({ source: "baby_expo_2026", prize: null }), { type: "spin", typeLabel: "Spin & win", kind: "code", label: "No gift · EXPO2026 sent" });
 });
