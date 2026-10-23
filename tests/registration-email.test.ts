@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { buildDiscountEmail, buildRegistrationEmail, isQrSignup } from "../lib/registration-email";
+import { buildDiscountEmail, buildRegistrationEmail, getsDiscountCode, isQrSignup } from "../lib/registration-email";
 
 const event = { name: "Dubai Baby Expo 2026", collection_text: "Booth 12, Hall 3." };
 
@@ -46,4 +46,14 @@ test("discount email: thank-you, the code and one button", () => {
   assert.match(m.text, /Your 25% off code: EXPO2026/);
   assert.match(m.html, /It expires in 30 days/);
   assert.doesNotMatch(m.html, /How to collect/);
+});
+
+test("no-gift spin guests get the code too, with a thanks-for-playing intro", () => {
+  assert.equal(getsDiscountCode({ source: "baby_expo_2026", prize: null }), true);
+  assert.equal(getsDiscountCode({ source: "baby_expo_2026_qr", prize: null }), true);
+  assert.equal(getsDiscountCode({ source: "baby_expo_2026", prize: "Mama Set" }), false);
+  const m = buildDiscountEmail({ first_name: "Sara", email: "sara@example.com", prize: null, source: "baby_expo_2026" }, null);
+  assert.match(m.html, /Thanks for playing!/);
+  assert.match(m.html, /No gift this time/);
+  assert.match(m.html, /EXPO2026/);
 });

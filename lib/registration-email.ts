@@ -100,17 +100,24 @@ const EXPO_LOGO = "https://ops.loveboo.com/expo-lockup.png";
 /** Guests who signed up through the QR code page (their source ends in "_qr") get a discount code, not a prize. */
 export const isQrSignup = (source?: string | null) => /_qr$/.test(source ?? "");
 
-/** "Here's your code" email for QR sign-ups: a thank-you, 25% off, the code in a box, one button. */
+/** Anyone who got no gift (or signed up through the QR code) is emailed the discount code instead. */
+export const getsDiscountCode = (guest: Pick<Guest, "source" | "prize">) => isQrSignup(guest.source) || !guest.prize?.trim();
+
+/** "Here's your code" email: a thank-you, 25% off, the code in a box, one button. `consolation` = they played the wheel and got no gift. */
 export function buildDiscountEmail(guest: Guest, event: EventInfo) {
   const where = event?.name ?? "Baby & Kids Expo Dubai";
   const name = firstName(guest.email, guest.first_name);
+  const consolation = !isQrSignup(guest.source);
   const subject = `Your 25% off Love Boo code: ${DISCOUNT_CODE}`;
   const preheader = "Thank you for signing up! Enjoy 25% off at loveboo.com. Your code expires in 30 days.";
-  const intro = `Lovely to meet you${name === "there" ? "" : `, ${name}`}! As a thank-you from all of us at Love Boo, here’s 25% off your order at loveboo.com.`;
+  const hello = name === "there" ? "" : `, ${name}`;
+  const intro = consolation
+    ? `Thanks for playing${hello}! No gift this time, but we’d love you to have 25% off your order at loveboo.com.`
+    : `Lovely to meet you${hello}! As a thank-you from all of us at Love Boo, here’s 25% off your order at loveboo.com.`;
   const note = "Enter the code at checkout. It expires in 30 days.";
 
   const body = `    <tr><td align="center" style="padding:28px 20px 8px">
-      <div style="font:400 24px/1.25 ${serif};color:${C.deep};letter-spacing:.2px">Thank you for signing up!</div>
+      <div style="font:400 24px/1.25 ${serif};color:${C.deep};letter-spacing:.2px">${consolation ? "Thanks for playing!" : "Thank you for signing up!"}</div>
       <div style="margin-top:10px;font:400 14px/1.6 ${font};color:${C.mute}">${esc(intro)}</div>
     </td></tr>
     <tr><td align="center" style="padding:20px 20px 0">
@@ -122,13 +129,13 @@ export function buildDiscountEmail(guest: Guest, event: EventInfo) {
     <tr><td align="center" style="padding:14px 28px 0;font:400 13px/1.5 ${font};color:${C.mute}">${esc(note)}</td></tr>
     <tr><td align="center" style="padding:22px 20px 32px">${button(SITE, "Shop now")}</td></tr>`;
   const html = frame({ subject, preheader, where, logo: { src: EXPO_LOGO, alt: "Love Boo x Baby & Kids Expo Dubai", width: 240, height: 37 }, body });
-  const text = ["Thank you for signing up!", "", intro, "", `Your 25% off code: ${DISCOUNT_CODE}`, note, "", `Shop now: ${SITE}`, "", `Questions? Write to ${REPLY_TO}.`, `You're receiving this because you registered at ${where}. This is an automated message.`].join("\n");
+  const text = [consolation ? "Thanks for playing!" : "Thank you for signing up!", "", intro, "", `Your 25% off code: ${DISCOUNT_CODE}`, note, "", `Shop now: ${SITE}`, "", `Questions? Write to ${REPLY_TO}.`, `You're receiving this because you registered at ${where}. This is an automated message.`].join("\n");
   return { subject, html, text };
 }
 
 /** Sends the email through Resend. Returns the Resend id. */
 export async function sendRegistrationEmail(to: string, guest: Guest, event: EventInfo) {
-  const { subject, html, text } = isQrSignup(guest.source) ? buildDiscountEmail(guest, event) : buildRegistrationEmail(guest, event);
+  const { subject, html, text } = getsDiscountCode(guest) ? buildDiscountEmail(guest, event) : buildRegistrationEmail(guest, event);
   const { data, error } = await new Resend(process.env.RESEND_API_KEY).emails.send({ from: FROM(), to, replyTo: REPLY_TO, subject, html, text });
   if (error) throw new Error(error.message);
   return data?.id ?? null;
@@ -152,10 +159,10 @@ export async function emailRegistration(id: number, imageUrl?: string | null) {
     db.from("event_registrations").update({ ...patch, updated_at: new Date().toISOString() }).eq("id", id);
 
   if (event && !event.email_enabled) { await done({ email_status: "skipped" }); return "skipped"; }
-  if (isQrSignup(claimed.source)) {
+  if (getsDiscountCode(claimed)) {
     // One code email per address: a repeat sign-up is stored but not emailed again.
     const { count } = await db.from("event_registrations").select("id", { count: "exact", head: true })
-      .eq("email", claimed.email).eq("email_status", "sent").like("source", "%\\_qr").neq("id", id);
+      .eq("email", claimed.email).eq("email_status", "sent").or("source.like.*_qr,prize.is.null").neq("id", id);
     if (count) { await done({ email_status: "skipped", email_error: "Code already sent to this address" }); return "skipped"; }
   }
   try {
