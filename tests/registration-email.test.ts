@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { outcomeOf } from "../lib/outcome";
-import { buildDiscountEmail, buildRegistrationEmail, getsDiscountCode, isQrSignup } from "../lib/registration-email";
+import { buildDiscountEmail, buildRegistrationEmail, isQrSignup } from "../lib/registration-email";
 
 const event = { name: "Dubai Baby Expo 2026", collection_text: "Booth 12, Hall 3." };
 
@@ -49,18 +49,14 @@ test("discount email: thank-you, the code and one button", () => {
   assert.doesNotMatch(m.html, /How to collect/);
 });
 
-test("no-gift spin guests get the code too, with a thanks-for-playing intro", () => {
-  assert.equal(getsDiscountCode({ source: "baby_expo_2026", prize: null }), true);
-  assert.equal(getsDiscountCode({ source: "baby_expo_2026_qr", prize: null }), true);
-  assert.equal(getsDiscountCode({ source: "baby_expo_2026", prize: "Mama Set" }), false);
-  const m = buildDiscountEmail({ first_name: "Sara", email: "sara@example.com", prize: null, source: "baby_expo_2026" }, null);
-  assert.match(m.html, /Thanks for playing!/);
-  assert.match(m.html, /No gift this time/);
-  assert.match(m.html, /EXPO2026/);
-});
-
 test("outcomeOf: QR = discount code, spin = gift or no gift", () => {
   assert.deepEqual(outcomeOf({ source: "baby_expo_2026_qr", prize: null }), { type: "qr", typeLabel: "QR code", kind: "code", label: "EXPO2026 discount" });
   assert.deepEqual(outcomeOf({ source: "baby_expo_2026", prize: "Mama Set" }), { type: "spin", typeLabel: "Spin & win", kind: "gift", label: "Mama Set" });
-  assert.deepEqual(outcomeOf({ source: "baby_expo_2026", prize: null }), { type: "spin", typeLabel: "Spin & win", kind: "code", label: "No gift · EXPO2026 sent" });
+  assert.deepEqual(outcomeOf({ source: "baby_expo_2026", prize: null }), { type: "spin", typeLabel: "Spin & win", kind: "none", label: "No gift" });
+});
+
+test("spin guests never get the discount code: a gift email, or the plain thank-you", () => {
+  const win = buildRegistrationEmail({ first_name: "Sara", email: "s@x.com", prize: "Mama Set", source: "baby_expo_2026" }, null);
+  const none = buildRegistrationEmail({ first_name: "Sara", email: "s@x.com", prize: null, source: "baby_expo_2026" }, null);
+  assert.doesNotMatch(win.html + none.html, /EXPO2026/);
 });

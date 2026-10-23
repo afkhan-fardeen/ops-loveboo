@@ -7,13 +7,13 @@ export const isQrSignup = (source?: string | null) => /_qr$/.test(source ?? "");
 export type Outcome = {
   type: "qr" | "spin";
   typeLabel: "QR code" | "Spin & win";
-  /** gift = won a prize; code = got the discount code (QR sign-up, or played and won no gift) */
-  kind: "gift" | "code";
+  /** gift = won a prize on the wheel; code = QR sign-up (gets the discount code); none = played and no gift was left */
+  kind: "gift" | "code" | "none";
   label: string;
 };
 
 export function outcomeOf(r: { source?: string | null; prize?: string | null }): Outcome {
   if (isQrSignup(r.source)) return { type: "qr", typeLabel: "QR code", kind: "code", label: `${DISCOUNT_CODE} discount` };
   if (r.prize?.trim()) return { type: "spin", typeLabel: "Spin & win", kind: "gift", label: r.prize.trim() };
-  return { type: "spin", typeLabel: "Spin & win", kind: "code", label: `No gift · ${DISCOUNT_CODE} sent` };
+  return { type: "spin", typeLabel: "Spin & win", kind: "none", label: "No gift" };
 }
