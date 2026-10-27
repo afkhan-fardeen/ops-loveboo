@@ -68,3 +68,28 @@ Ideas, not committed
 - Show Klaviyo campaign send dates on the calendar
 - Approvals step
 - Uploads into the portal (instead of Drive links)
+
+## 6. Email programme (proposed 2026-10-27, not started)
+Weekly promotional emails (every **Sunday and Thursday**): plan them ahead, say which products each one features, track the work to get each one out, and learn what works.
+
+**Idea:** an **Email plan** tab inside Marketing, built on the existing deliverables (type *Email*). A *series* ("Weekly promo: Sun + Thu") creates the dated sends for the next weeks; each send carries the extra email fields below.
+
+| Per send | Notes |
+|---|---|
+| Send date and time | From the series (Sun / Thu). Shows on the calendar like any deliverable. |
+| Subject line, audience or segment | Free text. |
+| Featured products | Product name + link (later: picked from the Shopify catalogue). |
+| Offer or code | As on campaigns. |
+| Owner, design due, status | Status reuses the six existing ones: To do (no products yet) → In progress (copy / design) → In review → Ready (scheduled in Klaviyo) → Live (sending today) → Done (sent, results noted). |
+| Klaviyo campaign link, Drive link | Link chips. |
+| Results | Recipients, open rate, click rate, revenue. Typed in first; pulled from Klaviyo later. |
+
+**Product rotation view:** one table of products with *last promoted*, *times promoted in the last 30 / 90 days* and *next planned*, so nothing is over-promoted or forgotten.
+
+Phases: (1) series + sends + email fields + Email plan tab; (2) product rotation view; (3) Shopify product picker; (4) Klaviyo results (needs a Klaviyo private API key in the ops portal).
+
+- [ ] Decisions confirmed (segments, send times, who does what, products per email, results by hand or Klaviyo)
+- [ ] Phase 1 built
+- [ ] Phase 2 built
+- [ ] Phase 3 built
+- [ ] Phase 4 built
