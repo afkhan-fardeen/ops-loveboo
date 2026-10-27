@@ -89,3 +89,16 @@ body { -webkit-tap-highlight-color: transparent; }
   .mantine-NavLink-root { min-height: 48px; }
   .mantine-Paper-root { border-radius: 16px; }
 }
+
+/* Marketing calendar (FullCalendar) */
+.fc { --fc-border-color: var(--mantine-color-default-border); --fc-today-bg-color: rgb(0 109 104 / 0.08); --fc-page-bg-color: transparent; font-family: inherit; }
+.fc .fc-toolbar-title { font-size: 1.15rem; font-weight: 700; }
+.fc .fc-button { background: var(--mantine-color-default); color: var(--mantine-color-text); border: 1px solid var(--mantine-color-default-border); box-shadow: none; text-transform: none; font-weight: 600; }
+.fc .fc-button-primary:not(:disabled).fc-button-active, .fc .fc-button-primary:not(:disabled):active, .fc .fc-button-primary:hover { background: #006d68; color: #fff; border-color: #006d68; }
+.fc .fc-button:focus { box-shadow: 0 0 0 2px rgb(0 109 104 / 0.3); }
+.fc .fc-event { cursor: pointer; }
+.fc .fc-daygrid-block-event .fc-event-title, .fc .fc-daygrid-block-event .fc-event-time { font-weight: 600; }
+.fc .fc-daygrid-event { border-radius: 6px; padding: 1px 4px; }
+.fc .mkt-cancelled { opacity: 0.5; text-decoration: line-through; }
+.fc .mkt-overdue .fc-event-title { color: #c92a2a; font-weight: 700; }
+.fc .fc-list-event-title a { color: inherit; }

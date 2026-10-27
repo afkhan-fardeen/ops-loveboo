@@ -26,7 +26,8 @@ Internal portal for **loveboo.com** at **ops.loveboo.com**. One module today: **
 | Scheduler | **Partly working.** Vercel Cron pings once a day (~08:53 Bahrain). The 15-minute GitHub scheduler is **not set up yet** (secrets missing), so a send time later than ~09:00 cannot fire. |
 | Automatic daily email | **Not reliable until the scheduler is fixed** (send time is 09:30 in the DB). Emails have mostly gone out via Send email now. |
 | Inventory module | Plan only (`docs/INVENTORY-MODULE-PLAN.md`). Not built. |
-| Registration (Expo) guest email | **Code written, not live.** Webhook endpoint `/api/webhooks/registration` + `lib/registration-email.ts` + `migrations/009_events.sql` and `010_prize_image.sql` (run by hand). Needs the SQL run, env vars `REGISTRATION_WEBHOOK_SECRET` (+ optional `REGISTRATION_FROM`, `REGISTRATION_REPLY_TO`), and the Supabase webhook on the registration project. Events module (`/events`: KPIs, registrations with email status, event settings, test/retry buttons) is built; module id `events`. |
+| Registration (Expo) guest email | **Live.** Webhook `/api/webhooks/registration` + `lib/registration-email.ts`; migrations 009/010 run. Events screen shows signups. See the change log for the gift / QR-code email rules. |
+| Marketing module (calendar of campaigns and deliverables) | **Phase 1 built, switched off until set up.** Run `migrations/011_marketing.sql` once, then tick **Marketing** (view) / **Marketing: can edit** per person in Users. Plan + ticked progress list: `docs/MARKETING-MODULE-PLAN.md`. Reminders and the Monday digest are a later step. |
 
 ## 3. Files
 | Path | Purpose |
@@ -50,6 +51,10 @@ Internal portal for **loveboo.com** at **ops.loveboo.com**. One module today: **
 | `lib/health.ts`, `lib/jobs.ts` | Health checks; run log (`job_runs`, 14 days). |
 | `lib/auth.ts`, `lib/modules.ts`, `lib/supabase.ts` | Session + profile (30 s cache), module ids (`reports`; legacy `sales` is mapped), Supabase clients. |
 | `lib/format.ts`, `lib/names.ts`, `lib/progress.ts`, `lib/theme.ts` | Formatting/dates; greeting name; top-progress trigger; Mantine theme. |
+| `app/(app)/marketing/` | Marketing screens: `page.tsx` What's on, `calendar/`, `tasks/`, `campaigns/[id]/`, `actions.ts` (save / delete / status; edit right enforced on the server), `layout.tsx` (tabs + New buttons). |
+| `components/marketing/` | `MarketingCalendar` (FullCalendar month + list), `Editors` (campaign / deliverable drawers, status menu), `DeliverablesTable`, `CampaignCard`, `LinkChips` (Drive-aware), `LinksField`, `MarketsField`. |
+| `lib/mkt.ts`, `lib/marketing.ts` | Marketing types, statuses, link parsing and date rules (pure, tested); loader and `canEditMarketing`. |
+| `migrations/011_marketing.sql` | Tables `mkt_campaigns` and `mkt_items`. |
 | `components/` | `AppFrame` (sidebar + phone layout), `SendEmailDialog`, `RecipientsManager`, `UsersManager`, `DateSwitcher`, `LoadMissing`, `RunCheckButton`, `SubmitButton` (spinner + confirm dialog), `TopProgress`, `FlashToast`, `Skeletons`, `ui.tsx`, `Links.tsx`. |
 | `middleware.ts` | Redirects signed-out users to `/login`; excludes static assets, `api/cron`, the manifest. |
 | `next.config.ts` | Security headers (CSP, HSTS, etc.); redirects from old `/sales...` links. |
@@ -139,3 +144,5 @@ Run: `npm install`, `npm run dev`, `npm test`, `npm run build`. SQL changes are 
 - 2026-10-23 — Events screen shows how each guest signed up (Spin & win / QR code) and what they got (gift, code, or no gift + code), filter chips (`?type=spin|qr`), per-type counts and a "Gifts given" breakdown (`lib/outcome.ts`). The 25% code goes to QR sign-ups only (one code email per address); spin & win guests get gift emails only.
 - 2026-10-23 — Correction: the spin wheel gives gifts only (no 25% code); the code is for the QR page only. Try Again = free re-spin and the re-spin is always a gift (`spin_wheel(p_final)`); a spin guest with no gift (only if every gift is out of stock) gets the plain thank-you email.
 - 2026-10-23 — QR discount is now `EXPO-10OFF` = 10% off (was EXPO2026 / 25%); email copy, `DISCOUNT_CODE` constant (`lib/outcome.ts`) and the admin labels updated. Must exist in the Love Boo Shopify admin as a 10% code.
+- 2026-10-27 — Marketing module planned and started (campaigns + deliverables, Drive links, per-person edit right). Decisions and the ticked progress list live in `docs/MARKETING-MODULE-PLAN.md`; update that list as work ships.
+- 2026-10-27 — Marketing module Phase 1 built (what's on, month calendar with filters, my tasks, campaign pages, Drive link chips, per-person edit right). Needs migration 011 run and Users ticked before it shows up. Details and what is still open: `docs/MARKETING-MODULE-PLAN.md`.

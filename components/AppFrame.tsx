@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { ActionIcon, AppShell, Avatar, Badge, Box, Divider, Drawer, Group, NavLink, ScrollArea, Stack, Text, ThemeIcon, Tooltip, UnstyledButton } from "@mantine/core";
-import { IconArrowLeft, IconCalendarEvent, IconChevronRight, IconFileText, IconHeartbeat, IconHome2, IconLayoutSidebarLeftCollapse, IconLayoutSidebarLeftExpand, IconSettings, IconUser, IconUsers, IconX } from "@tabler/icons-react";
+import { IconArrowLeft, IconCalendarEvent, IconChevronRight, IconFileText, IconHeartbeat, IconHome2, IconLayoutSidebarLeftCollapse, IconLayoutSidebarLeftExpand, IconSettings, IconSpeakerphone, IconUser, IconUsers, IconX } from "@tabler/icons-react";
 
 const Logo = () => <Image src="/logo.png" alt="Love Boo" width={92} height={29} priority />;
 const WIDE = 248, RAIL = 84;
@@ -15,6 +15,8 @@ const SCREENS: { match: (p: string) => boolean; title: string | null; back?: str
   { match: (p) => p === "/reports/daily-sales/settings", title: "Email settings", back: "/reports/daily-sales" },
   { match: (p) => p.startsWith("/reports"), title: "Daily Sales" },
   { match: (p) => p.startsWith("/events"), title: "Events" },
+  { match: (p) => p.startsWith("/marketing/campaigns"), title: "Campaign", back: "/marketing" },
+  { match: (p) => p.startsWith("/marketing"), title: "Marketing" },
   { match: (p) => p.startsWith("/admin/health"), title: "System health" },
   { match: (p) => p.startsWith("/admin"), title: "Users" },
 ];
@@ -24,8 +26,8 @@ const SCREENS: { match: (p: string) => boolean; title: string | null; back?: str
  * Phone: app layout. Bottom tabs for the main places, an app bar (logo or title, Back on sub-screens, account button),
  * and an account sheet that closes with its button, a swipe down, a tap outside, Escape, or by navigating.
  */
-export default function AppFrame({ isAdmin, showReports, showEvents, who, email, signOut, signOutCompact, initialCollapsed, children }: {
-  isAdmin: boolean; showReports: boolean; showEvents: boolean; who: string; email: string; signOut: ReactNode; signOutCompact: ReactNode; initialCollapsed: boolean; children: ReactNode;
+export default function AppFrame({ isAdmin, showReports, showEvents, showMarketing, who, email, signOut, signOutCompact, initialCollapsed, children }: {
+  isAdmin: boolean; showReports: boolean; showEvents: boolean; showMarketing: boolean; who: string; email: string; signOut: ReactNode; signOutCompact: ReactNode; initialCollapsed: boolean; children: ReactNode;
 }) {
   const path = usePathname();
   const [rail, setRail] = useState(initialCollapsed);
@@ -53,6 +55,7 @@ export default function AppFrame({ isAdmin, showReports, showEvents, who, email,
     { href: "/", label: "Home", icon: IconHome2, on: path === "/", show: true },
     { href: "/reports/daily-sales", label: "Reports", icon: IconFileText, on: path.startsWith("/reports"), show: showReports },
     { href: "/events", label: "Events", icon: IconCalendarEvent, on: path.startsWith("/events"), show: showEvents },
+    { href: "/marketing", label: "Marketing", icon: IconSpeakerphone, on: path.startsWith("/marketing"), show: showMarketing },
     { href: "/admin/users", label: "Users", icon: IconUsers, on: path.startsWith("/admin") && !path.startsWith("/admin/health"), show: isAdmin },
     { href: "/admin/health", label: "System health", icon: IconHeartbeat, on: path.startsWith("/admin/health"), show: isAdmin },
   ].filter((i) => i.show);
@@ -79,6 +82,7 @@ export default function AppFrame({ isAdmin, showReports, showEvents, who, email,
           <NavLink {...link} href="/" label="Home" leftSection={<IconHome2 size={18} />} active={path === "/"} />
           {showReports && <NavLink {...link} href="/reports/daily-sales" label="Reports" leftSection={<IconFileText size={18} />} active={path.startsWith("/reports")} />}
           {showEvents && <NavLink {...link} href="/events" label="Events" leftSection={<IconCalendarEvent size={18} />} active={path.startsWith("/events")} />}
+          {showMarketing && <NavLink {...link} href="/marketing" label="Marketing" leftSection={<IconSpeakerphone size={18} />} active={path.startsWith("/marketing")} />}
           {isAdmin && <Text size="xs" tt="uppercase" fw={700} c="dimmed" px="sm" pt="md" pb={4} style={{ letterSpacing: 0.5 }}>Admin</Text>}
           {isAdmin && <NavLink {...link} href="/admin/users" label="Users" leftSection={<IconUsers size={18} />} active={path.startsWith("/admin") && !path.startsWith("/admin/health")} />}
           {isAdmin && <NavLink {...link} href="/admin/health" label="System health" leftSection={<IconHeartbeat size={18} />} active={path.startsWith("/admin/health")} />}

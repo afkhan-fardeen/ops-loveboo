@@ -14,7 +14,7 @@ const greeting = async () => {
 
 export default async function Home() {
   const user = await requireUser();
-  const mine = MODULES.filter((m) => user.modules.includes(m.id));
+  const mine = MODULES.filter((m) => user.modules.includes(m.id) && !("hidden" in m && m.hidden));
   return (
     <Stack gap="xl">
       <div className="page-in">
@@ -25,7 +25,7 @@ export default async function Home() {
         <EmptyState title="No modules yet">An admin hasn’t given you access to any modules. Ask them to add you.</EmptyState>
       ) : (
         <SimpleGrid cols={{ base: 1, sm: 2, lg: 3 }}>
-          {mine.map((m) => <ModuleCard key={m.id} href={m.href} title={m.name} text={m.description} icon={m.id === "events" ? "events" : "reports"} />)}
+          {mine.map((m) => <ModuleCard key={m.id} href={m.href} title={m.name} text={m.description} icon={m.id === "events" ? "events" : m.id === "marketing" ? "marketing" : "reports"} />)}
           {user.role === "admin" && <ModuleCard href="/admin/users" title="Users" text="Add people, set passwords and choose which modules they can open." icon="users" badge="Admin" />}
           {user.role === "admin" && <ModuleCard href="/admin/health" title="System health" text="Is the scheduler running? See recent runs, yesterday’s report and email status." icon="health" badge="Admin" />}
         </SimpleGrid>
