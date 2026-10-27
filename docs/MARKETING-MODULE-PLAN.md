@@ -52,6 +52,7 @@ Phase 1 — calendar and deliverables
 - [x] **Quick actions** (editors): click a day to add, drag across days to create a campaign, drag to reschedule (campaigns can be resized), drag Board cards between statuses; rules enforced on the server (not live before due)
 - [x] **Guide**: in the portal (Marketing → Guide) and `docs/MARKETING-GUIDE.md`; the repo `README.md` points to it
 - [x] Unit tests (`tests/mkt.test.ts`: link chips, date maths, overdue rule)
+- [x] Migration run (Black Friday is in the system)
 - [ ] **Checked with real data** (first campaign: Black Friday) after the migration is run and "Marketing" is ticked for people in Users
 
 To switch it on: (1) run `migrations/011_marketing.sql`; (2) in Users, tick **Marketing** for everyone who should see it and **Marketing: can edit** for those who may change things (admins always can).
