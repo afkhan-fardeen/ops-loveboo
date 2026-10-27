@@ -1,5 +1,5 @@
 import { Stack, Text, Title } from "@mantine/core";
-import MarketingCalendar from "@/components/marketing/MarketingCalendar";
+import CalendarWorkspace from "@/components/marketing/calendar/CalendarWorkspace";
 import SetupNeeded from "@/components/marketing/SetupNeeded";
 import { requireModule } from "@/lib/auth";
 import { todayIn } from "@/lib/format";
@@ -17,9 +17,9 @@ export default async function CalendarPage() {
     <Stack gap="md">
       <div>
         <Title order={1} size="h2">Calendar</Title>
-        <Text c="dimmed">Every campaign and event, with the deliverables due and going live.</Text>
+        <Text c="dimmed">Plan campaigns, events and deliverables. Switch between Month, Week, Agenda, Timeline, Board and Year.</Text>
       </div>
-      <MarketingCalendar campaigns={campaigns} items={items} owners={owners} canEdit={canEditMarketing(user)} today={todayIn(TZ)} />
+      <CalendarWorkspace campaigns={campaigns} items={items} owners={owners} canEdit={canEditMarketing(user)} today={todayIn(TZ)} />
     </Stack>
   );
 }

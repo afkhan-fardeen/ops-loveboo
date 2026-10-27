@@ -91,14 +91,33 @@ body { -webkit-tap-highlight-color: transparent; }
 }
 
 /* Marketing calendar (FullCalendar) */
-.fc { --fc-border-color: var(--mantine-color-default-border); --fc-today-bg-color: rgb(0 109 104 / 0.08); --fc-page-bg-color: transparent; font-family: inherit; }
-.fc .fc-toolbar-title { font-size: 1.15rem; font-weight: 700; }
-.fc .fc-button { background: var(--mantine-color-default); color: var(--mantine-color-text); border: 1px solid var(--mantine-color-default-border); box-shadow: none; text-transform: none; font-weight: 600; }
-.fc .fc-button-primary:not(:disabled).fc-button-active, .fc .fc-button-primary:not(:disabled):active, .fc .fc-button-primary:hover { background: #006d68; color: #fff; border-color: #006d68; }
-.fc .fc-button:focus { box-shadow: 0 0 0 2px rgb(0 109 104 / 0.3); }
+.fc { --fc-border-color: var(--mantine-color-default-border); --fc-today-bg-color: rgb(0 109 104 / 0.06); --fc-page-bg-color: transparent; --fc-neutral-bg-color: var(--mantine-color-gray-light); --fc-list-event-hover-bg-color: rgb(0 109 104 / 0.06); font-family: inherit; }
+.fc .fc-scrollgrid { border-radius: 12px; overflow: hidden; }
+.fc .fc-col-header-cell-cushion { font-size: 11px; text-transform: uppercase; letter-spacing: 0.07em; font-weight: 700; color: var(--mantine-color-dimmed); padding: 9px 4px; }
+.fc .fc-daygrid-day-number { padding: 6px 8px; font-size: 13px; font-weight: 600; color: var(--mantine-color-text); }
+.fc .fc-day-other .fc-daygrid-day-number { opacity: 0.4; }
+.fc .fc-day-today .fc-daygrid-day-number { background: #006d68; color: #fff; border-radius: 99px; margin: 4px; padding: 1px 8px; }
+.fc .fc-daygrid-day-frame { min-height: 108px; }
+.fc .fc-dayGridWeek-view .fc-daygrid-day-frame { min-height: 340px; }
+.fc .fc-more-link { font-size: 11px; font-weight: 700; color: #006d68; }
+.fc .fc-highlight { background: rgb(0 109 104 / 0.14); }
 .fc .fc-event { cursor: pointer; }
-.fc .fc-daygrid-block-event .fc-event-title, .fc .fc-daygrid-block-event .fc-event-time { font-weight: 600; }
-.fc .fc-daygrid-event { border-radius: 6px; padding: 1px 4px; }
-.fc .mkt-cancelled { opacity: 0.5; text-decoration: line-through; }
-.fc .mkt-overdue .fc-event-title { color: #c92a2a; font-weight: 700; }
-.fc .fc-list-event-title a { color: inherit; }
+.fc .mkt-ev.fc-daygrid-event, .fc .mkt-ev.fc-daygrid-block-event { background: transparent !important; border: 0 !important; margin: 1px 3px; box-shadow: none; }
+.fc .mkt-ev .fc-event-main { padding: 0; }
+.mkt-chip { display: flex; align-items: center; gap: 5px; min-width: 0; width: 100%; padding: 2px 7px; border-radius: 7px; border-left: 3px solid; font-size: 12px; font-weight: 600; line-height: 1.45; color: var(--mantine-color-text); overflow: hidden; white-space: nowrap; transition: transform 0.12s ease, box-shadow 0.12s ease; }
+.mkt-chip-item { font-weight: 500; }
+.mkt-chip-tag { font-size: 9px; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; flex: none; }
+.mkt-chip-title { overflow: hidden; text-overflow: ellipsis; }
+.fc .mkt-ev:hover .mkt-chip { box-shadow: 0 3px 10px rgb(0 0 0 / 0.14); transform: translateY(-1px); }
+.fc .mkt-cancelled .mkt-chip { opacity: 0.5; text-decoration: line-through; }
+.fc .mkt-overdue .mkt-chip-title { color: #c92a2a; font-weight: 700; }
+.fc .fc-list { border-radius: 12px; overflow: hidden; }
+.fc .fc-list-day-cushion { background: var(--mantine-color-gray-light); font-weight: 700; }
+.fc .fc-list-event td { padding: 8px 12px; }
+.fc .fc-list-event .mkt-chip { width: auto; display: inline-flex; }
+.fc .fc-multimonth { border-radius: 12px; overflow: hidden; }
+.fc .fc-multimonth .fc-daygrid-day-frame { min-height: 36px; }
+.fc .fc-multimonth .fc-daygrid-day-number { font-size: 11px; padding: 3px 5px; }
+.fc .fc-multimonth .fc-day-today .fc-daygrid-day-number { margin: 2px; padding: 0 5px; }
+.fc .fc-multimonth-title { font-size: 14px; font-weight: 700; padding: 10px 0 4px; }
+.mkt-mini { height: 6px; border-radius: 3px; width: 100%; }

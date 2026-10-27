@@ -150,3 +150,44 @@ export const withMarketingAccess = (modules: string[], level: MarketingAccess): 
   const rest = modules.filter((m) => m !== "marketing" && m !== "marketing_edit");
   return level === "edit" ? [...rest, "marketing", "marketing_edit"] : level === "view" ? [...rest, "marketing"] : rest;
 };
+
+/** ---- Colours for the calendar: deliverables can be coloured by campaign, type, status or owner ---- */
+export type ColourBy = "campaign" | "type" | "status" | "owner";
+export const COLOUR_BY: { value: ColourBy; label: string }[] = [
+  { value: "campaign", label: "Campaign" }, { value: "type", label: "Type" }, { value: "status", label: "Status" }, { value: "owner", label: "Owner" },
+];
+export const TYPE_COLOURS: Record<string, string> = {
+  banner: "#2F7FC1", social_post: "#E0678A", reel_video: "#7B5EA7", email: "#E8A317", sms: "#3F8F5B", ad_creative: "#D9572B",
+  landing_page: "#006D68", influencer: "#C2437A", in_store: "#5F6B69", copy: "#4C6EF5", other: "#868E96",
+};
+export const STATUS_COLOURS: Record<string, string> = {
+  todo: "#868E96", in_progress: "#2F7FC1", in_review: "#E8A317", ready: "#15AABF", live: "#7B5EA7", done: "#2B8A3E",
+};
+const OWNER_PALETTE = ["#006D68", "#E0678A", "#2F7FC1", "#E8A317", "#7B5EA7", "#3F8F5B", "#D9572B", "#C2437A", "#4C6EF5", "#5F6B69"];
+
+/** The colour for a deliverable's marker under the chosen "colour by" mode. Falls back to grey. */
+export function colourFor(mode: ColourBy, item: Pick<Item, "type" | "status" | "owner_id">, campaign: Pick<Campaign, "colour"> | undefined, owners: Owner[]): string {
+  if (mode === "type") return TYPE_COLOURS[item.type] ?? "#868E96";
+  if (mode === "status") return STATUS_COLOURS[item.status] ?? "#868E96";
+  if (mode === "owner") { const i = owners.findIndex((o) => o.id === item.owner_id); return i < 0 ? "#ADB5BD" : OWNER_PALETTE[i % OWNER_PALETTE.length]; }
+  return campaign?.colour ?? "#5F6B69";
+}
+
+/** `#RRGGBB` as an rgba() string with the given opacity (for soft tinted backgrounds). */
+export function tint(hex: string, alpha: number): string {
+  const m = /^#([0-9a-f]{6})$/i.exec(hex);
+  if (!m) return `rgba(95,107,105,${alpha})`;
+  const n = parseInt(m[1], 16);
+  return `rgba(${(n >> 16) & 255},${(n >> 8) & 255},${n & 255},${alpha})`;
+}
+
+/** ---- Timeline maths ---- */
+export const monthStart = (iso: string) => `${iso.slice(0, 7)}-01`;
+/** First day of the month `n` months after (or before, if negative) the month containing `iso`. */
+export function addMonths(iso: string, n: number): string {
+  const [y, m] = iso.slice(0, 7).split("-").map(Number);
+  const t = y * 12 + (m - 1) + n;
+  return `${Math.floor(t / 12)}-${String((t % 12) + 1).padStart(2, "0")}-01`;
+}
+/** Where a date sits on a timeline that starts at `start` with `px` pixels per day. */
+export const xOf = (date: string, start: string, px: number) => daysBetween(start, date) * px;

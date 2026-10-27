@@ -23,7 +23,10 @@ async function editor() {
 }
 
 async function guard<T>(fn: () => Promise<T>): Promise<T | Result> {
-  try { return await fn(); } catch (e) { return fail(e instanceof Error ? e.message : "Something went wrong."); }
+  try { return await fn(); } catch (e) {
+    if (e && typeof e === "object" && "digest" in e && String((e as { digest: unknown }).digest).startsWith("NEXT_REDIRECT")) throw e;   // let a redirect (e.g. not allowed in) through
+    return fail(e instanceof Error ? e.message : "Something went wrong.");
+  }
 }
 
 export async function saveCampaign(form: FormData): Promise<Result> {
@@ -94,6 +97,35 @@ export async function setItemStatus(id: string, status: string): Promise<Result>
     if (!isUuid(id) || !oneOf(ITEM_STATUSES, status)) return fail("Couldn't change the status.");
     const { error } = await adminClient().from("mkt_items").update({ status, updated_at: new Date().toISOString() }).eq("id", id);
     return error ? fail(error.message) : done("Status updated.");
+  })) as Result;
+}
+
+/** Drag on the calendar: move (or resize) a campaign to new dates. A key date stays one day. */
+export async function moveCampaign(id: string, starts: string, ends: string): Promise<Result> {
+  return (await guard(async () => {
+    await editor();
+    if (!isUuid(id) || !isDate(starts) || !isDate(ends)) return fail("Couldn’t move that.");
+    if (ends < starts) return fail("The end date is before the start date.");
+    const db = adminClient();
+    const { data: c } = await db.from("mkt_campaigns").select("kind").eq("id", id).maybeSingle();
+    if (!c) return fail("That campaign wasn’t found.");
+    const { error } = await db.from("mkt_campaigns").update({ starts_on: starts, ends_on: c.kind === "key_date" ? starts : ends, updated_at: new Date().toISOString() }).eq("id", id);
+    return error ? fail(error.message) : done("Dates updated.");
+  })) as Result;
+}
+
+/** Drag on the calendar: move a deliverable's due or go-live day. It can't go live before it is due. */
+export async function moveItemDate(id: string, field: "due_on" | "live_on", date: string): Promise<Result> {
+  return (await guard(async () => {
+    await editor();
+    if (!isUuid(id) || !isDate(date) || (field !== "due_on" && field !== "live_on")) return fail("Couldn’t move that.");
+    const db = adminClient();
+    const { data: i } = await db.from("mkt_items").select("due_on,live_on").eq("id", id).maybeSingle();
+    if (!i) return fail("That deliverable wasn’t found.");
+    const due = field === "due_on" ? date : i.due_on, live = field === "live_on" ? date : i.live_on;
+    if (due && live && live < due) return fail("It can’t go live before it is due.");
+    const { error } = await db.from("mkt_items").update({ [field]: date, updated_at: new Date().toISOString() }).eq("id", id);
+    return error ? fail(error.message) : done(field === "due_on" ? "Due date updated." : "Go-live date updated.");
   })) as Result;
 }
 

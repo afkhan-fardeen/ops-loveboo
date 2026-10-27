@@ -19,10 +19,16 @@ One place to see **what is happening when**: campaigns and events (Black Friday,
 | Screen | What it shows |
 |---|---|
 | **What's on** | Campaigns happening now and coming up with countdowns, and the work that is overdue, due this week or going live this week. |
-| **Calendar** | A month calendar: campaign bands, plus a dot on each deliverable's due and live day. Filter by campaign, type, status, owner or market. On a phone it is a list. Click anything for the details. |
+| **Calendar** | The planning workspace with **six views** of the same plan: **Month**, **Week**, **Agenda** (a list by date), **Timeline** (campaigns as bars across 3 or 12 months, with deliverables as markers), **Board** (cards in columns by status) and **Year** (the whole year at a glance). Filter by search, campaign, type, status, owner or market. Click anything for the details. |
 | **My tasks** | Your open deliverables, soonest first. Switch to everyone's, or include finished ones. |
 | **Campaign page** | The brief, dates, markets, offer, links, progress, and all deliverables grouped by type. |
 | **Team** (admins) | Add people and choose what each can do in Marketing. |
+
+## Using the calendar
+- **Switch views** with the buttons at the top right (a dropdown on phones). The app remembers your last view.
+- **Colour by**: colour the deliverables by campaign, type, status or owner.
+- **Quick actions (people who can edit):** click an empty day to add a deliverable or a campaign on that date; drag across several days to create a campaign for those dates; drag a campaign or a deliverable to another day to reschedule it; drag a campaign's edge to change its end date; on the **Board**, drag a card to another column to change its status.
+- The little counters (live now, due in 7 days, overdue) update with your data.
 
 ## Statuses
 | Status | Means |
@@ -66,4 +72,4 @@ Add the countries or regions a campaign runs in as tags. Pick from the suggestio
 2. In **Users** (or Marketing → **Team**), give people access.
 
 ## Coming later
-Reminders by email (Monday summary, and a nudge the day before something is due), drag to reschedule, comments, and a campaign recap. See `docs/MARKETING-MODULE-PLAN.md` for what is done and what is open.
+Reminders by email (Monday summary, and a nudge the day before something is due), comments, and a campaign recap. See `docs/MARKETING-MODULE-PLAN.md` for what is done and what is open.

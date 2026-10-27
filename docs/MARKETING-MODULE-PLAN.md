@@ -24,7 +24,7 @@ Not a sync tool: no Google/Outlook calendar sync. Assets are files in Drive; the
 | Screen | Path | What it shows |
 |---|---|---|
 | What's on | `/marketing` | Live now, coming up (with countdowns), deliverables due or going live this week, overdue. |
-| Calendar | `/marketing/calendar` | Month calendar: campaign bands, deliverable markers (due / live), filters (campaign, type, status, owner, market), list view. |
+| Calendar | `/marketing/calendar` | Planning workspace with six views (Month, Week, Agenda, Timeline, Board, Year), filters, colour-by, quick add and drag to reschedule. |
 | My tasks | `/marketing/tasks` | Open deliverables sorted by due date: mine, or everyone's. Editors change status in one click. |
 | Team (admins) | `/marketing/team` | People who can sign in, with their Marketing access in one dropdown; Add member. |
 | Guide | `/marketing/guide` | How to use the module (same text as `docs/MARKETING-GUIDE.md`). |
@@ -48,6 +48,8 @@ Phase 1 — calendar and deliverables
 - [x] Campaign page with progress and deliverables grouped by type
 - [x] Drive link chips
 - [x] **Team tab** (admins): add members (name, email, generated password) and set each person's Marketing access: No access / Can view / Can view and edit
+- [x] **Calendar upgrade**: six views (Month, Week, Agenda, Timeline, Board, Year), a modern look (tinted chips with type icons and Due / Live tags), search, colour by campaign / type / status / owner, live-now / due / overdue counters, remembered view
+- [x] **Quick actions** (editors): click a day to add, drag across days to create a campaign, drag to reschedule (campaigns can be resized), drag Board cards between statuses; rules enforced on the server (not live before due)
 - [x] **Guide**: in the portal (Marketing → Guide) and `docs/MARKETING-GUIDE.md`; the repo `README.md` points to it
 - [x] Unit tests (`tests/mkt.test.ts`: link chips, date maths, overdue rule)
 - [ ] **Checked with real data** (first campaign: Black Friday) after the migration is run and "Marketing" is ticked for people in Users
@@ -56,7 +58,6 @@ To switch it on: (1) run `migrations/011_marketing.sql`; (2) in Users, tick **Ma
 
 Phase 2 — later
 - [ ] Reminders: Monday digest email (this week + overdue) and a nudge to the owner the day before something is due (Resend)
-- [ ] Drag to reschedule on the calendar
 - [ ] Comments on a campaign or deliverable
 - [ ] Campaign recap (what ran, results notes)
 - [ ] Repeating items (e.g. a weekly post)

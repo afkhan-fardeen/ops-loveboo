@@ -5,7 +5,7 @@ export const metadata = { title: "Marketing · Guide" };
 
 const SCREENS: [string, string][] = [
   ["What’s on", "Campaigns happening now and coming up with countdowns, and work that is overdue, due this week or going live this week."],
-  ["Calendar", "A month calendar: campaign bands, plus a dot on each deliverable’s due and live day. Filter by campaign, type, status, owner or market. On a phone it is a list. Click anything for details."],
+  ["Calendar", "The planning workspace, in six views: Month, Week, Agenda (a list by date), Timeline (campaigns as bars across 3 or 12 months), Board (cards by status) and Year. Filter by search, campaign, type, status, owner or market. Click anything for details."],
   ["My tasks", "Your open deliverables, soonest first. Switch to everyone’s, or include finished ones."],
   ["Campaign page", "The brief, dates, markets, offer, links, progress, and all deliverables grouped by type."],
   ["Team (admins)", "Add people and choose what each can do in Marketing."],
@@ -50,6 +50,13 @@ export default async function Guide() {
       <H>The screens</H>
       <Grid rows={SCREENS} />
 
+      <H>Using the calendar</H>
+      <List spacing="xs" size="sm">
+        <List.Item><b>Switch views</b> with the buttons at the top right (a dropdown on phones). It remembers your last view.</List.Item>
+        <List.Item><b>Colour by</b>: colour the deliverables by campaign, type, status or owner.</List.Item>
+        <List.Item><b>Quick actions (people who can edit):</b> click an empty day to add a deliverable or campaign on that date; drag across several days to create a campaign for them; drag a campaign or deliverable to another day to reschedule it; drag a campaign’s edge to change its end date; on the Board, drag a card to another column to change its status.</List.Item>
+      </List>
+
       <H>Statuses</H>
       <Grid rows={STATUSES} />
       <Text size="sm" c="dimmed">A deliverable is <b>overdue</b> when its due date has passed and it is still To do, In progress or In review. Ready, Live and Done are never overdue.</Text>
@@ -80,7 +87,7 @@ export default async function Guide() {
       </List>
 
       <H>Coming later</H>
-      <Text size="sm">Reminders by email (a Monday summary, and a nudge the day before something is due), drag to reschedule, comments, and a campaign recap.</Text>
+      <Text size="sm">Reminders by email (a Monday summary, and a nudge the day before something is due), comments, and a campaign recap.</Text>
     </Stack>
   );
 }

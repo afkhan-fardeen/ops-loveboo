@@ -23,8 +23,12 @@ const Trigger = ({ t, onClick }: { t: Trigger; onClick: () => void }) => (
 );
 
 /** Create or edit a campaign / event in a side drawer. Rights are enforced again on the server. */
-export function CampaignEditor({ campaign, owners, trigger }: { campaign?: Campaign; owners: Owner[]; trigger: Trigger }) {
-  const [open, setOpen] = useState(false);
+export function CampaignEditor({ campaign, owners, trigger, controlled, prefill }: {
+  campaign?: Campaign; owners: Owner[]; trigger?: Trigger; controlled?: { open: boolean; onClose: () => void }; prefill?: { starts_on?: string; ends_on?: string };
+}) {
+  const [openState, setOpenState] = useState(false);
+  const open = controlled ? controlled.open : openState;
+  const setOpen = (v: boolean) => (controlled ? !v && controlled.onClose() : setOpenState(v));
   const [pending, start] = useTransition();
   const [kind, setKind] = useState<string>(campaign?.kind ?? "campaign");
   const [colour, setColour] = useState(campaign?.colour ?? COLOURS[0]);
@@ -42,7 +46,7 @@ export function CampaignEditor({ campaign, owners, trigger }: { campaign?: Campa
 
   return (
     <>
-      <Trigger t={trigger} onClick={() => setOpen(true)} />
+      {trigger && <Trigger t={trigger} onClick={() => setOpen(true)} />}
       <Drawer opened={open} onClose={() => setOpen(false)} position="right" size="lg" zIndex={300} title={<Text fw={700}>{campaign ? "Edit campaign" : "New campaign or event"}</Text>}>
         <form onSubmit={submit}>
           <Stack gap="sm">
@@ -54,8 +58,8 @@ export function CampaignEditor({ campaign, owners, trigger }: { campaign?: Campa
               <Select name="status" label="Status" data={CAMPAIGN_STATUSES.map((s) => ({ value: s.value, label: s.label }))} defaultValue={campaign?.status ?? "planned"} allowDeselect={false} comboboxProps={{ zIndex: 400 }} />
             </SimpleGrid>
             <SimpleGrid cols={kind === "key_date" ? 1 : 2}>
-              <TextInput name="starts_on" type="date" label={kind === "key_date" ? "Date" : "Starts"} required defaultValue={campaign?.starts_on} />
-              {kind !== "key_date" && <TextInput name="ends_on" type="date" label="Ends" required defaultValue={campaign?.ends_on} />}
+              <TextInput name="starts_on" type="date" label={kind === "key_date" ? "Date" : "Starts"} required defaultValue={campaign?.starts_on ?? prefill?.starts_on} />
+              {kind !== "key_date" && <TextInput name="ends_on" type="date" label="Ends" required defaultValue={campaign?.ends_on ?? prefill?.ends_on ?? prefill?.starts_on} />}
             </SimpleGrid>
             <div>
               <Text size="sm" fw={500} mb={4}>Colour on the calendar</Text>
@@ -86,10 +90,13 @@ export function CampaignEditor({ campaign, owners, trigger }: { campaign?: Campa
 }
 
 /** Create or edit a deliverable (banner, post, email…) in a side drawer. */
-export function ItemEditor({ item, campaigns, owners, defaultCampaignId, back = "/marketing", trigger }: {
-  item?: Item; campaigns: { id: string; name: string }[]; owners: Owner[]; defaultCampaignId?: string; back?: string; trigger: Trigger;
+export function ItemEditor({ item, campaigns, owners, defaultCampaignId, back = "/marketing", trigger, controlled, prefill }: {
+  item?: Item; campaigns: { id: string; name: string }[]; owners: Owner[]; defaultCampaignId?: string; back?: string; trigger?: Trigger;
+  controlled?: { open: boolean; onClose: () => void }; prefill?: { due_on?: string; live_on?: string };
 }) {
-  const [open, setOpen] = useState(false);
+  const [openState, setOpenState] = useState(false);
+  const open = controlled ? controlled.open : openState;
+  const setOpen = (v: boolean) => (controlled ? !v && controlled.onClose() : setOpenState(v));
   const [pending, start] = useTransition();
   const router = useRouter();
   const submit = (e: React.FormEvent<HTMLFormElement>) => {
@@ -103,7 +110,7 @@ export function ItemEditor({ item, campaigns, owners, defaultCampaignId, back = 
   };
   return (
     <>
-      <Trigger t={trigger} onClick={() => setOpen(true)} />
+      {trigger && <Trigger t={trigger} onClick={() => setOpen(true)} />}
       <Drawer opened={open} onClose={() => setOpen(false)} position="right" size="lg" zIndex={300} title={<Text fw={700}>{item ? "Edit deliverable" : "New deliverable"}</Text>}>
         <form onSubmit={submit}>
           <Stack gap="sm">
@@ -116,8 +123,8 @@ export function ItemEditor({ item, campaigns, owners, defaultCampaignId, back = 
               <Select name="status" label="Status" data={ITEM_STATUSES.map((s) => ({ value: s.value, label: s.label }))} defaultValue={item?.status ?? "todo"} allowDeselect={false} comboboxProps={{ zIndex: 400 }} />
             </SimpleGrid>
             <SimpleGrid cols={2}>
-              <TextInput name="due_on" type="date" label="Due" description="When the work is needed" defaultValue={item?.due_on ?? ""} />
-              <TextInput name="live_on" type="date" label="Goes live" description="When it is published" defaultValue={item?.live_on ?? ""} />
+              <TextInput name="due_on" type="date" label="Due" description="When the work is needed" defaultValue={item?.due_on ?? prefill?.due_on ?? ""} />
+              <TextInput name="live_on" type="date" label="Goes live" description="When it is published" defaultValue={item?.live_on ?? prefill?.live_on ?? ""} />
             </SimpleGrid>
             <Select name="owner_id" label="Owner" placeholder="Unassigned" data={ownerData(owners)} defaultValue={item?.owner_id ?? null} clearable searchable comboboxProps={{ zIndex: 400 }} />
             <MarketsField initial={item?.markets ?? []} />

@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { campaignState, cleanLinks, cleanMarkets, countdown, daysBetween, describeLink, isOverdue, marketingAccess, withMarketingAccess } from "../lib/mkt";
+import { campaignState, cleanLinks, cleanMarkets, countdown, daysBetween, describeLink, isOverdue, marketingAccess, withMarketingAccess, addMonths, colourFor, monthStart, tint, xOf } from "../lib/mkt";
 
 test("describeLink recognises Drive, Docs, Canva and plain links", () => {
   assert.equal(describeLink("https://drive.google.com/drive/folders/abc123").kind, "drive_folder");
@@ -57,4 +57,22 @@ test("Marketing access is read from, and written to, the module list without tou
   assert.deepEqual(withMarketingAccess(["reports"], "edit"), ["reports", "marketing", "marketing_edit"]);
   assert.deepEqual(withMarketingAccess(["reports", "marketing", "marketing_edit"], "view"), ["reports", "marketing"]);
   assert.deepEqual(withMarketingAccess(["events", "marketing", "marketing_edit"], "none"), ["events"]);
+});
+
+test("calendar colours and timeline maths", () => {
+  const owners = [{ id: "a", name: "A", email: "a@x.com" }, { id: "b", name: "B", email: "b@x.com" }];
+  const it = { type: "banner", status: "in_review" as const, owner_id: "b" as string | null };
+  assert.equal(colourFor("campaign", it, { colour: "#112233" }, owners), "#112233");
+  assert.equal(colourFor("campaign", it, undefined, owners), "#5F6B69");
+  assert.equal(colourFor("type", it, undefined, owners), "#2F7FC1");
+  assert.equal(colourFor("status", it, undefined, owners), "#E8A317");
+  assert.notEqual(colourFor("owner", it, undefined, owners), colourFor("owner", { ...it, owner_id: "a" }, undefined, owners));
+  assert.equal(colourFor("owner", { ...it, owner_id: null }, undefined, owners), "#ADB5BD");
+  assert.equal(tint("#006D68", 0.15), "rgba(0,109,104,0.15)");
+  assert.equal(tint("nope", 0.5), "rgba(95,107,105,0.5)");
+  assert.equal(monthStart("2026-11-24"), "2026-11-01");
+  assert.equal(addMonths("2026-11-24", 1), "2026-12-01");
+  assert.equal(addMonths("2026-11-24", 2), "2027-01-01");
+  assert.equal(addMonths("2026-01-15", -1), "2025-12-01");
+  assert.equal(xOf("2026-11-10", "2026-11-01", 28), 252);
 });
