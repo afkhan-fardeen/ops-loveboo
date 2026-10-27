@@ -53,6 +53,7 @@ Internal portal for **loveboo.com** at **ops.loveboo.com**. One module today: **
 | `lib/format.ts`, `lib/names.ts`, `lib/progress.ts`, `lib/theme.ts` | Formatting/dates; greeting name; top-progress trigger; Mantine theme. |
 | `app/(app)/marketing/` | Marketing screens: `page.tsx` What's on, `calendar/`, `tasks/`, `campaigns/[id]/`, `actions.ts` (save / delete / status; edit right enforced on the server), `layout.tsx` (tabs + New buttons). |
 | `components/marketing/` | `MarketingCalendar` (FullCalendar month + list), `Editors` (campaign / deliverable drawers, status menu), `DeliverablesTable`, `CampaignCard`, `LinkChips` (Drive-aware), `LinksField`, `MarketsField`. |
+| `app/(app)/marketing/team/`, `app/(app)/marketing/guide/` | Team tab (admins: add members, set Marketing access; actions in `team/actions.ts`) and the in-portal Guide. Guide text also in `docs/MARKETING-GUIDE.md`. |
 | `lib/mkt.ts`, `lib/marketing.ts` | Marketing types, statuses, link parsing and date rules (pure, tested); loader and `canEditMarketing`. |
 | `migrations/011_marketing.sql` | Tables `mkt_campaigns` and `mkt_items`. |
 | `components/` | `AppFrame` (sidebar + phone layout), `SendEmailDialog`, `RecipientsManager`, `UsersManager`, `DateSwitcher`, `LoadMissing`, `RunCheckButton`, `SubmitButton` (spinner + confirm dialog), `TopProgress`, `FlashToast`, `Skeletons`, `ui.tsx`, `Links.tsx`. |
@@ -146,3 +147,4 @@ Run: `npm install`, `npm run dev`, `npm test`, `npm run build`. SQL changes are 
 - 2026-10-23 — QR discount is now `EXPO-10OFF` = 10% off (was EXPO2026 / 25%); email copy, `DISCOUNT_CODE` constant (`lib/outcome.ts`) and the admin labels updated. Must exist in the Love Boo Shopify admin as a 10% code.
 - 2026-10-27 — Marketing module planned and started (campaigns + deliverables, Drive links, per-person edit right). Decisions and the ticked progress list live in `docs/MARKETING-MODULE-PLAN.md`; update that list as work ships.
 - 2026-10-27 — Marketing module Phase 1 built (what's on, month calendar with filters, my tasks, campaign pages, Drive link chips, per-person edit right). Needs migration 011 run and Users ticked before it shows up. Details and what is still open: `docs/MARKETING-MODULE-PLAN.md`.
+- 2026-10-27 — Marketing: added the admin **Team** tab (add members, set Marketing access none / view / edit) and a **Guide** (in the portal and `docs/MARKETING-GUIDE.md`); README now lists all modules and points to the guide.

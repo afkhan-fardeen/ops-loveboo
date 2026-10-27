@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { campaignState, cleanLinks, cleanMarkets, countdown, daysBetween, describeLink, isOverdue } from "../lib/mkt";
+import { campaignState, cleanLinks, cleanMarkets, countdown, daysBetween, describeLink, isOverdue, marketingAccess, withMarketingAccess } from "../lib/mkt";
 
 test("describeLink recognises Drive, Docs, Canva and plain links", () => {
   assert.equal(describeLink("https://drive.google.com/drive/folders/abc123").kind, "drive_folder");
@@ -47,4 +47,14 @@ test("only unfinished work can be overdue", () => {
   assert.equal(isOverdue({ status: "done", due_on: "2026-11-09" }, today), false);
   assert.equal(isOverdue({ status: "todo", due_on: "2026-11-10" }, today), false);
   assert.equal(isOverdue({ status: "todo", due_on: null }, today), false);
+});
+
+test("Marketing access is read from, and written to, the module list without touching other modules", () => {
+  assert.equal(marketingAccess(["reports"]), "none");
+  assert.equal(marketingAccess(["reports", "marketing"]), "view");
+  assert.equal(marketingAccess(["marketing", "marketing_edit"]), "edit");
+  assert.equal(marketingAccess(["marketing_edit"]), "none");   // the edit right alone doesn't let anyone in
+  assert.deepEqual(withMarketingAccess(["reports"], "edit"), ["reports", "marketing", "marketing_edit"]);
+  assert.deepEqual(withMarketingAccess(["reports", "marketing", "marketing_edit"], "view"), ["reports", "marketing"]);
+  assert.deepEqual(withMarketingAccess(["events", "marketing", "marketing_edit"], "none"), ["events"]);
 });

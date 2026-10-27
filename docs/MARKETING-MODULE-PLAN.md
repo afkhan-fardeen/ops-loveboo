@@ -26,6 +26,8 @@ Not a sync tool: no Google/Outlook calendar sync. Assets are files in Drive; the
 | What's on | `/marketing` | Live now, coming up (with countdowns), deliverables due or going live this week, overdue. |
 | Calendar | `/marketing/calendar` | Month calendar: campaign bands, deliverable markers (due / live), filters (campaign, type, status, owner, market), list view. |
 | My tasks | `/marketing/tasks` | Open deliverables sorted by due date: mine, or everyone's. Editors change status in one click. |
+| Team (admins) | `/marketing/team` | People who can sign in, with their Marketing access in one dropdown; Add member. |
+| Guide | `/marketing/guide` | How to use the module (same text as `docs/MARKETING-GUIDE.md`). |
 | Campaign | `/marketing/campaigns/[id]` | Brief, dates, markets, offer, links, progress, all deliverables grouped by type. |
 
 ## 4. Data (Supabase, ops project) — `migrations/011_marketing.sql`
@@ -45,6 +47,8 @@ Phase 1 — calendar and deliverables
 - [x] My tasks screen with one-click status change
 - [x] Campaign page with progress and deliverables grouped by type
 - [x] Drive link chips
+- [x] **Team tab** (admins): add members (name, email, generated password) and set each person's Marketing access: No access / Can view / Can view and edit
+- [x] **Guide**: in the portal (Marketing → Guide) and `docs/MARKETING-GUIDE.md`; the repo `README.md` points to it
 - [x] Unit tests (`tests/mkt.test.ts`: link chips, date maths, overdue rule)
 - [ ] **Checked with real data** (first campaign: Black Friday) after the migration is run and "Marketing" is ticked for people in Users
 

@@ -1,6 +1,11 @@
 # Love Boo Ops portal
 
-Internal portal for loveboo.com. One module, **Reports**, with one report, **Daily Sales**: pick a date, see that day's orders, units, total sales and discounts, and email it on the spot.
+Internal portal for loveboo.com (ops.loveboo.com). Modules, each granted per person in **Users**:
+- **Reports**: **Daily Sales**, pick a date, see that day's orders, units, total sales and discounts, and email it on the spot.
+- **Events**: Expo registrations, what each guest won or got, and whether their email went out.
+- **Marketing**: a calendar of campaigns and events with the deliverables inside them (banners, posts, emails), owners, due dates and Drive links. **How to use it: `docs/MARKETING-GUIDE.md`** (also in the portal under Marketing → Guide). Plan and progress: `docs/MARKETING-MODULE-PLAN.md`.
+
+Always read `CONTEXT.md` first: it is the current state of everything.
 
 Stack: Next.js 15 (App Router) · Mantine 8 · Supabase (Auth + Postgres) · Shopify Admin GraphQL · Resend · Vercel.
 
@@ -17,7 +22,7 @@ Database: run `schema.sql` once on a new Supabase project (or the files in `migr
 - **Daily Sales** (`/reports/daily-sales`): a date switcher (arrows, calendar, "Latest", ←/→ keys) and that day's report.
 - **Send email now** (admins): sends the day's report immediately, with the Excel attached, to the current recipients, or only to addresses you type in (people who aren't recipients). Sending to someone else does not mark the day as emailed.
 - **Email settings** (admins, the gear button): recipients (name, email, on/off), the daily send time (Bahrain time), and whether the daily email and the Excel attachment are on.
-- **Users** (admins): add people, set passwords, choose which modules they can open.
+- **Users** (admins): add people, set passwords, choose which modules they can open. Marketing has its own **Team** tab for adding members and choosing what they can do there.
 - **System health** (admins, `/admin/health`): is the scheduler running (and how often), is yesterday's report stored, has the email gone out or is it overdue, are Shopify, email sending and secrets fine, plus a log of recent runs (14 days). "Run the check now" runs the same check the scheduler runs (and sends the email if it is due).
 
 ## How the daily email works

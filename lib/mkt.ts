@@ -140,3 +140,13 @@ export function cleanMarkets(raw: unknown): string[] {
   if (!Array.isArray(list)) return [];
   return [...new Set((list as unknown[]).map((m) => String(m).trim()).filter(Boolean).map((m) => m.slice(0, 40)))].slice(0, 60);
 }
+
+export type MarketingAccess = "none" | "view" | "edit";
+/** A person's Marketing access from their module list: "edit" needs both `marketing` (see it) and `marketing_edit` (change it). */
+export const marketingAccess = (modules: string[]): MarketingAccess =>
+  !modules.includes("marketing") ? "none" : modules.includes("marketing_edit") ? "edit" : "view";
+/** The module list with Marketing access set to `level`; every other module is kept as it was. */
+export const withMarketingAccess = (modules: string[], level: MarketingAccess): string[] => {
+  const rest = modules.filter((m) => m !== "marketing" && m !== "marketing_edit");
+  return level === "edit" ? [...rest, "marketing", "marketing_edit"] : level === "view" ? [...rest, "marketing"] : rest;
+};

@@ -13,7 +13,7 @@ export default async function MarketingLayout({ children }: { children: React.Re
   return (
     <Stack gap="lg">
       <Group justify="space-between" align="center" wrap="wrap" gap="sm">
-        <MarketingNav />
+        <MarketingNav isAdmin={user.role === "admin"} />
         {canEdit && !missing && (
           <Group gap="xs">
             <ItemEditor campaigns={campaigns.map((c) => ({ id: c.id, name: c.name }))} owners={owners} trigger={{ label: "New deliverable", icon: "plus" }} />
