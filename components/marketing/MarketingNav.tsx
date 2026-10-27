@@ -7,6 +7,7 @@ const TABS = [
   { href: "/marketing", label: "What’s on", match: (p: string) => p === "/marketing" || p.startsWith("/marketing/campaigns") },
   { href: "/marketing/calendar", label: "Calendar", match: (p: string) => p.startsWith("/marketing/calendar") },
   { href: "/marketing/tasks", label: "My tasks", match: (p: string) => p.startsWith("/marketing/tasks"), admin: false },
+  { href: "/marketing/emails", label: "Emails", match: (p: string) => p.startsWith("/marketing/emails"), admin: false },
   { href: "/marketing/team", label: "Team", match: (p: string) => p.startsWith("/marketing/team"), admin: true },
   { href: "/marketing/guide", label: "Guide", match: (p: string) => p.startsWith("/marketing/guide"), admin: false },
 ];

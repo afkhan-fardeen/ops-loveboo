@@ -1,10 +1,11 @@
-import { SimpleGrid, Stack, Text, Title } from "@mantine/core";
+import Link from "next/link";
+import { Anchor, Badge, Group, Paper, SimpleGrid, Stack, Text, Title } from "@mantine/core";
 import CampaignCard from "@/components/marketing/CampaignCard";
 import DeliverablesTable from "@/components/marketing/DeliverablesTable";
 import SetupNeeded from "@/components/marketing/SetupNeeded";
 import { EmptyState, Section } from "@/components/ui";
 import { requireModule } from "@/lib/auth";
-import { addDays, todayIn } from "@/lib/format";
+import { addDays, dateLabel, todayIn } from "@/lib/format";
 import { canEditMarketing, loadMarketing } from "@/lib/marketing";
 import { campaignState, isOpen, isOverdue } from "@/lib/mkt";
 import { TZ } from "@/lib/timezone";
@@ -14,7 +15,7 @@ export const dynamic = "force-dynamic";
 
 export default async function WhatsOn() {
   const user = await requireModule("marketing");
-  const { campaigns, items, owners, missing } = await loadMarketing();
+  const { campaigns, items, emails, owners, missing } = await loadMarketing();
   if (missing) return <SetupNeeded />;
   const canEdit = canEditMarketing(user);
   const today = todayIn(TZ), week = addDays(today, 7);
@@ -24,6 +25,7 @@ export default async function WhatsOn() {
   const overdue = items.filter((i) => isOverdue(i, today));
   const dueSoon = items.filter((i) => isOpen(i.status) && i.due_on && i.due_on >= today && i.due_on <= week);
   const goingLive = items.filter((i) => i.live_on && i.live_on >= today && i.live_on <= week && i.status !== "live" && i.status !== "done");
+  const nextEmails = emails.filter((e) => e.send_on >= today).slice(0, 5);
   const table = (list: typeof items) => <DeliverablesTable items={list} campaigns={campaigns} owners={owners} canEdit={canEdit} today={today} />;
 
   return (
@@ -48,6 +50,24 @@ export default async function WhatsOn() {
         <Stack gap="xs">
           <Title order={2} size="h4">Coming up</Title>
           <SimpleGrid cols={{ base: 1, sm: 2, lg: 3 }}>{upcoming.map((c) => <CampaignCard key={c.id} campaign={c} items={items} today={today} />)}</SimpleGrid>
+        </Stack>
+      )}
+
+      {nextEmails.length > 0 && (
+        <Stack gap="xs">
+          <Group justify="space-between"><Title order={2} size="h4">Emails coming up</Title><Anchor component={Link} href="/marketing/emails" size="sm">Open the email plan</Anchor></Group>
+          <Paper withBorder radius="lg" p={0}>
+            {nextEmails.map((e, i) => (
+              <Group key={e.id} wrap="nowrap" gap="md" p="sm" style={{ borderTop: i ? "1px solid var(--mantine-color-default-border)" : undefined }}>
+                <Text fw={700} size="sm" w={96} style={{ flex: "none" }}>{dateLabel(e.send_on)}</Text>
+                <div style={{ minWidth: 0, flex: 1 }}>
+                  <Text size="sm" fw={600} c={e.name ? undefined : "dimmed"} truncate>{e.name || "No theme yet"}</Text>
+                  <Text size="xs" c="dimmed" truncate>{e.products.length ? e.products.map((p) => p.name).join(", ") : "No products yet"}</Text>
+                </div>
+                {!e.name && e.products.length === 0 && <Badge color="orange" variant="light" style={{ flex: "none" }}>Needs a theme</Badge>}
+              </Group>
+            ))}
+          </Paper>
         </Stack>
       )}
 

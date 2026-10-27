@@ -4,8 +4,9 @@ import { useMediaQuery } from "@mantine/hooks";
 import { ActionIcon, Badge, Button, Group, Modal, Paper, SegmentedControl, Select, Stack, Switch, Text, TextInput, Title } from "@mantine/core";
 import { IconChevronLeft, IconChevronRight, IconSearch } from "@tabler/icons-react";
 import { addDays, dateLabel } from "@/lib/format";
-import { COLOUR_BY, ITEM_STATUSES, ITEM_TYPES, addMonths, campaignState, isOpen, isOverdue, monthStart, type Campaign, type ColourBy, type Item, type Owner } from "@/lib/mkt";
+import { COLOUR_BY, ITEM_STATUSES, ITEM_TYPES, addMonths, campaignState, isOpen, isOverdue, monthStart, type Campaign, type ColourBy, type Email, type Item, type Owner } from "@/lib/mkt";
 import { CampaignEditor, ItemEditor } from "../Editors";
+import { EmailEditor } from "../emails/EmailEditor";
 import BoardView from "./BoardView";
 import DetailDrawer from "./DetailDrawer";
 import FcCalendar, { type FcHandle } from "./FcCalendar";
@@ -18,7 +19,7 @@ const get = (k: string) => { try { return localStorage.getItem(k); } catch { ret
 const put = (k: string, v: string) => { try { localStorage.setItem(k, v); } catch { /* ignore */ } };
 
 /** The planning workspace: six ways to look at the same plan, shared filters, colour options, and quick actions for editors. */
-export default function CalendarWorkspace({ campaigns, items, owners, canEdit, today }: { campaigns: Campaign[]; items: Item[]; owners: Owner[]; canEdit: boolean; today: string }) {
+export default function CalendarWorkspace({ campaigns, items, emails, owners, canEdit, today }: { campaigns: Campaign[]; items: Item[]; emails: Email[]; owners: Owner[]; canEdit: boolean; today: string }) {
   const small = useMediaQuery("(max-width: 640px)");
   const [view, setView] = useState<ViewKey>("month");
   const [f, setF] = useState<Filters>(NONE);
@@ -29,7 +30,7 @@ export default function CalendarWorkspace({ campaigns, items, owners, canEdit, t
   const [anchor, setAnchor] = useState(monthStart(today));
   const [scale, setScale] = useState<Scale>("weeks");
   const [quick, setQuick] = useState<string | null>(null);
-  const [editor, setEditor] = useState<{ kind: "campaign" | "item"; prefill: Record<string, string>; key: number } | null>(null);
+  const [editor, setEditor] = useState<{ kind: "campaign" | "item" | "email"; prefill: Record<string, string>; key: number } | null>(null);
   const fc = useRef<FcHandle>(null);
 
   useEffect(() => {
@@ -41,7 +42,7 @@ export default function CalendarWorkspace({ campaigns, items, owners, canEdit, t
   const changeColour = (v: string | null) => { if (v) { setColourBy(v as ColourBy); put("mkt_colour", v); } };
 
   const markets = useMemo(() => [...new Set([...campaigns.flatMap((c) => c.markets), ...items.flatMap((i) => i.markets)])].sort(), [campaigns, items]);
-  const { fCampaigns, fItems } = useMemo(() => {
+  const { fCampaigns, fItems, fEmails } = useMemo(() => {
     const q = f.q.trim().toLowerCase();
     const cOf = (id: string | null) => campaigns.find((c) => c.id === id);
     const campOk = (c: Campaign) => (!f.campaign || c.id === f.campaign) && (!f.market || c.markets.includes(f.market)) && (!f.owner || c.owner_id === f.owner)
@@ -51,8 +52,11 @@ export default function CalendarWorkspace({ campaigns, items, owners, canEdit, t
       return (!f.campaign || i.campaign_id === f.campaign) && (!f.type || i.type === f.type) && (!f.status || i.status === f.status) && (!f.owner || i.owner_id === f.owner)
         && (!f.market || i.markets.includes(f.market) || !!c?.markets.includes(f.market)) && (!q || `${i.title} ${i.notes} ${c?.name ?? ""} ${i.markets.join(" ")}`.toLowerCase().includes(q));
     };
-    return { fCampaigns: campaigns.filter(campOk), fItems: items.filter(itemOk) };
-  }, [campaigns, items, f]);
+    // Emails aren't part of a campaign or a market: they follow the type, status, owner and search filters.
+    const emailOk = (e: Email) => !f.campaign && (!f.type || f.type === "email") && (!f.status || e.status === f.status) && (!f.owner || e.owner_id === f.owner)
+      && (!q || `${e.name} ${e.subject} ${e.products.map((p) => p.name).join(" ")}`.toLowerCase().includes(q));
+    return { fCampaigns: campaigns.filter(campOk), fItems: items.filter(itemOk), fEmails: emails.filter(emailOk) };
+  }, [campaigns, items, emails, f]);
 
   const week = addDays(today, 7);
   const stats = {
@@ -72,7 +76,7 @@ export default function CalendarWorkspace({ campaigns, items, owners, canEdit, t
   const nav = (dir: -1 | 1) => (isFc ? (dir < 0 ? fc.current?.prev() : fc.current?.next()) : setAnchor(addMonths(anchor, dir * step)));
   const goToday = () => (isFc ? fc.current?.today() : setAnchor(monthStart(today)));
   const pick = campaigns.map((c) => ({ id: c.id, name: c.name }));
-  const open = (kind: "campaign" | "item", prefill: Record<string, string>) => { setQuick(null); setEditor({ kind, prefill, key: Date.now() }); };
+  const open = (kind: "campaign" | "item" | "email", prefill: Record<string, string>) => { setQuick(null); setEditor({ kind, prefill, key: Date.now() }); };
 
   const shared = { campaigns: fCampaigns, items: fItems, owners, colourBy, canEdit, today, onSelect: setSel };
 
@@ -117,7 +121,7 @@ export default function CalendarWorkspace({ campaigns, items, owners, canEdit, t
       </Group>
 
       {isFc
-        ? <Paper withBorder radius="lg" p="sm" shadow="xs"><FcCalendar ref={fc} view={view as "month" | "week" | "agenda" | "year"} {...shared} showItems={showItems} onTitle={setTitle}
+        ? <Paper withBorder radius="lg" p="sm" shadow="xs"><FcCalendar ref={fc} view={view as "month" | "week" | "agenda" | "year"} {...shared} emails={fEmails} showItems={showItems} onTitle={setTitle}
             onQuickAdd={setQuick} onCreateRange={(a, b) => open("campaign", { starts_on: a, ends_on: b })} /></Paper>
         : view === "timeline" ? <TimelineView {...shared} anchor={anchor} scale={scale} /> : <BoardView {...shared} />}
 
@@ -128,16 +132,18 @@ export default function CalendarWorkspace({ campaigns, items, owners, canEdit, t
           : "Bands are campaigns and events. Small chips are deliverables: Due is when the work is needed, Live is when it goes out. Overdue work is in red."}
       </Text>
 
-      <DetailDrawer sel={sel} onClose={() => setSel(null)} campaigns={campaigns} items={items} owners={owners} canEdit={canEdit} today={today} />
+      <DetailDrawer sel={sel} onClose={() => setSel(null)} campaigns={campaigns} items={items} emails={emails} owners={owners} canEdit={canEdit} today={today} />
 
       <Modal opened={!!quick} onClose={() => setQuick(null)} title={<Text fw={700}>{quick ? dateLabel(quick, true) : ""}</Text>} size="sm" centered zIndex={300}>
         <Stack gap="xs">
           <Button variant="default" onClick={() => open("item", { due_on: quick! })}>New deliverable due this day</Button>
           <Button variant="default" onClick={() => open("item", { live_on: quick! })}>New deliverable going live this day</Button>
+          <Button variant="default" onClick={() => open("email", { send_on: quick! })}>New email on this day</Button>
           <Button onClick={() => open("campaign", { starts_on: quick!, ends_on: quick! })}>New campaign starting this day</Button>
         </Stack>
       </Modal>
       {editor?.kind === "campaign" && <CampaignEditor key={editor.key} owners={owners} prefill={editor.prefill} controlled={{ open: true, onClose: () => setEditor(null) }} />}
+      {editor?.kind === "email" && <EmailEditor key={editor.key} owners={owners} prefillDate={editor.prefill.send_on} controlled={{ open: true, onClose: () => setEditor(null) }} />}
       {editor?.kind === "item" && <ItemEditor key={editor.key} campaigns={pick} owners={owners} prefill={editor.prefill} back="/marketing/calendar" controlled={{ open: true, onClose: () => setEditor(null) }} />}
     </Stack>
   );

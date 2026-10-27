@@ -146,7 +146,7 @@ export function ItemEditor({ item, campaigns, owners, defaultCampaignId, back = 
 }
 
 /** A status badge. For people who can edit, clicking it opens a menu to change the status in one step. */
-export function StatusMenu({ item, canEdit }: { item: Pick<Item, "id" | "status">; canEdit: boolean }) {
+export function StatusMenu({ item, canEdit, change = setItemStatus }: { item: Pick<Item, "id" | "status">; canEdit: boolean; change?: (id: string, status: string) => Promise<Result> }) {
   const [pending, start] = useTransition();
   const router = useRouter();
   const s = itemStatus(item.status);
@@ -158,7 +158,7 @@ export function StatusMenu({ item, canEdit }: { item: Pick<Item, "id" | "status"
       </Menu.Target>
       <Menu.Dropdown>
         {ITEM_STATUSES.map((o) => (
-          <Menu.Item key={o.value} disabled={o.value === item.status} onClick={() => start(async () => { const r = await setItemStatus(item.id, o.value); toast(r); if (r.ok) router.refresh(); })}>
+          <Menu.Item key={o.value} disabled={o.value === item.status} onClick={() => start(async () => { const r = await change(item.id, o.value); toast(r); if (r.ok) router.refresh(); })}>
             <Badge variant="light" color={o.color}>{o.label}</Badge>
           </Menu.Item>
         ))}

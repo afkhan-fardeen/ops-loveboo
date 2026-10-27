@@ -69,27 +69,16 @@ Ideas, not committed
 - Approvals step
 - Uploads into the portal (instead of Drive links)
 
-## 6. Email programme (proposed 2026-10-27, not started)
-Weekly promotional emails (every **Sunday and Thursday**): plan them ahead, say which products each one features, track the work to get each one out, and learn what works.
+## 6. Email plan (decided and built 2026-10-27)
+A simple tracker for the weekly promo emails (every **Sunday and Thursday**): each send plotted on its date, with a theme (for example "Mums & Babies"), the products to push and the copy, so the team can plan ahead. Others on the team add the products and copy.
 
-**Idea:** an **Email plan** tab inside Marketing, built on the existing deliverables (type *Email*). A *series* ("Weekly promo: Sun + Thu") creates the dated sends for the next weeks; each send carries the extra email fields below.
+- **Data:** `mkt_emails` (`migrations/012_marketing_emails.sql`): send date, theme, subject, status, owner, products [name, link, note], copy, notes, links. Statuses reuse the six deliverable statuses (Ready = scheduled in Klaviyo, Done = sent).
+- **Emails tab** (`/marketing/emails`): schedule grouped by week (Sunday to Saturday) with theme, product chips, copy status, owner, status menu; **Plan ahead** creates empty slots on chosen weekdays (default Sun + Thu) and skips dates that already have an email; **Products** tab shows each product's planned dates and flags "twice within a week".
+- **Calendar:** emails show as amber Email chips in Month / Week / Agenda / Year, can be dragged to another day, and can be added from the quick-add on a day. **What's on** lists the next five sends.
+- Same edit right as the rest of Marketing (Team tab).
 
-| Per send | Notes |
-|---|---|
-| Send date and time | From the series (Sun / Thu). Shows on the calendar like any deliverable. |
-| Subject line, audience or segment | Free text. |
-| Featured products | Product name + link (later: picked from the Shopify catalogue). |
-| Offer or code | As on campaigns. |
-| Owner, design due, status | Status reuses the six existing ones: To do (no products yet) → In progress (copy / design) → In review → Ready (scheduled in Klaviyo) → Live (sending today) → Done (sent, results noted). |
-| Klaviyo campaign link, Drive link | Link chips. |
-| Results | Recipients, open rate, click rate, revenue. Typed in first; pulled from Klaviyo later. |
+- [x] Email plan built (tab, plan ahead, editor, products table, calendar chips, What's on list)
+- [ ] **Migration `012_marketing_emails.sql` run in the ops Supabase SQL Editor** (manual step)
+- [ ] Checked with real emails (first Sunday + Thursday sends)
 
-**Product rotation view:** one table of products with *last promoted*, *times promoted in the last 30 / 90 days* and *next planned*, so nothing is over-promoted or forgotten.
-
-Phases: (1) series + sends + email fields + Email plan tab; (2) product rotation view; (3) Shopify product picker; (4) Klaviyo results (needs a Klaviyo private API key in the ops portal).
-
-- [ ] Decisions confirmed (segments, send times, who does what, products per email, results by hand or Klaviyo)
-- [ ] Phase 1 built
-- [ ] Phase 2 built
-- [ ] Phase 3 built
-- [ ] Phase 4 built
+Later, only if wanted: Shopify product picker (image and link), pulling send results from Klaviyo (needs a Klaviyo private API key), results columns typed in by hand.

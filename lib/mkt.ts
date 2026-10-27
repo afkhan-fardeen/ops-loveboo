@@ -191,3 +191,61 @@ export function addMonths(iso: string, n: number): string {
 }
 /** Where a date sits on a timeline that starts at `start` with `px` pixels per day. */
 export const xOf = (date: string, start: string, px: number) => daysBetween(start, date) * px;
+
+/** ---- Email plan ---- */
+export type Product = { name: string; url: string; note: string };
+export type Email = {
+  id: string; send_on: string; name: string; subject: string; status: ItemStatus; owner_id: string | null;
+  products: Product[]; copy: string; notes: string; links: Link[];
+};
+
+export const WEEKDAYS = [
+  { value: 0, label: "Sunday", short: "Sun" }, { value: 1, label: "Monday", short: "Mon" }, { value: 2, label: "Tuesday", short: "Tue" },
+  { value: 3, label: "Wednesday", short: "Wed" }, { value: 4, label: "Thursday", short: "Thu" }, { value: 5, label: "Friday", short: "Fri" }, { value: 6, label: "Saturday", short: "Sat" },
+] as const;
+
+/** Every date from `from` to `to` (inclusive, YYYY-MM-DD) that falls on one of `days` (0 = Sunday … 6 = Saturday). */
+export function weekdayDates(from: string, to: string, days: number[]): string[] {
+  const out: string[] = [];
+  for (let d = from, guard = 0; d <= to && guard < 800; guard++) {
+    if (days.includes(new Date(`${d}T12:00:00Z`).getUTCDay())) out.push(d);
+    d = new Date(Date.parse(`${d}T12:00:00Z`) + DAY).toISOString().slice(0, 10);
+  }
+  return out;
+}
+
+/** Products from a JSON array: a name is required, the link must be http(s) if present. At most 30. */
+export function cleanProducts(raw: unknown): Product[] {
+  let list: unknown = raw;
+  if (typeof raw === "string") { try { list = JSON.parse(raw); } catch { return []; } }
+  if (!Array.isArray(list)) return [];
+  const out: Product[] = [];
+  for (const x of list as Partial<Product>[]) {
+    const name = String(x?.name ?? "").trim().slice(0, 120);
+    if (!name) continue;
+    const url = String(x?.url ?? "").trim();
+    out.push({ name, url: /^https?:\/\/\S+$/i.test(url) ? url.slice(0, 2000) : "", note: String(x?.note ?? "").trim().slice(0, 200) });
+    if (out.length >= 30) break;
+  }
+  return out;
+}
+
+export type ProductRow = { key: string; name: string; url: string; dates: string[]; next: string | null; last: string | null };
+/** Which products are planned, and on which send dates: a quick check that nothing is over-promoted or forgotten. */
+export function productPlan(emails: Pick<Email, "send_on" | "products">[], today: string): ProductRow[] {
+  const map = new Map<string, ProductRow>();
+  for (const e of emails) for (const p of e.products) {
+    const key = p.name.toLowerCase();
+    const row = map.get(key) ?? { key, name: p.name, url: p.url, dates: [], next: null, last: null };
+    if (!row.url && p.url) row.url = p.url;
+    row.dates.push(e.send_on);
+    map.set(key, row);
+  }
+  const rows = [...map.values()];
+  for (const r of rows) {
+    r.dates.sort();
+    r.next = r.dates.find((d) => d >= today) ?? null;
+    r.last = [...r.dates].reverse().find((d) => d < today) ?? null;
+  }
+  return rows.sort((a, b) => ((a.next ?? "9999") < (b.next ?? "9999") ? -1 : (a.next ?? "9999") > (b.next ?? "9999") ? 1 : a.name.localeCompare(b.name)));
+}

@@ -3,7 +3,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireModule } from "@/lib/auth";
 import { canEditMarketing } from "@/lib/marketing";
-import { CAMPAIGN_STATUSES, ITEM_STATUSES, ITEM_TYPES, KINDS, cleanLinks, cleanMarkets } from "@/lib/mkt";
+import { CAMPAIGN_STATUSES, ITEM_STATUSES, ITEM_TYPES, KINDS, cleanLinks, cleanMarkets, cleanProducts, weekdayDates } from "@/lib/mkt";
 import { adminClient } from "@/lib/supabase";
 
 export type Result = { ok: boolean; message: string; id?: string };
@@ -129,8 +129,74 @@ export async function moveItemDate(id: string, field: "due_on" | "live_on", date
   })) as Result;
 }
 
+/** Create or edit one email in the plan. */
+export async function saveEmail(form: FormData): Promise<Result> {
+  return (await guard(async () => {
+    const me = await editor();
+    const id = str(form, "id"), send = str(form, "send_on"), status = str(form, "status") || "todo", owner = str(form, "owner_id");
+    if (!isDate(send)) return fail("Pick the send date.");
+    if (!oneOf(ITEM_STATUSES, status)) return fail("Pick a status.");
+    if (owner && !isUuid(owner)) return fail("Pick an owner from the list.");
+    const row = {
+      send_on: send, name: str(form, "name").slice(0, 120), subject: str(form, "subject").slice(0, 200), status, owner_id: owner || null,
+      products: cleanProducts(form.get("products")), copy: str(form, "copy").slice(0, 10000), notes: str(form, "notes").slice(0, 4000),
+      links: cleanLinks(form.get("links")), updated_at: new Date().toISOString(),
+    };
+    const db = adminClient();
+    if (id) {
+      if (!isUuid(id)) return fail("Unknown email.");
+      const { error } = await db.from("mkt_emails").update(row).eq("id", id);
+      return error ? fail(error.message) : done("Email saved.", id);
+    }
+    const { data, error } = await db.from("mkt_emails").insert({ ...row, created_by: me.id }).select("id").single();
+    return error ? fail(error.message) : done("Email added.", data.id);
+  })) as Result;
+}
+
+/** Plan ahead: create an empty email slot on each chosen weekday between two dates (for example every Sunday and Thursday). Dates that already have an email are skipped. */
+export async function planEmails(form: FormData): Promise<Result> {
+  return (await guard(async () => {
+    const me = await editor();
+    const from = str(form, "from"), to = str(form, "to");
+    const days = form.getAll("days").map((d) => Number(d)).filter((d) => Number.isInteger(d) && d >= 0 && d <= 6);
+    if (!isDate(from) || !isDate(to)) return fail("Pick the dates to plan between.");
+    if (to < from) return fail("The end date is before the start date.");
+    if (!days.length) return fail("Pick at least one day of the week.");
+    const dates = weekdayDates(from, to, days);
+    if (dates.length > 120) return fail("That is more than 120 emails. Pick a shorter period.");
+    if (!dates.length) return fail("No matching days in that period.");
+    const db = adminClient();
+    const { data: existing } = await db.from("mkt_emails").select("send_on").gte("send_on", from).lte("send_on", to);
+    const have = new Set((existing ?? []).map((e) => e.send_on as string));
+    const fresh = dates.filter((d) => !have.has(d));
+    if (!fresh.length) return fail("Those days already have emails planned.");
+    const { error } = await db.from("mkt_emails").insert(fresh.map((d) => ({ send_on: d, created_by: me.id })));
+    if (error) return fail(error.message);
+    return done(`Added ${fresh.length} email${fresh.length === 1 ? "" : "s"}${have.size ? ` (${dates.length - fresh.length} already existed)` : ""}.`);
+  })) as Result;
+}
+
+export async function setEmailStatus(id: string, status: string): Promise<Result> {
+  return (await guard(async () => {
+    await editor();
+    if (!isUuid(id) || !oneOf(ITEM_STATUSES, status)) return fail("Couldn’t change the status.");
+    const { error } = await adminClient().from("mkt_emails").update({ status, updated_at: new Date().toISOString() }).eq("id", id);
+    return error ? fail(error.message) : done("Status updated.");
+  })) as Result;
+}
+
+/** Drag an email on the calendar to another send day. */
+export async function moveEmail(id: string, date: string): Promise<Result> {
+  return (await guard(async () => {
+    await editor();
+    if (!isUuid(id) || !isDate(date)) return fail("Couldn’t move that.");
+    const { error } = await adminClient().from("mkt_emails").update({ send_on: date, updated_at: new Date().toISOString() }).eq("id", id);
+    return error ? fail(error.message) : done("Send date updated.");
+  })) as Result;
+}
+
 /** Deletes a row after the editor check; returns what happened so the caller can redirect (redirect() throws, so never inside a try). */
-async function remove(table: "mkt_items" | "mkt_campaigns", id: string, what: string): Promise<Result> {
+async function remove(table: "mkt_items" | "mkt_campaigns" | "mkt_emails", id: string, what: string): Promise<Result> {
   return (await guard(async () => {
     await editor();
     if (!isUuid(id)) return fail(`Unknown ${what}.`);
@@ -151,4 +217,9 @@ export async function deleteItem(form: FormData) {
 export async function deleteCampaign(form: FormData) {
   const r = await remove("mkt_campaigns", str(form, "id"), "campaign");
   redirect(withFlash("/marketing", r));
+}
+
+export async function deleteEmail(form: FormData) {
+  const r = await remove("mkt_emails", str(form, "id"), "email");
+  redirect(withFlash(backTo(str(form, "back"), "/marketing/emails"), r));
 }

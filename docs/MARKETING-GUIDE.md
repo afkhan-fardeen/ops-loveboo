@@ -41,6 +41,7 @@ One place to see **what is happening when**, who owns it, when it is due, and wh
 |---|---|
 | **What's on** | Campaigns happening now and coming up with countdowns, and work that is overdue, due this week or going live this week. |
 | **Calendar** | The planning workspace in six views, with filters, search and colour options. |
+| **Emails** | The email plan: every send on its date (for example each Sunday and Thursday) with its theme, the products to push and the copy. |
 | **My tasks** | Your open deliverables, soonest first. Switch to everyone's, or include finished ones. |
 | **Campaign page** | The brief, dates, markets, offer, links, progress, and all deliverables grouped by type. |
 | **Team** (admins) | Add people and choose what each can do in Marketing. |
@@ -66,6 +67,14 @@ Switch with the buttons at the top right (a dropdown on a phone). It remembers y
 | Drag a campaign's edge | Change when it ends. |
 | Drag a Board card | Change its status. |
 | Click a status badge | Change the status from a menu, anywhere you see it. |
+
+## The email plan
+Every promotional email on its send date, so we can plan ahead and everyone knows what is going out and which products to push.
+1. **Plan ahead** (people who can edit): choose the days you send (Sunday and Thursday are pre-ticked) and how far ahead, then press *Add emails*. Each send appears as an empty slot on its date.
+2. Press **Edit** on an email. Give it a **theme** (for example *Mums & Babies*), then add the **products to push** (name, a link to the product, and a note if useful), the **copy** or a link to the doc, the owner and the status.
+3. Everyone can see the plan. The **Products** tab shows each product and the dates it is planned, and flags a product planned twice within a week.
+
+Email statuses: **To do** nothing ready yet, **In progress** copy or design being made, **In review**, **Ready** scheduled in Klaviyo, **Live** sending today, **Done** sent. Emails also show on the Calendar and can be dragged to another send day. Anyone who should add products or copy needs **Can view and edit**.
 
 ## Statuses
 | Status | Means |
@@ -115,7 +124,7 @@ Add the countries or regions a campaign runs in as tags. Pick from the suggestio
 - **The page says it couldn't load.** Refresh once. If it keeps happening, tell an admin what you were opening.
 
 ## Setting it up (admins, once)
-1. Run `migrations/011_marketing.sql` in the ops Supabase SQL Editor (done).
+1. Run `migrations/011_marketing.sql` (done) and `migrations/012_marketing_emails.sql` (for the email plan) in the ops Supabase SQL Editor.
 2. Give people access in **Marketing → Team** (or **Users**).
 
 ## Coming later

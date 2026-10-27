@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { campaignState, cleanLinks, cleanMarkets, countdown, daysBetween, describeLink, isOverdue, marketingAccess, withMarketingAccess, addMonths, colourFor, monthStart, tint, xOf } from "../lib/mkt";
+import { campaignState, cleanLinks, cleanMarkets, countdown, daysBetween, describeLink, isOverdue, marketingAccess, withMarketingAccess, addMonths, colourFor, monthStart, tint, xOf, weekdayDates, cleanProducts, productPlan } from "../lib/mkt";
 
 test("describeLink recognises Drive, Docs, Canva and plain links", () => {
   assert.equal(describeLink("https://drive.google.com/drive/folders/abc123").kind, "drive_folder");
@@ -75,4 +75,31 @@ test("calendar colours and timeline maths", () => {
   assert.equal(addMonths("2026-11-24", 2), "2027-01-01");
   assert.equal(addMonths("2026-01-15", -1), "2025-12-01");
   assert.equal(xOf("2026-11-10", "2026-11-01", 28), 252);
+});
+
+test("weekdayDates lists the Sundays and Thursdays in a range", () => {
+  // 2026-11-01 is a Sunday
+  assert.deepEqual(weekdayDates("2026-11-01", "2026-11-15", [0, 4]), ["2026-11-01", "2026-11-05", "2026-11-08", "2026-11-12", "2026-11-15"]);
+  assert.deepEqual(weekdayDates("2026-11-02", "2026-11-04", [0, 4]), []);
+  assert.deepEqual(weekdayDates("2026-11-05", "2026-11-05", [4]), ["2026-11-05"]);
+  assert.deepEqual(weekdayDates("2026-11-10", "2026-11-01", [0, 4]), []);
+});
+
+test("cleanProducts needs a name, keeps only http(s) links", () => {
+  assert.deepEqual(cleanProducts(JSON.stringify([{ name: " Body Wash ", url: " https://loveboo.com/products/x ", note: "hero" }, { name: "", url: "https://x.com" }, { name: "Lotion", url: "javascript:alert(1)" }])),
+    [{ name: "Body Wash", url: "https://loveboo.com/products/x", note: "hero" }, { name: "Lotion", url: "", note: "" }]);
+  assert.deepEqual(cleanProducts("nope"), []);
+});
+
+test("productPlan shows when each product is planned, next and last", () => {
+  const emails = [
+    { send_on: "2026-11-01", products: [{ name: "Body Wash", url: "", note: "" }, { name: "Lotion", url: "https://l.com", note: "" }] },
+    { send_on: "2026-11-05", products: [{ name: "body wash", url: "https://b.com", note: "" }] },
+    { send_on: "2026-11-12", products: [{ name: "Lotion", url: "", note: "" }] },
+  ];
+  const rows = productPlan(emails, "2026-11-03");
+  assert.equal(rows.length, 2);
+  assert.deepEqual(rows[0], { key: "body wash", name: "Body Wash", url: "https://b.com", dates: ["2026-11-01", "2026-11-05"], next: "2026-11-05", last: "2026-11-01" });
+  assert.deepEqual(rows[1].dates, ["2026-11-01", "2026-11-12"]);
+  assert.equal(rows[1].url, "https://l.com");
 });

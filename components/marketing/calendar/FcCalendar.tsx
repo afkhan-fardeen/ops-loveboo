@@ -10,13 +10,14 @@ import type { DatesSetArg, EventContentArg, EventDropArg, EventInput } from "@fu
 import type { EventResizeDoneArg } from "@fullcalendar/interaction";
 import { notifications } from "@mantine/notifications";
 import { addDays } from "@/lib/format";
-import { colourFor, isOverdue, tint } from "@/lib/mkt";
-import { moveCampaign, moveItemDate, type Result } from "@/app/(app)/marketing/actions";
+import { TYPE_COLOURS, colourFor, isOverdue, tint, type Email } from "@/lib/mkt";
+import { moveCampaign, moveEmail, moveItemDate, type Result } from "@/app/(app)/marketing/actions";
 import { typeIcon } from "./typeIcons";
 import type { ViewKey, ViewProps } from "./types";
 
 export type FcHandle = { prev: () => void; next: () => void; today: () => void };
 type Props = ViewProps & {
+  emails: Email[];
   view: Extract<ViewKey, "month" | "week" | "agenda" | "year">; showItems: boolean;
   onTitle: (t: string) => void; onQuickAdd: (date: string) => void; onCreateRange: (start: string, end: string) => void;
 };
@@ -39,7 +40,7 @@ function EventContent({ arg }: { arg: EventContentArg }) {
 }
 
 /** Month / Week / Agenda / Year, drawn by FullCalendar with our own look. Editors can click a day, drag across days, and drag events to reschedule. */
-const FcCalendar = forwardRef<FcHandle, Props>(function FcCalendar({ view, campaigns, items, owners, colourBy, canEdit, today, showItems, onSelect, onTitle, onQuickAdd, onCreateRange }, ref) {
+const FcCalendar = forwardRef<FcHandle, Props>(function FcCalendar({ view, emails, campaigns, items, owners, colourBy, canEdit, today, showItems, onSelect, onTitle, onQuickAdd, onCreateRange }, ref) {
   const cal = useRef<FullCalendar>(null);
   const router = useRouter();
   useImperativeHandle(ref, () => ({ prev: () => cal.current?.getApi().prev(), next: () => cal.current?.getApi().next(), today: () => cal.current?.getApi().today() }));
@@ -59,9 +60,14 @@ const FcCalendar = forwardRef<FcHandle, Props>(function FcCalendar({ view, campa
         if (i.due_on) out.push({ ...base, id: `d:${i.id}`, title: i.title, start: i.due_on, classNames: ["mkt-ev", ...(isOverdue(i, today) ? ["mkt-overdue"] : [])], extendedProps: { kind: "due", id: i.id, colour, type: i.type, tag: "Due" } });
         if (i.live_on) out.push({ ...base, id: `l:${i.id}`, title: i.title, start: i.live_on, classNames: ["mkt-ev"], extendedProps: { kind: "live", id: i.id, colour, type: i.type, tag: "Live" } });
       }
+      for (const e of emails) {
+        const colour = colourBy === "campaign" ? TYPE_COLOURS.email : colourFor(colourBy, { type: "email", status: e.status, owner_id: e.owner_id }, undefined, owners);
+        out.push({ id: `e:${e.id}`, title: e.name || "Email", start: e.send_on, allDay: true, display: "block", backgroundColor: colour, borderColor: colour, durationEditable: false, editable: canEdit,
+          classNames: ["mkt-ev"], extendedProps: { kind: "email", id: e.id, colour, type: "email", tag: "Email" } });
+      }
     }
     return out;
-  }, [campaigns, items, owners, colourBy, canEdit, showItems, today]);
+  }, [campaigns, items, emails, owners, colourBy, canEdit, showItems, today]);
 
   const report = (r: Result) => notifications.show(r.ok
     ? { color: "brand", message: r.message, autoClose: 3000 }
@@ -72,6 +78,7 @@ const FcCalendar = forwardRef<FcHandle, Props>(function FcCalendar({ view, campa
       const start = e.startStr.slice(0, 10);
       const r = p.kind === "campaign"
         ? await moveCampaign(p.id, start, addDays(e.endStr ? e.endStr.slice(0, 10) : addDays(start, 1), -1))
+        : p.kind === "email" ? await moveEmail(p.id, start)
         : await moveItemDate(p.id, p.kind === "due" ? "due_on" : "live_on", start);
       report(r);
       if (r.ok) router.refresh(); else info.revert();

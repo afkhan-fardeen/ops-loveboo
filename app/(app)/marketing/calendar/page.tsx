@@ -11,7 +11,7 @@ export const dynamic = "force-dynamic";
 
 export default async function CalendarPage() {
   const user = await requireModule("marketing");
-  const { campaigns, items, owners, missing } = await loadMarketing();
+  const { campaigns, items, emails, owners, missing } = await loadMarketing();
   if (missing) return <SetupNeeded />;
   return (
     <Stack gap="md">
@@ -19,7 +19,7 @@ export default async function CalendarPage() {
         <Title order={1} size="h2">Calendar</Title>
         <Text c="dimmed">Plan campaigns, events and deliverables. Switch between Month, Week, Agenda, Timeline, Board and Year.</Text>
       </div>
-      <CalendarWorkspace campaigns={campaigns} items={items} owners={owners} canEdit={canEditMarketing(user)} today={todayIn(TZ)} />
+      <CalendarWorkspace campaigns={campaigns} items={items} emails={emails} owners={owners} canEdit={canEditMarketing(user)} today={todayIn(TZ)} />
     </Stack>
   );
 }

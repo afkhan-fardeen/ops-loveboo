@@ -33,6 +33,7 @@ const STATUSES: [string, string][] = [
 const SCREENS: [string, string][] = [
   ["What’s on", "Campaigns happening now and coming up with countdowns, and work that is overdue, due this week or going live this week."],
   ["Calendar", "The planning workspace in six views, with filters, search and colour options."],
+  ["Emails", "The email plan: every send on its date (for example each Sunday and Thursday) with its theme, the products to push and the copy."],
   ["My tasks", "Your open deliverables, soonest first. Switch to everyone’s, or include finished ones."],
   ["Campaign page", "The brief, dates, markets, offer, links, progress, and all deliverables grouped by type."],
   ["Team (admins)", "Add people and choose what each can do in Marketing."],
@@ -67,7 +68,7 @@ export default async function Guide() {
         <Text c="dimmed">One place to see what is happening when, who owns it, when it is due, and where the files are.</Text>
       </div>
       <Group gap="md" wrap="wrap">
-        {[["start", "Start here"], ["portal", "The portal"], ["idea", "The idea"], ["calendar", "Calendar"], ["statuses", "Statuses"], ["drive", "Drive links"], ["access", "Who can do what"], ["faq", "Questions"]].map(([id, l]) => <Anchor key={id} href={`#${id}`} size="sm">{l}</Anchor>)}
+        {[["start", "Start here"], ["portal", "The portal"], ["idea", "The idea"], ["calendar", "Calendar"], ["emails", "Emails"], ["statuses", "Statuses"], ["drive", "Drive links"], ["access", "Who can do what"], ["faq", "Questions"]].map(([id, l]) => <Anchor key={id} href={`#${id}`} size="sm">{l}</Anchor>)}
       </Group>
 
       <H id="start">Start here</H>
@@ -111,6 +112,15 @@ export default async function Guide() {
       <Grid rows={VIEWS} w={120} />
       <Title order={3} size="h5" mt="sm">Quick actions (people who can edit)</Title>
       <Grid rows={ACTIONS} w={230} />
+
+      <H id="emails">The email plan</H>
+      <Text size="sm">Every promotional email on its send date, so we can plan ahead and everyone knows what is going out and which products to push.</Text>
+      <List type="ordered" spacing="xs" size="sm">
+        <ListItem><b>Plan ahead</b> (people who can edit): choose the days you send (Sunday and Thursday are pre-ticked) and how far ahead, then press Add emails. Each send appears as an empty slot on its date.</ListItem>
+        <ListItem>Press <b>Edit</b> on an email. Give it a <b>theme</b> (for example <i>Mums &amp; Babies</i>), then add the <b>products to push</b> (name, a link to the product, and a note if useful), the <b>copy</b> or a link to the doc, the owner and the status.</ListItem>
+        <ListItem>Everyone can see the plan. The <b>Products</b> tab shows each product and the dates it is planned, and flags a product planned twice within a week.</ListItem>
+      </List>
+      <Text size="sm">Email statuses: <b>To do</b> nothing ready yet, <b>In progress</b> copy or design being made, <b>In review</b>, <b>Ready</b> scheduled in Klaviyo, <b>Live</b> sending today, <b>Done</b> sent. Emails also show on the Calendar (and can be dragged to another send day). Anyone who should add products or copy needs <b>Can view and edit</b>.</Text>
 
       <H id="statuses">Statuses</H>
       <Grid rows={STATUSES} w={150} />

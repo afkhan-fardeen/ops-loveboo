@@ -1,6 +1,6 @@
 import type { Campaign, ColourBy, Item, Owner } from "@/lib/mkt";
 
-export type Sel = { kind: "campaign" | "due" | "live"; id: string } | null;
+export type Sel = { kind: "campaign" | "due" | "live" | "email"; id: string } | null;
 export type ViewKey = "month" | "week" | "agenda" | "timeline" | "board" | "year";
 export const VIEWS: { value: ViewKey; label: string }[] = [
   { value: "month", label: "Month" }, { value: "week", label: "Week" }, { value: "agenda", label: "Agenda" },

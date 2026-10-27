@@ -16,6 +16,7 @@ const SCREENS: { match: (p: string) => boolean; title: string | null; back?: str
   { match: (p) => p.startsWith("/reports"), title: "Daily Sales" },
   { match: (p) => p.startsWith("/events"), title: "Events" },
   { match: (p) => p.startsWith("/marketing/campaigns"), title: "Campaign", back: "/marketing" },
+  { match: (p) => p.startsWith("/marketing/emails"), title: "Emails" },
   { match: (p) => p.startsWith("/marketing"), title: "Marketing" },
   { match: (p) => p.startsWith("/admin/health"), title: "System health" },
   { match: (p) => p.startsWith("/admin"), title: "Users" },
