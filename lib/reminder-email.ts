@@ -9,7 +9,11 @@ export type ReminderProduct = { title: string; handle: string; image: string };
 const UTM = "utm_source=email&utm_medium=reminder&utm_campaign=expo_code_reminder";
 /** A store discount link: it applies the code to the visitor's cart, then sends them on to `path` (the product, or the homepage). */
 export const discountLink = (path = "/") => `${SITE}/discount/${encodeURIComponent(DISCOUNT_CODE)}?redirect=${encodeURIComponent(`${path}${path.includes("?") ? "&" : "?"}${UTM}`)}`;
-const img = (url: string, w: number) => `${url}${url.includes("?") ? "&" : "?"}width=${w}`;
+/** Product photos are hosted next to the logo (ops.loveboo.com/email/) so mail apps that block third-party image hosts still show them. */
+export const EMAIL_IMAGES: Record<string, string> = {
+  "no-more-knots-detangling-spray": "knots", "soft-swishy-gentle-shampoo": "shampoo", "tame-my-mane-gentle-conditioner": "conditioner",
+};
+export const hostedImage = (handle: string, fallback: string) => (EMAIL_IMAGES[handle] ? `https://ops.loveboo.com/email/${EMAIL_IMAGES[handle]}.jpg` : fallback);
 export const endsLabel = () => new Date(`${DISCOUNT_ENDS_ON}T12:00:00Z`).toLocaleDateString("en-GB", { day: "numeric", month: "long", timeZone: "UTC" });
 const UNSUB = `mailto:${REPLY_TO}?subject=Unsubscribe`;
 
@@ -24,7 +28,7 @@ export function buildReminderEmail(guest: { first_name: string; email: string },
   const cards = products.slice(0, 3).map((p) => `
         <td width="33%" valign="top" align="center" style="padding:0 5px">
           <a href="${esc(discountLink(`/products/${p.handle}`))}" style="text-decoration:none;color:${C.ink}">
-            <img src="${esc(img(p.image, 360))}" alt="${esc(p.title)}" width="170" style="display:block;width:100%;max-width:170px;height:auto;border:0;border-radius:14px;background:${C.cream};font:600 12px ${font};color:${C.deep}">
+            <img src="${esc(p.image)}" alt="${esc(p.title)}" width="170" style="display:block;width:100%;max-width:170px;height:auto;border:0;border-radius:14px;background:${C.cream};font:600 12px ${font};color:${C.deep}">
             <div style="margin-top:8px;font:700 13px/1.35 ${font};color:${C.ink}">${esc(p.title)}</div>
             <div style="margin-top:4px;font:700 12px ${font};color:${C.teal}">Shop with 10% off &rarr;</div>
           </a>

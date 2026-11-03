@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { buildReminderEmail, discountLink, endsLabel } from "../lib/reminder-email";
+import { hostedImage, buildReminderEmail, discountLink, endsLabel } from "../lib/reminder-email";
 
 const products = [
   { title: "No More Knots Detangling Spray", handle: "no-more-knots", image: "https://cdn.shopify.com/a.jpg?v=1" },
@@ -25,7 +25,8 @@ test("reminder: buttons use the store discount link so the code is applied, with
   assert.match(decodeURIComponent(link), /\/products\/no-more-knots\?utm_source=email&utm_medium=reminder&utm_campaign=expo_code_reminder/);
   const m = buildReminderEmail({ first_name: "Sara", email: "sara@example.com" }, products);
   assert.equal((m.html.match(/loveboo\.com\/discount\/EXPO-10OFF/g) ?? []).length >= 5, true);   // 2 main buttons + 3 product cards
-  assert.match(m.html, /width=360/);
+  assert.match(m.html, /<img src="https:\/\/cdn\.shopify\.com\/a\.jpg/);
+  assert.equal(hostedImage("soft-swishy-gentle-shampoo", "x"), "https://ops.loveboo.com/email/shampoo.jpg");
 });
 
 test("reminder: no name falls back to Hi there, and text is escaped", () => {
