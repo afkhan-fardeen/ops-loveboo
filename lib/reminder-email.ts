@@ -63,12 +63,12 @@ export function buildReminderEmail(guest: { first_name: string; email: string },
 }
 
 /** Sends one reminder through Resend, with a one-click-style unsubscribe header. */
-export async function sendReminder(to: string, guest: { first_name: string; email: string }, products: ReminderProduct[], opts: { testLabel?: boolean } = {}) {
+export async function sendReminder(to: string, guest: { first_name: string; email: string }, products: ReminderProduct[], opts: { testLabel?: boolean; idempotencyKey?: string } = {}) {
   const { subject, html, text } = buildReminderEmail(guest, products);
   const { data, error } = await new Resend(process.env.RESEND_API_KEY).emails.send({
     from: FROM(), to, replyTo: REPLY_TO, subject: opts.testLabel ? `[TEST] ${subject}` : subject, html, text,
     headers: { "List-Unsubscribe": `<${UNSUB}>` },
-  });
+  }, opts.idempotencyKey ? { idempotencyKey: opts.idempotencyKey } : undefined);
   if (error) throw new Error(error.message);
   return data?.id ?? null;
 }
