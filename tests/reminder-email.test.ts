@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { hostedImage, buildReminderEmail, discountLink, endsLabel } from "../lib/reminder-email";
+import { daysLeft, hostedImage, buildReminderEmail, discountLink, endsLabel } from "../lib/reminder-email";
 
 const products = [
   { title: "No More Knots Detangling Spray", handle: "no-more-knots", image: "https://cdn.shopify.com/a.jpg?v=1" },
@@ -14,7 +14,7 @@ test("reminder: short subject, true end date, the code, one offer", () => {
   assert.equal(endsLabel(), "23 November");
   assert.match(m.html, /EXPO-10OFF/);
   assert.match(m.html, /Hi Sara/);
-  assert.match(m.html, /works until <b[^>]*>23 November/);
+  assert.match(m.html, /After <b[^>]*>23 November/);
   assert.match(m.html, /Unsubscribe/);
   assert.match(m.text, /Unsubscribe/);
 });
@@ -32,4 +32,11 @@ test("reminder: buttons use the store discount link so the code is applied, with
 test("reminder: no name falls back to Hi there, and text is escaped", () => {
   assert.match(buildReminderEmail({ first_name: "", email: "info@example.com" }, products).html, /Hi there/);
   assert.doesNotMatch(buildReminderEmail({ first_name: "<b>x</b>", email: "x@example.com" }, products).html, /<b>x<\/b>/);
+});
+
+test("reminder: urgency is real and counts down to the true end date", () => {
+  assert.equal(daysLeft(new Date("2026-11-03T09:00:00Z")), 20);
+  assert.equal(daysLeft(new Date("2026-11-22T09:00:00Z")), 1);
+  assert.equal(daysLeft(new Date("2026-11-30T09:00:00Z")), 0);
+  assert.match(buildReminderEmail({ first_name: "Sara", email: "s@example.com" }, products).subject, /ends 23 November/);
 });
