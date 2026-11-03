@@ -5,26 +5,26 @@ import { DISCOUNT_CODE, isQrSignup } from "./outcome";
 
 export { DISCOUNT_CODE, isQrSignup };
 
-const C = { cream: "#FBF9F1", teal: "#006D68", deep: "#005151", ink: "#23312F", mute: "#5F6B69", yellow: "#FBD872", line: "#EAE5D6" };
-const esc = (v: string) => v.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
-const font = "'Helvetica Neue',Helvetica,Arial,sans-serif";
-const serif = "Georgia,'Times New Roman',serif";
+export const C = { cream: "#FBF9F1", teal: "#006D68", deep: "#005151", ink: "#23312F", mute: "#5F6B69", yellow: "#FBD872", line: "#EAE5D6" };
+export const esc = (v: string) => v.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+export const font = "'Helvetica Neue',Helvetica,Arial,sans-serif";
+export const serif = "Georgia,'Times New Roman',serif";
 
 export const REPLY_TO = process.env.REGISTRATION_REPLY_TO || "hello@loveboo.com";
-const FROM = () => process.env.REGISTRATION_FROM || "Love Boo <registration@mail.loveboo.com>";
+export const FROM = () => process.env.REGISTRATION_FROM || "Love Boo <registration@mail.loveboo.com>";
 const MAX_ATTEMPTS = 5;
 const LOGO = "https://ops.loveboo.com/logo.png";
-const SITE = "https://loveboo.com";
+export const SITE = "https://loveboo.com";
 
 export type Guest = { first_name: string; email: string; prize: string | null; prize_image_url?: string | null; source?: string | null; registered_at?: string | null };
 export type EventInfo = { name: string; collection_text: string } | null;
 
-const button = (href: string, label: string) =>
+export const button = (href: string, label: string) =>
   `<table role="presentation" cellpadding="0" cellspacing="0" border="0" align="center"><tr><td align="center" bgcolor="${C.teal}" style="border-radius:999px"><a href="${esc(href)}" style="display:inline-block;padding:12px 26px;font:700 14px ${font};color:#ffffff;text-decoration:none;border-radius:999px">${esc(label)}</a></td></tr></table>`;
 
 
 /** The email shell shared by every guest email: cream header with the logo, white body, dark-teal footer. */
-function frame(o: { subject: string; preheader: string; where: string; logo: { src: string; alt: string; width: number; height: number }; body: string }) {
+export function frame(o: { subject: string; preheader: string; where: string; logo: { src: string; alt: string; width: number; height: number }; body: string; footer?: string }) {
   return `<!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light"><meta name="supported-color-schemes" content="light"><title>${esc(o.subject)}</title></head>
 <body style="margin:0;padding:0;background:${C.cream};-webkit-text-size-adjust:100%">
@@ -42,7 +42,7 @@ ${o.body}
 
   <tr><td bgcolor="${C.deep}" align="center" style="background:${C.deep};padding:22px 20px 26px">
     <div style="font:400 12px/1.6 ${font};color:#ffffff">Questions? Write to <a href="mailto:${REPLY_TO}" style="color:#ffffff;font-weight:700">${REPLY_TO}</a></div>
-    <div style="margin-top:10px;font:400 11px/1.6 ${font};color:#ffffff">You’re receiving this because you registered at ${esc(o.where)}.<br>This is an automated message.<br><a href="${SITE}" style="color:#ffffff">loveboo.com</a></div>
+    <div style="margin-top:10px;font:400 11px/1.6 ${font};color:#ffffff">${o.footer ?? `You’re receiving this because you registered at ${esc(o.where)}.<br>This is an automated message.<br><a href="${SITE}" style="color:#ffffff">loveboo.com</a>`}</div>
   </td></tr>
 
 </table></td></tr></table>
@@ -97,7 +97,7 @@ export function buildRegistrationEmail(guest: Guest, event: EventInfo) {
 }
 
 
-const EXPO_LOGO = "https://ops.loveboo.com/expo-lockup.png";
+export const EXPO_LOGO = "https://ops.loveboo.com/expo-lockup.png";
 
 
 /** "Here's your code" email for QR sign-ups: a thank-you, 10% off, the code in a box, one button. (The spin wheel gives gifts only, never the code.) */
